@@ -1,0 +1,549 @@
+# HG changeset patch
+# User Nicky <sl.nicky.ml@googlemail.com>
+# Date 1387584754 -3600
+# Node ID 8e3656a95c9e5cf7deea29a9fcb84dc275037ce4
+# Parent  f2b20eff030f0ca61347a9ba10f47bcb981b7a7d
+Compatibility for OpenJPEG 2
+
+diff --git a/autobuild.xml b/autobuild.xml
+--- a/autobuild.xml
++++ b/autobuild.xml
+@@ -1852,9 +1852,9 @@
+             <key>archive</key>
+             <map>
+               <key>hash</key>
+-              <string>fb2382014c79e0049746e4e29bd834f9</string>
++              <string>7adad98ecb1557de79843964a04899e7</string>
+               <key>url</key>
+-              <string>http://s3.amazonaws.com/viewer-source-downloads/install_pkgs/openjpeg-1.4-linux-20110314.tar.bz2</string>
++              <string>file:///tmp/openjpeg-2.0-linux-20131205.tar.bz2</string>
+             </map>
+             <key>name</key>
+             <string>linux</string>
+diff --git a/indra/cmake/Copy3rdPartyLibs.cmake b/indra/cmake/Copy3rdPartyLibs.cmake
+--- a/indra/cmake/Copy3rdPartyLibs.cmake
++++ b/indra/cmake/Copy3rdPartyLibs.cmake
+@@ -34,7 +34,7 @@
+ 
+     set(debug_src_dir "${ARCH_PREBUILT_DIRS_DEBUG}")
+     set(debug_files
+-        openjpegd.dll
++#        openjpegd.dll
+         libapr-1.dll
+         libaprutil-1.dll
+         libapriconv-1.dll
+@@ -47,7 +47,7 @@
+ 
+     set(release_src_dir "${ARCH_PREBUILT_DIRS_RELEASE}")
+     set(release_files
+-        openjpeg.dll
++#        openjpeg.dll
+         libapr-1.dll
+         libaprutil-1.dll
+         libapriconv-1.dll
+@@ -311,7 +311,7 @@
+         libhunspell-1.3.so.0.0.0
+         libminizip.so
+         libopenal.so
+-        libopenjpeg.so
++#        libopenjpeg.so
+         libssl.so
+         libuuid.so.16
+         libuuid.so.16.0.22
+diff --git a/indra/cmake/OpenJPEG.cmake b/indra/cmake/OpenJPEG.cmake
+--- a/indra/cmake/OpenJPEG.cmake
++++ b/indra/cmake/OpenJPEG.cmake
+@@ -15,8 +15,8 @@
+         debug openjpegd
+         optimized openjpeg)
+   else(WINDOWS)
+-    set(OPENJPEG_LIBRARIES openjpeg)
++    set(OPENJPEG_LIBRARIES openjp2)
+   endif(WINDOWS)
+   
+-    set(OPENJPEG_INCLUDE_DIR ${LIBS_PREBUILT_DIR}/include/openjpeg)
++    set(OPENJPEG_INCLUDE_DIR ${LIBS_PREBUILT_DIR}/include/openjpeg-2.0)
+ endif (STANDALONE)
+diff --git a/indra/llimage/llimage.cpp b/indra/llimage/llimage.cpp
+--- a/indra/llimage/llimage.cpp
++++ b/indra/llimage/llimage.cpp
+@@ -301,6 +301,7 @@
+ {
+ 	//llassert( S32(width) * S32(height) * S32(components) <= MAX_IMAGE_DATA_SIZE );
+ 	allocateDataSize(width, height, components);
++	memset(getData(), 0xFF, width*height*components);
+ 	++sRawImageCount;
+ }
+ 
+diff --git a/indra/llimagej2coj/llimagej2coj.cpp b/indra/llimagej2coj/llimagej2coj.cpp
+--- a/indra/llimagej2coj/llimagej2coj.cpp
++++ b/indra/llimagej2coj/llimagej2coj.cpp
+@@ -28,15 +28,88 @@
+ #include "llimagej2coj.h"
+ 
+ // this is defined so that we get static linking.
+-#include "openjpeg.h"
++#include "openjpeg-2.0-fs/openjpeg.h"
+ 
+ #include "lltimer.h"
+ //#include "llmemory.h"
+ 
++
++struct ndUserdata
++{
++	ndUserdata( bool aInput )
++	{
++		mInputStream = aInput;
++
++		mOffset = mLength = 0;
++		mInput = 0;
++	}
++
++	bool mInputStream;
++
++	size_t mOffset;
++	size_t mLength;
++	std::vector< U8 > mOutput;
++	LLImageJ2C *mInput;
++};
++
++OPJ_SIZE_T nd_opj_stream_read_fn (void * p_buffer, OPJ_SIZE_T p_nb_bytes, void * p_user_data)
++{
++	ndUserdata *pUserdata = reinterpret_cast< ndUserdata* >( p_user_data );
++	llassert_always( pUserdata->mInputStream );
++
++	U8* pData = pUserdata->mInput->getData();
++	size_t nImgsize =  pUserdata->mInput->getDataSize();
++	size_t nByteLeft = (nImgsize - pUserdata->mOffset);
++
++	size_t nRead = p_nb_bytes;
++
++	if( nRead > nByteLeft )
++		nRead = nByteLeft;
++
++	if( !pData || !p_buffer || !nRead )
++		return (OPJ_SIZE_T)-1;
++
++	memcpy( p_buffer, pData+pUserdata->mOffset, nRead );
++
++	pUserdata->mOffset += nRead;
++
++	return nRead;
++}
++
++OPJ_SIZE_T nd_opj_stream_write_fn(void * p_buffer, OPJ_SIZE_T p_nb_bytes, void * p_user_data)
++{
++	ndUserdata *pUserdata = reinterpret_cast< ndUserdata* >( p_user_data );
++	llassert_always( !pUserdata->mInputStream );
++
++	pUserdata->mOutput.reserve( pUserdata->mOutput.size() + p_nb_bytes );
++	memcpy( &pUserdata->mOutput[ pUserdata->mOutput.size() ], p_buffer, p_nb_bytes );
++
++	return p_nb_bytes;
++}
++
++OPJ_OFF_T nd_opj_stream_skip_fn(OPJ_OFF_T p_nb_bytes, void * p_user_data)
++{
++	ndUserdata *pUserdata = reinterpret_cast< ndUserdata* >( p_user_data );
++	llassert_always( pUserdata->mInputStream );
++
++	pUserdata->mOffset += p_nb_bytes;
++
++	return p_nb_bytes;
++}
++
++OPJ_BOOL nd_opj_stream_seek_fn(OPJ_OFF_T p_nb_bytes, void * p_user_data)
++{
++	ndUserdata *pUserdata = reinterpret_cast< ndUserdata* >( p_user_data );
++	llassert_always( pUserdata->mInputStream );
++
++	pUserdata->mOffset += p_nb_bytes;
++	return 1;
++}
++
+ const char* fallbackEngineInfoLLImageJ2CImpl()
+ {
+ 	static std::string version_string =
+-		std::string("OpenJPEG: " OPENJPEG_VERSION ", Runtime: ")
++		std::string("OpenJPEG: " OPJ_PACKAGE_VERSION ", Runtime: ")
+ 		+ opj_version();
+ 	return version_string.c_str();
+ }
+@@ -164,85 +237,74 @@
+ 	LLTimer decode_timer;
+ 
+ 	opj_dparameters_t parameters;	/* decompression parameters */
+-	opj_event_mgr_t event_mgr;		/* event manager */
+-	opj_image_t *image = NULL;
+-
+-	opj_dinfo_t* dinfo = NULL;	/* handle to a decompressor */
+-	opj_cio_t *cio = NULL;
+-
+-
+-	/* configure the event callbacks (not required) */
+-	memset(&event_mgr, 0, sizeof(opj_event_mgr_t));
+-	event_mgr.error_handler = error_callback;
+-	event_mgr.warning_handler = warning_callback;
+-	event_mgr.info_handler = info_callback;
+ 
+ 	/* set decoding parameters to default values */
+ 	opj_set_default_decoder_parameters(&parameters);
+ 
+ 	parameters.cp_reduce = base.getRawDiscardLevel();
+ 
+-	/* decode the code-stream */
+-	/* ---------------------- */
++	opj_codec_t *pDecoder = opj_create_decompress( OPJ_CODEC_J2K );
+ 
+-	/* JPEG-2000 codestream */
++	opj_set_error_handler( pDecoder, error_callback, 0 );
++	opj_set_warning_handler( pDecoder, warning_callback, 0 );
++	opj_set_info_handler( pDecoder, info_callback, 0 );
+ 
+-	/* get a decoder handle */
+-	dinfo = opj_create_decompress(CODEC_J2K);
++	opj_stream_t *pStream = opj_stream_default_create( OPJ_TRUE );
+ 
+-	/* catch events using our callbacks and give a local context */
+-	opj_set_event_mgr((opj_common_ptr)dinfo, &event_mgr, stderr);			
++	opj_stream_set_read_function(pStream, nd_opj_stream_read_fn );
++	opj_stream_set_write_function(pStream, nd_opj_stream_write_fn );
++	opj_stream_set_skip_function(pStream, nd_opj_stream_skip_fn );
++	opj_stream_set_seek_function(pStream, nd_opj_stream_seek_fn );
+ 
+-	/* setup the decoder decoding parameters using user parameters */
+-	opj_setup_decoder(dinfo, &parameters);
++	ndUserdata oStreamdata( true );
++	oStreamdata.mInput = &base;
++	opj_stream_set_user_data (pStream, &oStreamdata );
++	opj_stream_set_user_data_length( pStream, sizeof( void*) );
+ 
+-	/* open a byte stream */
+-	cio = opj_cio_open((opj_common_ptr)dinfo, base.getData(), base.getDataSize());
++	opj_setup_decoder( pDecoder, &parameters );
+ 
+-	/* decode the stream and fill the image structure */
+-	image = opj_decode(dinfo, cio);
++	opj_image_t *pImage(0);
++	opj_read_header( pStream, pDecoder, &pImage );
+ 
+-	/* close the byte stream */
+-	opj_cio_close(cio);
++	opj_decode( pDecoder, pStream, pImage);
+ 
+-	/* free remaining structures */
+-	if(dinfo)
+-	{
+-		opj_destroy_decompress(dinfo);
+-	}
++	opj_stream_destroy( pStream );
++
++	if( pDecoder )
++		opj_destroy_codec( pDecoder );
+ 
+ 	// The image decode failed if the return was NULL or the component
+ 	// count was zero.  The latter is just a sanity check before we
+ 	// dereference the array.
+-	if(!image || !image->numcomps)
++	if( !pImage || !pImage->numcomps)
+ 	{
+ 		LL_DEBUGS("Texture") << "ERROR -> decodeImpl: failed to decode image!" << LL_ENDL;
+-		if (image)
++		if ( pImage )
+ 		{
+-			opj_image_destroy(image);
++			opj_image_destroy( pImage );
+ 		}
+ 
+-		return TRUE; // done
++		return TRUE;
+ 	}
+ 
+ 	// sometimes we get bad data out of the cache - check to see if the decode succeeded
+-	for (S32 i = 0; i < image->numcomps; i++)
++	for (S32 i = 0; i < pImage->numcomps; i++)
+ 	{
+-		if (image->comps[i].factor != base.getRawDiscardLevel())
++		if ( pImage->comps[i].factor != base.getRawDiscardLevel())
+ 		{
+ 			// if we didn't get the discard level we're expecting, fail
+-			opj_image_destroy(image);
++			opj_image_destroy( pImage );
+ 			base.mDecoding = FALSE;
+ 			return TRUE;
+ 		}
+ 	}
+ 	
+-	if(image->numcomps <= first_channel)
++	if( pImage->numcomps <= first_channel)
+ 	{
+-		llwarns << "trying to decode more channels than are present in image: numcomps: " << image->numcomps << " first_channel: " << first_channel << llendl;
+-		if (image)
++		llwarns << "trying to decode more channels than are present in image: numcomps: " << pImage->numcomps << " first_channel: " << first_channel << llendl;
++		if ( pImage )
+ 		{
+-			opj_image_destroy(image);
++			opj_image_destroy( pImage );
+ 		}
+ 			
+ 		return TRUE;
+@@ -250,7 +312,7 @@
+ 
+ 	// Copy image data into our raw image format (instead of the separate channel format
+ 
+-	S32 img_components = image->numcomps;
++	S32 img_components = pImage->numcomps;
+ 	S32 channels = img_components - first_channel;
+ 	if( channels > max_channel_count )
+ 		channels = max_channel_count;
+@@ -262,10 +324,10 @@
+ 	// It is integer math so the formula is written in ceildivpo2.
+ 	// (Assuming all the components have the same width, height and
+ 	// factor.)
+-	S32 comp_width = image->comps[0].w;
+-	S32 f=image->comps[0].factor;
+-	S32 width = ceildivpow2(image->x1 - image->x0, f);
+-	S32 height = ceildivpow2(image->y1 - image->y0, f);
++	S32 comp_width = pImage->comps[0].w;
++	S32 f= pImage->comps[0].factor;
++	S32 width = ceildivpow2( pImage->x1 - pImage->x0, f);
++	S32 height = ceildivpow2( pImage->y1 - pImage->y0, f);
+ 	raw_image.resize(width, height, channels);
+ 	U8 *rawp = raw_image.getData();
+ 
+@@ -275,14 +337,14 @@
+ 	for (S32 comp = first_channel, dest=0; comp < first_channel + channels;
+ 		comp++, dest++)
+ 	{
+-		if (image->comps[comp].data)
++		if ( pImage->comps[comp].data)
+ 		{
+ 			S32 offset = dest;
+ 			for (S32 y = (height - 1); y >= 0; y--)
+ 			{
+ 				for (S32 x = 0; x < width; x++)
+ 				{
+-					rawp[offset] = image->comps[comp].data[y*comp_width + x];
++					rawp[offset] = pImage->comps[comp].data[y*comp_width + x];
+ 					offset += channels;
+ 				}
+ 			}
+@@ -290,14 +352,14 @@
+ 		else // Some rare OpenJPEG versions have this bug.
+ 		{
+ 			LL_DEBUGS("Texture") << "ERROR -> decodeImpl: failed to decode image! (NULL comp data - OpenJPEG bug)" << LL_ENDL;
+-			opj_image_destroy(image);
++			opj_image_destroy( pImage );
+ 
+ 			return TRUE; // done
+ 		}
+ 	}
+ 
+ 	/* free image data structure */
+-	opj_image_destroy(image);
++	opj_image_destroy( pImage );
+ 
+ 	return TRUE; // done
+ }
+@@ -307,17 +369,8 @@
+ {
+ 	const S32 MAX_COMPS = 5;
+ 	opj_cparameters_t parameters;	/* compression parameters */
+-	opj_event_mgr_t event_mgr;		/* event manager */
+ 
+-
+-	/* 
+-	configure the event callbacks (not required)
+-	setting of each callback is optional 
+-	*/
+-	memset(&event_mgr, 0, sizeof(opj_event_mgr_t));
+-	event_mgr.error_handler = error_callback;
+-	event_mgr.warning_handler = warning_callback;
+-	event_mgr.info_handler = info_callback;
++	//#if x
+ 
+ 	/* set encoding parameters to default values */
+ 	opj_set_default_encoder_parameters(&parameters);
+@@ -357,7 +410,7 @@
+ 	//
+ 	// Fill in the source image from our raw image
+ 	//
+-	OPJ_COLOR_SPACE color_space = CLRSPC_SRGB;
++	OPJ_COLOR_SPACE color_space = OPJ_CLRSPC_SRGB;
+ 	opj_image_cmptparm_t cmptparm[MAX_COMPS];
+ 	opj_image_t * image = NULL;
+ 	S32 numcomps = raw_image.getComponents();
+@@ -397,52 +450,51 @@
+ 		}
+ 	}
+ 
+-
+-
+-	/* encode the destination image */
+-	/* ---------------------------- */
+-
+ 	int codestream_length;
+-	opj_cio_t *cio = NULL;
+ 
+ 	/* get a J2K compressor handle */
+-	opj_cinfo_t* cinfo = opj_create_compress(CODEC_J2K);
++	opj_codec_t * pEncoder = opj_create_compress( OPJ_CODEC_J2K );
+ 
+-	/* catch events using our callbacks and give a local context */
+-	opj_set_event_mgr((opj_common_ptr)cinfo, &event_mgr, stderr);			
++	opj_set_error_handler( pEncoder, error_callback, 0 );
++	opj_set_warning_handler( pEncoder, warning_callback, 0 );
++	opj_set_info_handler( pEncoder, info_callback, 0 );
+ 
+-	/* setup the encoder parameters using the current image and using user parameters */
+-	opj_setup_encoder(cinfo, &parameters, image);
++	opj_setup_encoder(pEncoder, &parameters, image);
+ 
+-	/* open a byte stream for writing */
+-	/* allocate memory for all tiles */
+-	cio = opj_cio_open((opj_common_ptr)cinfo, NULL, 0);
++	opj_stream_t *pStream = opj_stream_default_create( OPJ_FALSE );
+ 
+-	/* encode the image */
+-	bool bSuccess = opj_encode(cinfo, cio, image, NULL);
++	opj_stream_set_read_function(pStream, nd_opj_stream_read_fn );
++	opj_stream_set_write_function(pStream, nd_opj_stream_write_fn );
++	opj_stream_set_skip_function(pStream, nd_opj_stream_skip_fn );
++	opj_stream_set_seek_function(pStream, nd_opj_stream_seek_fn );
++
++	ndUserdata oStreamdata( false );
++	opj_stream_set_user_data (pStream, &oStreamdata );
++	opj_stream_set_user_data_length( pStream, sizeof( void*) );
++
++	bool bSuccess = opj_encode( pEncoder, pStream );
+ 	if (!bSuccess)
+ 	{
+-		opj_cio_close(cio);
+ 		LL_DEBUGS("Texture") << "Failed to encode image." << LL_ENDL;
+ 		return FALSE;
+ 	}
+-	codestream_length = cio_tell(cio);
+ 
+-	base.copyData(cio->buffer, codestream_length);
++	codestream_length = oStreamdata.mOutput.size();
++
++	base.copyData( &oStreamdata.mOutput[0], codestream_length);
+ 	base.updateData(); // set width, height
+ 
+-	/* close and free the byte stream */
+-	opj_cio_close(cio);
++	opj_stream_destroy( pStream );
+ 
+-	/* free remaining compression structures */
+-	opj_destroy_compress(cinfo);
+-
++	opj_destroy_codec( pEncoder );
+ 
+ 	/* free user parameters structure */
+ 	if(parameters.cp_matrice) free(parameters.cp_matrice);
+ 
+ 	/* free image data */
+ 	opj_image_destroy(image);
++	//#endif
++
+ 	return TRUE;
+ }
+ 
+@@ -525,57 +577,43 @@
+ 	// Do it the old and slow way, decode the image with openjpeg
+ 
+ 	opj_dparameters_t parameters;	/* decompression parameters */
+-	opj_event_mgr_t event_mgr;		/* event manager */
+-	opj_image_t *image = NULL;
+-
+-	opj_dinfo_t* dinfo = NULL;	/* handle to a decompressor */
+-	opj_cio_t *cio = NULL;
+-
+-
+-	/* configure the event callbacks (not required) */
+-	memset(&event_mgr, 0, sizeof(opj_event_mgr_t));
+-	event_mgr.error_handler = error_callback;
+-	event_mgr.warning_handler = warning_callback;
+-	event_mgr.info_handler = info_callback;
+ 
+ 	/* set decoding parameters to default values */
+ 	opj_set_default_decoder_parameters(&parameters);
+ 
+-	// Only decode what's required to get the size data.
+-	parameters.cp_limit_decoding=LIMIT_TO_MAIN_HEADER;
++	parameters.cp_reduce = base.getRawDiscardLevel();
+ 
+-	//parameters.cp_reduce = mRawDiscardLevel;
++	opj_codec_t *pDecoder = opj_create_decompress( OPJ_CODEC_J2K );
+ 
+-	/* decode the code-stream */
+-	/* ---------------------- */
++	opj_set_error_handler( pDecoder, error_callback, 0 );
++	opj_set_warning_handler( pDecoder, warning_callback, 0 );
++	opj_set_info_handler( pDecoder, info_callback, 0 );
+ 
+-	/* JPEG-2000 codestream */
++	opj_stream_t *pStream = opj_stream_default_create( OPJ_TRUE );
+ 
+-	/* get a decoder handle */
+-	dinfo = opj_create_decompress(CODEC_J2K);
++	opj_stream_set_read_function(pStream, nd_opj_stream_read_fn );
++	opj_stream_set_write_function(pStream, nd_opj_stream_write_fn );
++	opj_stream_set_skip_function(pStream, nd_opj_stream_skip_fn );
++	opj_stream_set_seek_function(pStream, nd_opj_stream_seek_fn );
+ 
+-	/* catch events using our callbacks and give a local context */
+-	opj_set_event_mgr((opj_common_ptr)dinfo, &event_mgr, stderr);			
++	ndUserdata oStreamdata ( true );
++	oStreamdata.mInput = &base;
++	opj_stream_set_user_data (pStream, &oStreamdata );
++	opj_stream_set_user_data_length( pStream, sizeof( void*) );
+ 
+-	/* setup the decoder decoding parameters using user parameters */
+-	opj_setup_decoder(dinfo, &parameters);
++	opj_setup_decoder( pDecoder, &parameters );
+ 
+-	/* open a byte stream */
+-	cio = opj_cio_open((opj_common_ptr)dinfo, base.getData(), base.getDataSize());
++	opj_image_t *pImage(0);
++	opj_read_header( pStream, pDecoder, &pImage );
+ 
+-	/* decode the stream and fill the image structure */
+-	image = opj_decode(dinfo, cio);
++	opj_decode( pDecoder, pStream, pImage);
+ 
+-	/* close the byte stream */
+-	opj_cio_close(cio);
++	opj_stream_destroy( pStream );
+ 
+-	/* free remaining structures */
+-	if(dinfo)
+-	{
+-		opj_destroy_decompress(dinfo);
+-	}
++	if( pDecoder )
++		opj_destroy_codec( pDecoder );
+ 
+-	if(!image)
++	if(!pImage)
+ 	{
+ 		llwarns << "ERROR -> getMetadata: failed to decode image!" << llendl;
+ 		return FALSE;
+@@ -583,13 +621,13 @@
+ 
+ 	// Copy image data into our raw image format (instead of the separate channel format
+ 
+-	img_components = image->numcomps;
+-	width = image->x1 - image->x0;
+-	height = image->y1 - image->y0;
++	img_components = pImage->numcomps;
++	width = pImage->x1 - pImage->x0;
++	height = pImage->y1 - pImage->y0;
+ 
+ 	base.setSize(width, height, img_components);
+ 
+ 	/* free image data structure */
+-	opj_image_destroy(image);
++	opj_image_destroy( pImage );
+ 	return TRUE;
+ }

@@ -1,0 +1,61 @@
+diff --git a/indra/newview/app_settings/settings.xml b/indra/newview/app_settings/settings.xml
+index b5d61ff..79db3ea 100644
+--- a/indra/newview/app_settings/settings.xml
++++ b/indra/newview/app_settings/settings.xml
+@@ -5753,6 +5753,17 @@
+       <key>Value</key>
+       <integer>1</integer>
+     </map>
++    <key>MiniMapPrimMaxRadius</key>
++    <map>
++      <key>Comment</key>
++      <string>Radius of the largest prim to show on the MiniMap. Increasing beyond 256 may cause client lag.</string>
++      <key>Persist</key>
++      <integer>1</integer>
++      <key>Type</key>
++      <string>F32</string>
++      <key>Value</key>
++      <real>256.0</real>
++    </map>
+     <key>MiniMapRotate</key>
+     <map>
+       <key>Comment</key>
+diff --git a/indra/newview/llnetmap.cpp b/indra/newview/llnetmap.cpp
+index 666b5bd..7dc6667 100644
+--- a/indra/newview/llnetmap.cpp
++++ b/indra/newview/llnetmap.cpp
+@@ -600,11 +600,7 @@ void LLNetMap::renderScaledPointGlobal( const LLVector3d& pos, const LLColor4U &
+ 	LLVector3 local_pos;
+ 	local_pos.setVec( pos - mObjectImageCenterGlobal );
+ 
+-	// DEV-17370 - megaprims of size > 4096 cause lag.  (go figger.)
+-	const F32 MAX_RADIUS = 256.0f;
+-	F32 radius_clamped = llmin(radius_meters, MAX_RADIUS);
+-	
+-	S32 diameter_pixels = llround(2 * radius_clamped * mObjectMapTPM);
++	S32 diameter_pixels = llround(2 * radius_meters * mObjectMapTPM);
+ 	renderPoint( local_pos, color, diameter_pixels );
+ }
+ 
+diff --git a/indra/newview/llviewerobjectlist.cpp b/indra/newview/llviewerobjectlist.cpp
+index ec0dbe4..4961f48 100644
+--- a/indra/newview/llviewerobjectlist.cpp
++++ b/indra/newview/llviewerobjectlist.cpp
+@@ -1031,6 +1031,7 @@ void LLViewerObjectList::renderObjectsForMap(LLNetMap &netmap)
+ 	LLColor4 group_own_below_water_color = 
+ 						gColors.getColor( "NetMapGroupOwnBelowWater" );
+ 
++	F32 max_radius = gSavedSettings.getF32("MiniMapPrimMaxRadius");
+ 
+ 	for (S32 i = 0; i < mMapObjects.count(); i++)
+ 	{
+@@ -1046,6 +1047,9 @@ void LLViewerObjectList::renderObjectsForMap(LLNetMap &netmap)
+ 
+ 		F32 approx_radius = (scale.mV[VX] + scale.mV[VY]) * 0.5f * 0.5f * 1.3f;  // 1.3 is a fudge
+ 
++		// DEV-17370 - megaprims of size > 4096 cause lag.  (go figger.)
++		approx_radius = llmin(approx_radius, max_radius);
++
+ 		LLColor4U color = above_water_color;
+ 		if( objectp->permYouOwner() )
+ 		{

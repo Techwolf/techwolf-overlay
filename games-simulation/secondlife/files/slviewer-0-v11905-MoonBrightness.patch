@@ -1,0 +1,12 @@
+diff -urN linden/indra/newview/llvosky.cpp linden-patched/indra/newview/llvosky.cpp
+--- linden/indra/newview/llvosky.cpp	2008-02-29 19:47:45.000000000 +0100
++++ linden-patched/indra/newview/llvosky.cpp	2008-11-13 20:56:15.000000000 +0100
+@@ -543,7 +543,7 @@
+ 	mFogRatio = 1.2f;
+ 
+ 	mSun.setIntensity(SUN_INTENSITY);
+-	mMoon.setIntensity(0.1f * SUN_INTENSITY);
++	mMoon.setIntensity(0.3f * SUN_INTENSITY);
+ 
+ 	mSunTexturep = gImageList.getImage(gSunTextureID, TRUE, TRUE);
+ 	mSunTexturep->setClamp(TRUE, TRUE);

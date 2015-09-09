@@ -1,0 +1,1988 @@
+--- indra/llcommon/llbase64.cpp	(revision 2562)
++++ indra/llcommon/llbase64.cpp	(working copy)
+@@ -65,3 +65,21 @@
+ 	return output;
+ }
+ 
++// static
++std::vector<U8> LLBase64::decode(std::string input)
++{
++	std::vector<U8> data;
++	if (input.length() > 0)
++	{
++		// Because we're decoding binary data, we don't want the null terminator
++		// figured into our array size calculations, so we reduce the reported size by 1.
++		size_t data_length = static_cast<size_t>(apr_base64_decode_len(input.c_str())) - 1;
++		if (data_length > 0)
++		{
++			data.resize(data_length);
++			apr_base64_decode_binary(&data[0], input.c_str());
++		}
++	}
++	
++	return data;
++}
+Index: indra/llcommon/llstring.cpp
+===================================================================
+--- indra/llcommon/llstring.cpp	(revision 2562)
++++ indra/llcommon/llstring.cpp	(working copy)
+@@ -595,6 +595,18 @@
+ 	return out;
+ }
+ 
++bool LLStringOps::isHexString(const std::string& str)
++{
++	const char* buf = str.c_str();
++	int len = str.size();
++	while (--len >= 0)
++	{
++		if (!isxdigit(buf[len])) return false;
++	}
++	
++	return true;
++}
++
+ #if LL_WINDOWS
+ // documentation moved to header. Phoenix 2007-11-27
+ namespace snprintf_hack
+Index: indra/llcommon/llstring.h
+===================================================================
+--- indra/llcommon/llstring.h	(revision 2562)
++++ indra/llcommon/llstring.h	(working copy)
+@@ -173,6 +173,8 @@
+ 
+ 	static S32	collate(const char* a, const char* b) { return strcoll(a, b); }
+ 	static S32	collate(const llwchar* a, const llwchar* b);
++	
++	static bool isHexString(const std::string& str);
+ };
+ 
+ /**
+Index: indra/llcommon/llbase64.h
+===================================================================
+--- indra/llcommon/llbase64.h	(revision 2562)
++++ indra/llcommon/llbase64.h	(working copy)
+@@ -37,7 +37,20 @@
+ class LLBase64
+ {
+ public:
++	/**
++	 * Encodes a binary array into a string.
++	 * @param[in] input The buffer to encode.
++	 * @param[in] input_size The length of data to encode.
++	 * @return A base64 string representing the encoded data.
++	 */
+ 	static std::string encode(const U8* input, size_t input_size);
++	
++	/**
++	 * Decodes a string into a binary vector.
++	 * @param[in] input The base64 string to decode.
++	 * @return A vector containing the decoded binary data.
++	 */
++	static std::vector<U8> decode(std::string input);
+ };
+ 
+ #endif
+Index: indra/newview/llpanellogin.h
+===================================================================
+--- indra/newview/llpanellogin.h	(revision 2562)
++++ indra/newview/llpanellogin.h	(working copy)
+@@ -36,16 +36,17 @@
+ #include "llpanel.h"
+ #include "llmemory.h"			// LLPointer<>
+ #include "llwebbrowserctrl.h"	// LLWebBrowserCtrlObserver
++#include "llsavedlogins.h"
+ 
+ class LLUIImage;
+ 
+-
+ class LLPanelLogin:	
+ 	public LLPanel,
+ 	public LLWebBrowserCtrlObserver
+ {
+ 	LOG_CLASS(LLPanelLogin);
+ public:
++	
+ 	LLPanelLogin(const LLRect &rect, BOOL show_server, 
+ 				void (*callback)(S32 option, void* user_data),
+ 				void *callback_data);
+@@ -60,8 +61,22 @@
+ 		void* callback_data);
+ 
+ 	// Remember password checkbox is set via gSavedSettings "RememberPassword"
++	
++	/**
++	 * @brief	Set the values of the displayed fields.
++	 * @param	firstname	First name value.
++	 * @param	lastname	Last name value.
++	 * @param	password	Password, as plaintext or munged.
++	 * @param	login_history	Login history object. An empty one can be provided if no history is available.
++	 */
+ 	static void setFields(const std::string& firstname, const std::string& lastname, 
+-		const std::string& password);
++						  const std::string& password, const LLSavedLogins& login_history = LLSavedLogins());
++	
++	/**
++	 * @brief	Set the values of the displayed fields from a populated history entry.
++	 * @param	entry	History entry containing all necessary fields.
++	 */
++	static void setFields(const LLSavedLoginEntry& entry);
+ 
+ 	static void addServer(const std::string& server, S32 domain_name);
+ 	static void refreshLocation( bool force_visible );
+@@ -81,6 +96,20 @@
+ 	static void setAlwaysRefresh(bool refresh); 
+ 	static void mungePassword(LLUICtrl* caller, void* user_data);
+ 	
++	/**
++	 * @brief	Returns the login history data.
++	 * @return	History data. It will be empty if the instance does not exist.
++	 */
++	static LLSavedLogins getLoginHistory()
++	{
++		return (sInstance ? sInstance->mLoginHistoryData : LLSavedLogins());
++	}	
++	/**
++	 * @brief	Returns the state of the "remember resident name" checkbox if it exists.
++	 * @return	Checkbox state, or false if the instance is not instantiated.
++	 */
++	static bool getRememberLogin();
++	
+ private:
+ 	static void onClickConnect(void*);
+ 	static void onClickNewAccount(void*);
+@@ -92,6 +121,11 @@
+ 	static void onPassKey(LLLineEditor* caller, void* user_data);
+ 	static void onSelectServer(LLUICtrl*, void*);
+ 	static void onServerComboLostFocus(LLFocusableElement*, void*);
++	static void onLastNameEditLostFocus(LLUICtrl* ctrl, void* data);
++	static void onSelectLoginEntry(LLUICtrl*, void*);
++	static void onLoginComboLostFocus(LLFocusableElement* fe, void*);
++	static void onNameCheckChanged(LLUICtrl* ctrl, void* data);
++	static void clearPassword();
+ 	
+ private:
+ 	LLPointer<LLUIImage> mLogoImage;
+@@ -105,6 +139,8 @@
+ 	static LLPanelLogin* sInstance;
+ 	static BOOL		sCapslockDidNotification;
+ 	BOOL			mHtmlAvailable;
++	
++	LLSavedLogins	mLoginHistoryData;
+ };
+ 
+ std::string load_password_from_disk(void);
+Index: indra/newview/llsavedlogins.cpp
+===================================================================
+--- indra/newview/llsavedlogins.cpp	(revision 0)
++++ indra/newview/llsavedlogins.cpp	(revision 0)
+@@ -0,0 +1,239 @@
++/**
++ * @file llsavedlogins.cpp
++ * @brief Manages a list of previous successful logins
++ *
++ * $LicenseInfo:firstyear=2009&license=viewergpl$
++ * 
++ * Copyright (c) 2009, Linden Research, Inc.
++ * 
++ * Second Life Viewer Source Code
++ * The source code in this file ("Source Code") is provided by Linden Lab
++ * to you under the terms of the GNU General Public License, version 2.0
++ * ("GPL"), unless you have obtained a separate licensing agreement
++ * ("Other License"), formally executed by you and Linden Lab.  Terms of
++ * the GPL can be found in doc/GPL-license.txt in this distribution, or
++ * online at http://secondlifegrid.net/programs/open_source/licensing/gplv2
++ * 
++ * There are special exceptions to the terms and conditions of the GPL as
++ * it is applied to this Source Code. View the full text of the exception
++ * in the file doc/FLOSS-exception.txt in this software distribution, or
++ * online at
++ * http://secondlifegrid.net/programs/open_source/licensing/flossexception
++ * 
++ * By copying, modifying or distributing this software, you acknowledge
++ * that you have read and understood your obligations described above,
++ * and agree to abide by those obligations.
++ * 
++ * ALL LINDEN LAB SOURCE CODE IS PROVIDED "AS IS." LINDEN LAB MAKES NO
++ * WARRANTIES, EXPRESS, IMPLIED OR OTHERWISE, REGARDING ITS ACCURACY,
++ * COMPLETENESS OR PERFORMANCE.
++ * $/LicenseInfo$
++ */
++
++#include "llviewerprecompiledheaders.h"
++#include "llsavedlogins.h"
++#include "llxorcipher.h"
++#include "llsdserialize.h"
++
++//---------------------------------------------------------------------------
++// LLSavedLoginEntry methods
++//---------------------------------------------------------------------------
++
++LLSavedLoginEntry::LLSavedLoginEntry(const LLSD& entry_data)
++{
++	if (entry_data.isUndefined() ||
++		!entry_data.isMap() ||
++		!entry_data.has("grid") ||
++		!entry_data.has("firstname") ||
++		!entry_data.has("lastname") ||
++		!entry_data.has("password") ||
++		!entry_data.get("grid").isInteger() ||
++		!entry_data.get("firstname").isString() ||
++		!entry_data.get("lastname").isString() ||
++		!(entry_data.get("password").isUndefined() || entry_data.get("password").isBinary()))
++	{
++		throw std::invalid_argument("Cannot create a null login entry.");
++	}
++	mEntry = entry_data;
++}
++
++LLSavedLoginEntry::LLSavedLoginEntry(const EGridInfo grid,
++									 const std::string& firstname, 
++									 const std::string& lastname,
++									 const std::string& password)
++{
++	mEntry.clear();
++	mEntry.insert("grid", LLSD(grid));
++	mEntry.insert("firstname", LLSD(firstname));
++	mEntry.insert("lastname", LLSD(lastname));
++	setPassword(password);
++}
++
++const std::string LLSavedLoginEntry::getGridName() const
++{ 
++	std::string gridname = "";
++	if (mEntry.has("griduri") && mEntry.get("griduri").isURI())
++	{
++		gridname = mEntry.get("griduri").asURI().hostName();
++	}
++	else if (mEntry.has("grid"))
++	{
++		LLViewerLogin* login_data = LLViewerLogin::getInstance();
++		gridname = login_data->getKnownGridLabel(static_cast<EGridInfo>(mEntry.get("grid").asInteger()));
++	}
++	return gridname;
++}
++
++LLSD LLSavedLoginEntry::asLLSD() const
++{
++	return mEntry;
++}
++
++const std::string LLSavedLoginEntry::getDisplayString() const
++{
++	std::ostringstream etitle;
++	etitle << getFirstName() << " " << getLastName() << " (" <<	getGridName() << ")";
++	return etitle.str();
++}
++
++const std::string LLSavedLoginEntry::getPassword() const
++{
++	return (mEntry.has("password") ? decryptPassword(mEntry.get("password")) : std::string());
++}
++void LLSavedLoginEntry::setPassword(const std::string& value)
++{
++	mEntry.insert("password", encryptPassword(value));
++}
++
++const std::string LLSavedLoginEntry::decryptPassword(const LLSD& pwdata)
++{
++	std::string pw = "";
++	
++	if (pwdata.isBinary() && pwdata.asBinary().size() == PASSWORD_HASH_LENGTH+1)
++	{
++		LLSD::Binary buffer = pwdata.asBinary();
++		
++		LLXORCipher cipher(gMACAddress, 6);
++		cipher.decrypt(&buffer[0], PASSWORD_HASH_LENGTH);
++		
++		buffer[PASSWORD_HASH_LENGTH] = '\0';
++		if (LLStringOps::isHexString(std::string(reinterpret_cast<const char*>(&buffer[0]), PASSWORD_HASH_LENGTH)))
++		{
++			pw.assign(reinterpret_cast<char*>(&buffer[0])); 
++		}
++	}
++	
++	return pw;
++}
++
++const LLSD LLSavedLoginEntry::encryptPassword(const std::string& password)
++{
++	LLSD pwdata;
++	
++	if (password.size() == PASSWORD_HASH_LENGTH && LLStringOps::isHexString(password))
++	{
++		LLSD::Binary buffer(PASSWORD_HASH_LENGTH+1);
++		LLStringUtil::copy(reinterpret_cast<char*>(&buffer[0]), password.c_str(), PASSWORD_HASH_LENGTH+1);
++		buffer[PASSWORD_HASH_LENGTH] = '\0';
++		LLXORCipher cipher(gMACAddress, 6);
++		cipher.encrypt(&buffer[0], PASSWORD_HASH_LENGTH);
++		pwdata.assign(buffer);
++	}
++	
++	return pwdata;
++}
++
++//---------------------------------------------------------------------------
++// LLSavedLogins methods
++//---------------------------------------------------------------------------
++
++LLSavedLogins::LLSavedLogins()
++{
++}
++
++LLSavedLogins::LLSavedLogins(const LLSD& history_data)
++{
++	if (!history_data.isArray()) throw std::invalid_argument("Invalid history data.");
++	for (LLSD::array_const_iterator i = history_data.beginArray();
++		 i != history_data.endArray(); ++i)
++	{
++		if (!i->isUndefined()) mEntries.push_back(LLSavedLoginEntry(*i));
++	}
++}
++
++LLSD LLSavedLogins::asLLSD() const
++{
++	LLSD output;
++	for (LLSavedLoginsVector::const_iterator i = mEntries.begin();
++		 i != mEntries.end(); ++i)
++	{
++		output.insert(0, i->asLLSD());
++	}
++	return output;
++}
++
++void LLSavedLogins::addEntry(const LLSavedLoginEntry& entry)
++{
++	mEntries.insert(mEntries.begin(), entry);
++}
++
++void LLSavedLogins::deleteEntry(const EGridInfo grid,
++								const std::string& firstname,
++								const std::string& lastname)
++{
++	for (LLSavedLoginsVector::iterator i = mEntries.begin();
++		 i != mEntries.end();)
++	{
++		if (i->getFirstName() == firstname &&
++			i->getGrid() == grid &&
++			i->getLastName() == lastname)
++		{
++			i = mEntries.erase(i);
++		}
++		else
++		{
++			++i;
++		}
++	}
++}
++
++LLSavedLogins LLSavedLogins::loadFile(const std::string& filepath)
++{
++	LLSavedLogins hist; 
++	LLSD data;
++	
++	llifstream file(filepath);
++	
++	if (file.is_open())
++	{
++		llinfos << "Loading login history file at " << filepath << llendl;
++		LLSDSerialize::fromXML(data, file);
++	}
++	
++	if (data.isUndefined())
++	{
++		llinfos << "file missing, ill-formed, or simply undefined; not" <<
++			"changing the file" << llendl;
++	}
++	else
++	{
++		hist = LLSavedLogins(data);
++	}
++	
++	return hist;
++}
++
++bool LLSavedLogins::saveFile(const LLSavedLogins& history, const std::string& filepath)
++{
++	llofstream out(filepath);
++	if (!out.good())
++	{
++		llwarns << "Unable to open " << filepath << " for output." << llendl;
++		return false;
++	}
++	
++	LLSDSerialize::toXML(history.asLLSD(), out);
++	
++	out.close();
++	return true;
++}
+Index: indra/newview/llappviewer.cpp
+===================================================================
+--- indra/newview/llappviewer.cpp	(revision 2562)
++++ indra/newview/llappviewer.cpp	(working copy)
+@@ -457,23 +457,28 @@
+ 
+ 	// Set the "grid choice", this is specified	by command line.
+ 	std::string	grid_choice	= gSavedSettings.getString("CmdLineGridChoice");
+-	LLViewerLogin::getInstance()->setGridChoice(grid_choice);
++	LLViewerLogin* vl = LLViewerLogin::getInstance();
++	vl->setGridChoice(grid_choice);
+ 
+ 	// Load last server choice by default 
+ 	// ignored if the command line grid	choice has been	set
+-	if(grid_choice.empty())
++	if(grid_choice.empty() && vl->getGridChoice() != GRID_INFO_OTHER)
+ 	{
+ 		S32	server = gSavedSettings.getS32("ServerChoice");
++		std::string custom_server = gSavedSettings.getString("CustomServer");
+ 		server = llclamp(server, 0,	(S32)GRID_INFO_COUNT - 1);
+-		if(server == GRID_INFO_OTHER)
++		if(server == GRID_INFO_OTHER && !custom_server.empty())
+ 		{
+-			std::string custom_server = gSavedSettings.getString("CustomServer");
+-			LLViewerLogin::getInstance()->setGridChoice(custom_server);
++			vl->setGridChoice(custom_server);
+ 		}
+-		else if(server != (S32)GRID_INFO_NONE)
++		else if(server != (S32)GRID_INFO_NONE && server != GRID_INFO_OTHER)
+ 		{
+-			LLViewerLogin::getInstance()->setGridChoice((EGridInfo)server);
++			vl->setGridChoice((EGridInfo)server);
+ 		}
++		else
++		{
++			vl->setGridChoice(DEFAULT_GRID_CHOICE);
++		}
+ 	}
+ }
+ 
+Index: indra/newview/llviewernetwork.h
+===================================================================
+--- indra/newview/llviewernetwork.h	(revision 2562)
++++ indra/newview/llviewernetwork.h	(working copy)
+@@ -77,7 +77,9 @@
+ 
+ 	void setGridChoice(EGridInfo grid);
+ 	void setGridChoice(const std::string& grid_name);
+-	void resetURIs();
++	void setGridURI(const std::string& uri);
++	void setGridURIs(const std::vector<std::string>& urilist); 
++	//void resetURIs();
+ 
+ 	/**
+ 	* @brief Get the enumeration of the grid choice.
+@@ -91,20 +93,36 @@
+ 	* If the grid is 'other', returns something
+ 	* the string used to specifiy the grid.
+ 	**/
+-	std::string getGridLabel() const; 
+-
++	std::string getGridLabel();
++	
+ 	std::string getKnownGridLabel(EGridInfo grid_index) const; 
+ 
+-	void getLoginURIs(std::vector<std::string>& uris) const;
+-	std::string getHelperURI() const;
++	const std::string getCurrentGridURI();
++	bool tryNextURI();
++	
++	const std::vector<std::string>& getGridURIs();
++	const std::string getHelperURI() const;
++	void setHelperURI(const std::string& uri);
++	const std::string getLoginPageURI() const;
++	void setLoginPageURI(const std::string& uri);
+ 
+ 	bool isInProductionGrid();
++private:
++	void parseCommandLineURIs();
++	const std::string getStaticGridURI(const EGridInfo grid) const;
++	const std::string getStaticGridHelperURI(const EGridInfo grid) const;
+ 
+-private:
+ 	EGridInfo mGridChoice;
+ 	std::string mGridName;
++	std::string mHelperURI;
++	std::string mLoginPageURI;
++	std::vector<std::string> mGridURIs;
++	
++	int mCurrentURI;
+ };
+ 
++const EGridInfo DEFAULT_GRID_CHOICE = GRID_INFO_AGNI;
++
+ const S32 MAC_ADDRESS_BYTES = 6;
+ extern unsigned char gMACAddress[MAC_ADDRESS_BYTES];		/* Flawfinder: ignore */
+ 
+Index: indra/newview/llviewernetwork.cpp
+===================================================================
+--- indra/newview/llviewernetwork.cpp	(revision 2562)
++++ indra/newview/llviewernetwork.cpp	(working copy)
+@@ -40,7 +40,7 @@
+ {
+ 	const char* mLabel;
+ 	const char* mName;
+-	const char* mLoginURI;
++	const char* mGridURI;
+ 	const char* mHelperURI;
+ };
+ 
+@@ -145,14 +145,13 @@
+ 	  "" }
+ };
+ 
+-const EGridInfo DEFAULT_GRID_CHOICE = GRID_INFO_AGNI;
+-
+-
+ unsigned char gMACAddress[MAC_ADDRESS_BYTES];		/* Flawfinder: ignore */
+ 
+ LLViewerLogin::LLViewerLogin() :
+-	mGridChoice(DEFAULT_GRID_CHOICE)
++	mGridChoice(DEFAULT_GRID_CHOICE),
++	mCurrentURI(0)
+ {
++	parseCommandLineURIs();
+ }
+ 
+ void LLViewerLogin::setGridChoice(EGridInfo grid)
+@@ -162,26 +161,26 @@
+ 		llerrs << "Invalid grid index specified." << llendl;
+ 	}
+ 
+-	if(mGridChoice != grid || gSavedSettings.getS32("ServerChoice") != grid)
++	mGridChoice = grid;
++	if(GRID_INFO_LOCAL == mGridChoice)
+ 	{
+-		mGridChoice = grid;
+-		if(GRID_INFO_LOCAL == mGridChoice)
+-		{
+-			mGridName = LOOPBACK_ADDRESS_STRING;
+-		}
+-		else if(GRID_INFO_OTHER == mGridChoice)
+-		{
+-			// *FIX:Mani - could this possibly be valid?
+-			mGridName = "other"; 
+-		}
+-		else
+-		{
+-			mGridName = gGridInfo[mGridChoice].mLabel;
+-		}
++		mGridName = LOOPBACK_ADDRESS_STRING;
++	}
++	else if (GRID_INFO_OTHER == mGridChoice)
++	{
++		// *FIX:Mani - could this possibly be valid?
++		mGridName = "other"; 
++	}
++	else
++	{
++		mGridName = gGridInfo[mGridChoice].mLabel;
++		setGridURI(getStaticGridURI(grid));
++		setHelperURI(getStaticGridHelperURI(grid));
++		setLoginPageURI(std::string());
++	}
+ 
+-		gSavedSettings.setS32("ServerChoice", mGridChoice);
+-		gSavedSettings.setString("CustomServer", "");
+-	}
++	gSavedSettings.setS32("ServerChoice", mGridChoice);
++	gSavedSettings.setString("CustomServer", "");
+ }
+ 
+ void LLViewerLogin::setGridChoice(const std::string& grid_name)
+@@ -215,19 +214,36 @@
+     }
+ }
+ 
+-void LLViewerLogin::resetURIs()
++void LLViewerLogin::setGridURI(const std::string& uri)
+ {
++	std::vector<std::string> uri_list;
++	uri_list.push_back(uri);
++	setGridURIs(uri_list);
++}
++
++void LLViewerLogin::setGridURIs(const std::vector<std::string>& urilist)
++{
++	mGridURIs.clear();
++	mGridURIs.insert(mGridURIs.begin(), urilist.begin(), urilist.end());
++	mCurrentURI = 0;
++}
++
++/*void LLViewerLogin::resetURIs()
++{
+     // Clear URIs when picking a new server
+-	gSavedSettings.setValue("CmdLineLoginURI", LLSD::emptyArray());
++	if (!gSavedSettings.controlExists("CmdLineGridURI"))
++		gSavedSettings.declareLLSD("CmdLineGridURI", LLSD::emptyArray(), "Command line", false);
++	else
++		gSavedSettings.setValue("CmdLineGridURI", LLSD::emptyArray());
+ 	gSavedSettings.setString("CmdLineHelperURI", "");
+-}
++}*/
+ 
+ EGridInfo LLViewerLogin::getGridChoice() const
+ {
+ 	return mGridChoice;
+ }
+ 
+-std::string LLViewerLogin::getGridLabel() const
++std::string LLViewerLogin::getGridLabel()
+ {
+ 	if(mGridChoice == GRID_INFO_NONE)
+ 	{
+@@ -237,8 +253,14 @@
+ 	{
+ 		return gGridInfo[mGridChoice].mLabel;
+ 	}
+-
+-	return mGridName;
++	else if (!mGridName.empty())
++	{
++		return mGridName;
++	}
++	else
++	{
++		return LLURI(getCurrentGridURI()).hostName();
++	}
+ }
+ 
+ std::string LLViewerLogin::getKnownGridLabel(EGridInfo grid_index) const
+@@ -250,82 +272,140 @@
+ 	return gGridInfo[GRID_INFO_NONE].mLabel;
+ }
+ 
+-void LLViewerLogin::getLoginURIs(std::vector<std::string>& uris) const
++const std::vector<std::string>& LLViewerLogin::getGridURIs()
+ {
++	return mGridURIs;
++}
++
++void LLViewerLogin::parseCommandLineURIs()
++{
+ 	// return the login uri set on the command line.
+ 	LLControlVariable* c = gSavedSettings.getControl("CmdLineLoginURI");
+ 	if(c)
+ 	{
+ 		LLSD v = c->getValue();
+-		if(v.isArray())
++		if (!v.isUndefined())
+ 		{
+-			for(LLSD::array_const_iterator itr = v.beginArray();
+-				itr != v.endArray(); ++itr)
++			bool foundRealURI = false;
++			if(v.isArray())
+ 			{
+-				std::string uri = itr->asString();
++				for(LLSD::array_const_iterator itr = v.beginArray();
++					itr != v.endArray(); ++itr)
++				{
++					std::string uri = itr->asString();
++					if(!uri.empty())
++					{
++						foundRealURI = true;
++						LLStringUtil::toLower(uri);
++						mGridURIs.push_back(uri);
++					}
++				}
++			}
++			else if (v.isString())
++			{
++				std::string uri = v.asString();
+ 				if(!uri.empty())
+ 				{
+-					uris.push_back(uri);
++					foundRealURI = true;
++					LLStringUtil::toLower(uri);
++					mGridURIs.push_back(uri);
+ 				}
+ 			}
+-		}
+-		else
+-		{
+-			std::string uri = v.asString();
+-			if(!uri.empty())
++
++			if (foundRealURI)
+ 			{
+-				uris.push_back(uri);
++				mGridChoice = GRID_INFO_OTHER;
++				mCurrentURI = 0;
++				mGridName = getGridLabel();
+ 			}
+ 		}
+ 	}
++	
++	setLoginPageURI(gSavedSettings.getString("LoginPage"));
++	setHelperURI(gSavedSettings.getString("CmdLineHelperURI"));
++}
+ 
+-	// If there was no command line uri...
+-	if(uris.empty())
++const std::string LLViewerLogin::getCurrentGridURI()
++{
++	return (mGridURIs.size() > mCurrentURI ? mGridURIs[mCurrentURI] : std::string());
++}
++
++bool LLViewerLogin::tryNextURI()
++{
++	if (++mCurrentURI < mGridURIs.size())
+ 	{
+-		// If its a known grid choice, get the uri from the table,
+-		// else try the grid name.
+-		if(mGridChoice > GRID_INFO_NONE && mGridChoice < GRID_INFO_OTHER)
+-		{
+-			uris.push_back(gGridInfo[mGridChoice].mLoginURI);
+-		}
+-		else
+-		{
+-			uris.push_back(mGridName);
+-		}
++		return true;
+ 	}
++	else
++	{
++		mCurrentURI = 0;
++		return false;
++	}
+ }
+ 
+-std::string LLViewerLogin::getHelperURI() const
++const std::string LLViewerLogin::getStaticGridHelperURI(const EGridInfo grid) const
+ {
+-	std::string helper_uri = gSavedSettings.getString("CmdLineHelperURI");
++	std::string helper_uri;
++	// grab URI from selected grid
++	if(grid > GRID_INFO_NONE && grid < GRID_INFO_OTHER)
++	{
++		helper_uri = gGridInfo[grid].mHelperURI;
++	}
++
+ 	if (helper_uri.empty())
+ 	{
+-		// grab URI from selected grid
+-		if(mGridChoice > GRID_INFO_NONE && mGridChoice < GRID_INFO_OTHER)
+-		{
+-			helper_uri = gGridInfo[mGridChoice].mHelperURI;
+-		}
+-
+-		if (helper_uri.empty())
+-		{
+-			// what do we do with unnamed/miscellaneous grids?
+-			// for now, operations that rely on the helper URI (currency/land purchasing) will fail
+-		}
++		// what do we do with unnamed/miscellaneous grids?
++		// for now, operations that rely on the helper URI (currency/land purchasing) will fail
+ 	}
+ 	return helper_uri;
+ }
+ 
++const std::string LLViewerLogin::getHelperURI() const
++{
++	return mHelperURI;
++}
++
++void LLViewerLogin::setHelperURI(const std::string& uri)
++{
++	mHelperURI = uri;
++}
++
++const std::string LLViewerLogin::getLoginPageURI() const
++{
++	return mLoginPageURI;
++}
++
++void LLViewerLogin::setLoginPageURI(const std::string& uri)
++{
++	mLoginPageURI = uri;
++}
++
+ bool LLViewerLogin::isInProductionGrid()
+ {
+ 	// *NOTE:Mani This used to compare GRID_INFO_AGNI to gGridChoice,
+ 	// but it seems that loginURI trumps that.
+-	std::vector<std::string> uris;
+-	getLoginURIs(uris);
+-	LLStringUtil::toLower(uris[0]);
+-	if((uris[0].find("agni") != std::string::npos))
++	std::vector<std::string> uris = getGridURIs();
++	if (uris.size() > 0)
+ 	{
+-		return true;
++		if((getCurrentGridURI().find("agni") != std::string::npos))
++		{
++			return true;
++		}
+ 	}
+ 
+ 	return false;
+ }
++
++const std::string LLViewerLogin::getStaticGridURI(const EGridInfo grid) const
++{
++	// If its a known grid choice, get the uri from the table,
++	// else try the grid name.
++	if(mGridChoice > GRID_INFO_NONE && mGridChoice < GRID_INFO_OTHER)
++	{
++		return gGridInfo[mGridChoice].mGridURI;
++	}
++	else
++	{
++		return mGridName;
++	}
++}
+Index: indra/newview/llstartup.cpp
+===================================================================
+--- indra/newview/llstartup.cpp	(revision 2562)
++++ indra/newview/llstartup.cpp	(working copy)
+@@ -235,7 +235,6 @@
+ 
+ void login_show();
+ void login_callback(S32 option, void* userdata);
+-bool is_hex_string(U8* str, S32 len);
+ void show_first_run_dialog();
+ bool first_run_dialog_callback(const LLSD& notification, const LLSD& response);
+ void set_startup_status(const F32 frac, const std::string& string, const std::string& msg);
+@@ -308,9 +307,6 @@
+ 	gImageList.updateImages(0.10f);
+ }
+ 
+-static std::vector<std::string> sAuthUris;
+-static S32 sAuthUriNum = -1;
+-
+ // Returns false to skip other idle processing. Should only return
+ // true when all initialization done.
+ bool idle_startup()
+@@ -756,11 +752,15 @@
+ 			}
+ 			// Make sure the process dialog doesn't hide things
+ 			gViewerWindow->setShowProgress(FALSE);
++			
++			// Load login history
++			std::string login_hist_filepath = gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "saved_logins.xml");
++			LLSavedLogins login_history = LLSavedLogins::loadFile(login_hist_filepath);
+ 
+ 			// Show the login dialog
+ 			login_show();
+ 			// connect dialog is already shown, so fill in the names
+-			LLPanelLogin::setFields( firstname, lastname, password);
++			LLPanelLogin::setFields( firstname, lastname, password, login_history );
+ 
+ 			LLPanelLogin::giveFocus();
+ 
+@@ -818,7 +818,7 @@
+ 		ms_sleep(1);
+ 		return FALSE;
+ 	}
+-
++	
+ 	if (STATE_LOGIN_CLEANUP == LLStartUp::getStartupState())
+ 	{
+ 		//reset the values that could have come in from a slurl
+@@ -834,7 +834,7 @@
+ 			// TODO if not use viewer auth
+ 			// Load all the name information out of the login view
+ 			LLPanelLogin::getFields(&firstname, &lastname, &password);
+-			// end TODO
++			// end TODO			
+ 	 
+ 			// HACK: Try to make not jump on login
+ 			gKeyboard->resetKeys();
+@@ -844,6 +844,8 @@
+ 		{
+ 			gSavedSettings.setString("FirstName", firstname);
+ 			gSavedSettings.setString("LastName", lastname);
++			if (!gSavedSettings.controlExists("RememberLogin")) gSavedSettings.declareBOOL("RememberLogin", false, "Remember login", false);
++			gSavedSettings.setBOOL("RememberLogin", LLPanelLogin::getRememberLogin());
+ 
+ 			LL_INFOS("AppInit") << "Attempting login as: " << firstname << " " << lastname << LL_ENDL;
+ 			gDebugInfo["LoginName"] = firstname + " " + lastname;	
+@@ -903,13 +905,14 @@
+ 
+ 		if (show_connect_box)
+ 		{
+-			if ( LLPanelLogin::isGridComboDirty() )
++			// *TODO Remove
++/*			if ( LLPanelLogin::isGridComboDirty() )
+ 			{
+ 				// User picked a grid from the popup, so clear the 
+ 				// stored uris and they will be reacquired from the grid choice.
+ 				sAuthUris.clear();
+ 			}
+-			
++*/			
+ 			std::string location;
+ 			LLPanelLogin::getLocation( location );
+ 			LLURLSimString::setString( location );
+@@ -1024,8 +1027,8 @@
+ 			gSavedSettings.setBOOL("UseDebugMenus", TRUE);
+ 			requested_options.push_back("god-connect");
+ 		}
+-		std::vector<std::string> uris;
+-		LLViewerLogin::getInstance()->getLoginURIs(uris);
++		// *TODO Remove
++/*		std::vector<std::string> uris = LLViewerLogin::getInstance()->getLoginURIs();
+ 		std::vector<std::string>::const_iterator iter, end;
+ 		for (iter = uris.begin(), end = uris.end(); iter != end; ++iter)
+ 		{
+@@ -1035,7 +1038,7 @@
+ 							 rewritten.begin(), rewritten.end());
+ 		}
+ 		sAuthUriNum = 0;
+-		auth_method = "login_to_simulator";
++*/		auth_method = "login_to_simulator";
+ 		
+ 		LLStringUtil::format_map_t args;
+ 		args["[APP_NAME]"] = LLAppViewer::instance()->getSecondLifeTitle();
+@@ -1077,11 +1080,16 @@
+ 		hashed_mac.update( gMACAddress, MAC_ADDRESS_BYTES );
+ 		hashed_mac.finalize();
+ 		hashed_mac.hex_digest(hashed_mac_string);
++		
++		LLViewerLogin* vl = LLViewerLogin::getInstance();
++		std::string grid_uri = vl->getCurrentGridURI();
++		
++		llinfos << "Authenticating with " << grid_uri << llendl;
+ 
+ 		// TODO if statement here to use web_login_key
+-		sAuthUriNum = llclamp(sAuthUriNum, 0, (S32)sAuthUris.size()-1);
++		// sAuthUriNum = llclamp(sAuthUriNum, 0, (S32)sAuthUris.size()-1);
+ 		LLUserAuth::getInstance()->authenticate(
+-			sAuthUris[sAuthUriNum],
++			grid_uri,
+ 			auth_method,
+ 			firstname,
+ 			lastname,			
+@@ -1174,8 +1182,8 @@
+ 			else if(login_response == "indeterminate")
+ 			{
+ 				LL_INFOS("AppInit") << "Indeterminate login..." << LL_ENDL;
+-				sAuthUris = LLSRV::rewriteURI(LLUserAuth::getInstance()->getResponse("next_url"));
+-				sAuthUriNum = 0;
++				LLViewerLogin::getInstance()->setGridURIs(LLSRV::rewriteURI(LLUserAuth::getInstance()->getResponse("next_url")));
++				
+ 				auth_method = LLUserAuth::getInstance()->getResponse("next_method");
+ 				auth_message = LLUserAuth::getInstance()->getResponse("message");
+ 				if(auth_method.substr(0, 5) == "login")
+@@ -1277,19 +1285,21 @@
+ 		case LLUserAuth::E_SSL_CACERT:
+ 		case LLUserAuth::E_SSL_CONNECT_ERROR:
+ 		default:
+-			if (sAuthUriNum >= (int) sAuthUris.size() - 1)
++			if (LLViewerLogin::getInstance()->tryNextURI())
+ 			{
+-				emsg << "Unable to connect to " << LLAppViewer::instance()->getSecondLifeTitle() << ".\n";
+-				emsg << LLUserAuth::getInstance()->errorMessage();
+-			} else {
+-				sAuthUriNum++;
++				static int login_attempt_number = 0;
+ 				std::ostringstream s;
+ 				LLStringUtil::format_map_t args;
+-				args["[NUMBER]"] = llformat("%d", sAuthUriNum + 1);
++				args["[NUMBER]"] = llformat("%d", ++login_attempt_number);
+ 				auth_desc = LLTrans::getString("LoginAttempt", args);
+ 				LLStartUp::setStartupState( STATE_LOGIN_AUTHENTICATE );
+ 				return FALSE;
+ 			}
++			else
++			{
++				emsg << "Unable to connect to " << LLAppViewer::instance()->getSecondLifeTitle() << ".\n";
++				emsg << LLUserAuth::getInstance()->errorMessage();
++			}
+ 			break;
+ 		}
+ 
+@@ -1361,8 +1371,42 @@
+ 				// Don't leave password from previous session sitting around
+ 				// during this login session.
+ 				LLStartUp::deletePasswordFromDisk();
++				password.assign(""); // clear the password so it isn't saved to login history either
+ 			}
++			
++			{
++				// Save the login history data to disk
++				std::string history_file = gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "saved_logins.xml");
+ 
++				LLSavedLogins history_data = LLSavedLogins::loadFile(history_file);
++				LLViewerLogin* login_data = LLViewerLogin::getInstance();
++				EGridInfo grid_choice = login_data->getGridChoice();
++				history_data.deleteEntry(grid_choice, firstname, lastname);
++				if (gSavedSettings.getBOOL("RememberLogin"))
++				{
++					LLSavedLoginEntry login_entry(grid_choice, firstname, lastname, password);
++					if (grid_choice == GRID_INFO_OTHER)
++					{
++						std::string grid_uri = login_data->getCurrentGridURI();
++						std::string login_uri = login_data->getLoginPageURI();
++						std::string helper_uri = login_data->getHelperURI();
++						
++						if (!grid_uri.empty()) login_entry.setGridURI(LLURI(grid_uri));
++						if (!login_uri.empty()) login_entry.setLoginPageURI(LLURI(login_uri));
++						if (!helper_uri.empty()) login_entry.setHelperURI(LLURI(helper_uri));
++					}
++					history_data.addEntry(login_entry);
++				}
++				else
++				{
++					// Clear the old-style login data as well
++					gSavedSettings.setString("FirstName", std::string(""));
++					gSavedSettings.setString("LastName", std::string(""));
++				}
++				
++				LLSavedLogins::saveFile(history_data, history_file);
++			}
++			
+ 			// this is their actual ability to access content
+ 			text = LLUserAuth::getInstance()->getResponse("agent_access_max");
+ 			if (!text.empty())
+@@ -2570,12 +2614,12 @@
+ 						login_callback, NULL );
+ 
+ 	// UI textures have been previously loaded in doPreloadImages()
+-	
++					
+ 	LL_DEBUGS("AppInit") << "Setting Servers" << LL_ENDL;
+ 
+-	LLPanelLogin::addServer(LLViewerLogin::getInstance()->getGridLabel(), LLViewerLogin::getInstance()->getGridChoice());
++	LLViewerLogin* vl = LLViewerLogin::getInstance();
++	LLPanelLogin::addServer(vl->getGridLabel(), vl->getGridChoice());
+ 
+-	LLViewerLogin* vl = LLViewerLogin::getInstance();
+ 	for(int grid_index = GRID_INFO_ADITI; grid_index < GRID_INFO_OTHER; ++grid_index)
+ 	{
+ 		LLPanelLogin::addServer(vl->getKnownGridLabel((EGridInfo)grid_index), grid_index);
+@@ -2674,7 +2718,7 @@
+ 	// password. It should be a hex-string or else the mac adress has
+ 	// changed. This is a security feature to make sure that if you
+ 	// get someone's password.dat file, you cannot hack their account.
+-	if(is_hex_string(buffer, HASHED_LENGTH))
++	if(LLStringOps::isHexString(std::string(reinterpret_cast<const char*>(buffer), HASHED_LENGTH)))
+ 	{
+ 		hashed_password.assign((char*)buffer);
+ 	}
+@@ -2720,41 +2764,6 @@
+ 	LLFile::remove(filepath);
+ }
+ 
+-
+-bool is_hex_string(U8* str, S32 len)
+-{
+-	bool rv = true;
+-	U8* c = str;
+-	while(rv && len--)
+-	{
+-		switch(*c)
+-		{
+-		case '0':
+-		case '1':
+-		case '2':
+-		case '3':
+-		case '4':
+-		case '5':
+-		case '6':
+-		case '7':
+-		case '8':
+-		case '9':
+-		case 'a':
+-		case 'b':
+-		case 'c':
+-		case 'd':
+-		case 'e':
+-		case 'f':
+-			++c;
+-			break;
+-		default:
+-			rv = false;
+-			break;
+-		}
+-	}
+-	return rv;
+-}
+-
+ void show_first_run_dialog()
+ {
+ 	LLNotifications::instance().add("FirstRun", LLSD(), LLSD(), first_run_dialog_callback);
+@@ -2773,8 +2782,6 @@
+ 	return false;
+ }
+ 
+-
+-
+ void set_startup_status(const F32 frac, const std::string& string, const std::string& msg)
+ {
+ 	gViewerWindow->setProgressPercent(frac*100);
+@@ -3499,4 +3506,3 @@
+ 	while(comma < csv.length());
+ 	
+ }
+-
+Index: indra/newview/llpanellogin.cpp
+===================================================================
+--- indra/newview/llpanellogin.cpp	(revision 2562)
++++ indra/newview/llpanellogin.cpp	(working copy)
+@@ -204,9 +204,18 @@
+ 	reshape(rect.getWidth(), rect.getHeight());
+ 
+ #if !USE_VIEWER_AUTH
+-	childSetPrevalidate("first_name_edit", LLLineEditor::prevalidatePrintableNoSpace);
+-	childSetPrevalidate("last_name_edit", LLLineEditor::prevalidatePrintableNoSpace);
++	LLComboBox* first_name_combo = sInstance->getChild<LLComboBox>("first_name_combo");
++	first_name_combo->setCommitCallback(onSelectLoginEntry);
++	first_name_combo->setFocusLostCallback(onLoginComboLostFocus);
++	first_name_combo->setPrevalidate(LLLineEditor::prevalidatePrintableNoSpace);
++	first_name_combo->setSuppressTentative(true);
++	
+ 
++	LLLineEditor* last_name_edit = sInstance->getChild<LLLineEditor>("last_name_edit");
++	last_name_edit->setPrevalidate(LLLineEditor::prevalidatePrintableNoSpace);
++	last_name_edit->setCommitCallback(onLastNameEditLostFocus);
++	
++	childSetCommitCallback("remember_name_check", onNameCheckChanged);
+ 	childSetCommitCallback("password_edit", mungePassword);
+ 	childSetKeystrokeCallback("password_edit", onPassKey, this);
+ 	childSetUserData("password_edit", this);
+@@ -304,7 +313,8 @@
+ 
+ 	// kick off a request to grab the url manually
+ 	gResponsePtr = LLIamHereLogin::build( this );
+-	std::string login_page = gSavedSettings.getString("LoginPage");
++
++	std::string login_page = LLViewerLogin::getInstance()->getLoginPageURI();
+ 	if (login_page.empty())
+ 	{
+ 		login_page = getString( "real_url" );
+@@ -498,30 +508,27 @@
+ 	if( sInstance )
+ 	{
+ 		// Grab focus and move cursor to first blank input field
+-		std::string first = sInstance->childGetText("first_name_edit");
++		std::string first = sInstance->childGetText("first_name_combo");
+ 		std::string pass = sInstance->childGetText("password_edit");
+ 
+ 		BOOL have_first = !first.empty();
+ 		BOOL have_pass = !pass.empty();
+ 
+-		LLLineEditor* edit = NULL;
+ 		if (have_first && !have_pass)
+ 		{
++			LLLineEditor* edit = NULL;
+ 			// User saved his name but not his password.  Move
+ 			// focus to password field.
+ 			edit = sInstance->getChild<LLLineEditor>("password_edit");
++			edit->setFocus(TRUE);
++			edit->selectAll();
+ 		}
+ 		else
+ 		{
+ 			// User doesn't have a name, so start there.
+-			edit = sInstance->getChild<LLLineEditor>("first_name_edit");
++			LLComboBox* combo = sInstance->getChild<LLComboBox>("first_name_combo");
++			combo->setFocusText(TRUE);
+ 		}
+-
+-		if (edit)
+-		{
+-			edit->setFocus(TRUE);
+-			edit->selectAll();
+-		}
+ 	}
+ #endif
+ }
+@@ -548,7 +555,8 @@
+ // static
+ void LLPanelLogin::setFields(const std::string& firstname,
+ 			     const std::string& lastname,
+-			     const std::string& password)
++			     const std::string& password,
++			     const LLSavedLogins& login_history)
+ {
+ 	if (!sInstance)
+ 	{
+@@ -556,9 +564,31 @@
+ 		return;
+ 	}
+ 
+-	sInstance->childSetText("first_name_edit", firstname);
++	LLComboBox* login_combo = sInstance->getChild<LLComboBox>("first_name_combo");
+ 	sInstance->childSetText("last_name_edit", lastname);
++	
++	if (login_history.size() > 0)
++	{
++		sInstance->mLoginHistoryData = login_history;
++		
++		llassert(login_combo);
++		login_combo->clear();
++		
++		const LLSavedLoginsVector& entries = sInstance->mLoginHistoryData.getEntries();
++		for (LLSavedLoginsVector::const_reverse_iterator i = entries.rbegin();
++			 i != entries.rend(); ++i)
++		{
++			LLSD e = i->asLLSD();
++			if (e.isMap()) login_combo->add(i->getDisplayString(), e);
++		}
++	}
++	else
++	{
++		sInstance->mLoginHistoryData = LLSavedLogins();
++	}
+ 
++	login_combo->setLabel(firstname);
++	
+ 	// Max "actual" password length is 16 characters.
+ 	// Hex digests are always 32 characters.
+ 	if (password.length() == 32)
+@@ -584,7 +614,61 @@
+ 	}
+ }
+ 
++// static
++void LLPanelLogin::setFields(const LLSavedLoginEntry& entry)
++{
++	if (!sInstance)
++	{
++		llwarns << "Attempted setFields with no login view shown" << llendl;
++		return;
++	}
++	
++	LLCheckBoxCtrl* remember_pass_check = sInstance->getChild<LLCheckBoxCtrl>("remember_check");
++	LLComboBox* login_combo = sInstance->getChild<LLComboBox>("first_name_combo");
++	login_combo->setLabel(entry.getFirstName());
++	login_combo->resetDirty();
++	login_combo->resetTextDirty();
++	
++	LLLineEditor* last_name = sInstance->getChild<LLLineEditor>("last_name_edit");
++	last_name->setText(entry.getLastName());
++	last_name->resetDirty();
++	
++	if (entry.getPassword().empty())
++	{
++		sInstance->childSetText("password_edit", std::string(""));
++		remember_pass_check->setValue(LLSD(false));
++	}
++	else
++	{
++		const std::string filler("123456789!123456");
++		sInstance->childSetText("password_edit", filler);
++		sInstance->mIncomingPassword = filler;
++		sInstance->mMungedPassword = entry.getPassword();
++		remember_pass_check->setValue(LLSD(true));
++	}
++	
++	LLViewerLogin* vl = LLViewerLogin::getInstance();
+ 
++	if (entry.getGrid() == GRID_INFO_OTHER)
++	{
++		vl->setGridURI(entry.getGridURI().asString());
++		vl->setHelperURI(entry.getHelperURI().asString());
++		vl->setLoginPageURI(entry.getLoginPageURI().asString());
++	}
++	
++	EGridInfo entry_grid = entry.getGrid();
++	
++	if (entry_grid == GRID_INFO_OTHER || entry_grid != vl->getGridChoice())
++	{
++		vl->setGridChoice(entry_grid);
++		
++		// grid changed so show new splash screen (possibly)
++		loadLoginPage();
++	}
++	
++	giveFocus();
++}
++
+ // static
+ void LLPanelLogin::addServer(const std::string& server, S32 domain_name)
+ {
+@@ -610,7 +694,7 @@
+ 		return;
+ 	}
+ 
+-	*firstname = sInstance->childGetText("first_name_edit");
++	*firstname = sInstance->childGetText("first_name_combo");
+ 	LLStringUtil::trim(*firstname);
+ 
+ 	*lastname = sInstance->childGetText("last_name_edit");
+@@ -722,11 +806,14 @@
+ 	
+ 	std::ostringstream oStr;
+ 
+-	std::string login_page = gSavedSettings.getString("LoginPage");
++	LLViewerLogin* vl = LLViewerLogin::getInstance();
++	std::string login_page = vl->getLoginPageURI();
+ 	if (login_page.empty())
+ 	{
+ 		login_page = sInstance->getString( "real_url" );
++		vl->setLoginPageURI(login_page);
+ 	}
++	
+ 	oStr << login_page;
+ 	
+ 	// Use the right delimeter depending on how LLURI parses the URL
+@@ -806,7 +893,7 @@
+ 		lastname = cmd_line_login[1].asString();
+         password = cmd_line_login[2].asString();
+     }
+-    	
++	
+ 	if (firstname.empty())
+ 	{
+ 		firstname = gSavedSettings.getString("FirstName");
+@@ -874,6 +961,27 @@
+ 	}
+ }
+ 
++
++bool LLPanelLogin::getRememberLogin()
++{
++	bool remember = false;
++	
++	if (sInstance)
++	{
++		LLCheckBoxCtrl* remember_login = sInstance->getChild<LLCheckBoxCtrl>("remember_name_check");
++		if (remember_login)
++		{
++			remember = remember_login->getValue().asBoolean();
++		}
++	}
++	else
++	{
++		llwarns << "Attempted to query rememberLogin with no login view shown" << llendl;
++	}
++	
++	return remember;
++}
++
+ //---------------------------------------------------------------------------
+ // Protected methods
+ //---------------------------------------------------------------------------
+@@ -890,7 +998,7 @@
+ 		// JC - Make sure the fields all get committed.
+ 		sInstance->setFocus(FALSE);
+ 
+-		std::string first = sInstance->childGetText("first_name_edit");
++		std::string first = sInstance->childGetText("first_name_combo");
+ 		std::string last  = sInstance->childGetText("last_name_edit");
+ 		if (!first.empty() && !last.empty())
+ 		{
+@@ -1007,7 +1115,7 @@
+ 	// This new seelction will override preset uris
+ 	// from the command line.
+ 	LLViewerLogin* vl = LLViewerLogin::getInstance();
+-	vl->resetURIs();
++	
+ 	if(grid_index != GRID_INFO_OTHER)
+ 	{
+ 		vl->setGridChoice((EGridInfo)grid_index);
+@@ -1021,11 +1129,94 @@
+ 	loadLoginPage();
+ }
+ 
++// static
+ void LLPanelLogin::onServerComboLostFocus(LLFocusableElement* fe, void*)
+ {
+-	LLComboBox* combo = sInstance->getChild<LLComboBox>("server_combo");
+-	if(fe == combo)
++	if (sInstance)
+ 	{
+-		onSelectServer(combo, NULL);	
++		LLComboBox* combo = sInstance->getChild<LLComboBox>("server_combo");
++		if(fe == combo)
++		{
++			onSelectServer(combo, NULL);	
++		}
+ 	}
+ }
++
++// static
++void LLPanelLogin::onLastNameEditLostFocus(LLUICtrl* ctrl, void* data)
++{
++	if (sInstance)
++	{
++		LLLineEditor* edit = sInstance->getChild<LLLineEditor>("last_name_edit");
++		if(ctrl == edit)
++		{
++			if (edit->isDirty()) clearPassword();
++		}
++	}
++}
++
++// static
++void LLPanelLogin::onSelectLoginEntry(LLUICtrl* ctrl, void* data)
++{
++	if (sInstance)
++	{
++		LLComboBox* combo = sInstance->getChild<LLComboBox>("first_name_combo");
++		if (ctrl == combo)
++		{
++			LLSD selected_entry = combo->getSelectedValue();
++			if (!selected_entry.isUndefined())
++			{
++				LLSavedLoginEntry entry(selected_entry);
++				setFields(entry);
++			}
++		}
++	}
++}
++
++// static
++void LLPanelLogin::onLoginComboLostFocus(LLFocusableElement* fe, void*)
++{
++	if (sInstance)
++	{
++		LLComboBox* combo = sInstance->getChild<LLComboBox>("first_name_combo");
++		if(fe == combo)
++		{
++			if (combo->isTextDirty())
++			{
++				clearPassword();
++			}
++			onSelectLoginEntry(combo, NULL);	
++		}
++	}
++}
++
++// static
++void LLPanelLogin::onNameCheckChanged(LLUICtrl* ctrl, void* data)
++{
++	if (sInstance)
++	{
++		LLCheckBoxCtrl* remember_login_check = sInstance->getChild<LLCheckBoxCtrl>("remember_name_check");
++		LLCheckBoxCtrl* remember_pass_check = sInstance->getChild<LLCheckBoxCtrl>("remember_check");
++		if (remember_login_check && remember_pass_check)
++		{
++			if (remember_login_check->getValue().asBoolean())
++			{
++				remember_pass_check->setEnabled(true);
++			}
++			else
++			{
++				remember_pass_check->setValue(LLSD(false));
++				remember_pass_check->setEnabled(false);
++			}
++		}
++	}
++}
++
++// static
++void LLPanelLogin::clearPassword()
++{
++	std::string blank;
++	sInstance->childSetText("password_edit", blank);
++	sInstance->mIncomingPassword = blank;
++	sInstance->mMungedPassword = blank;
++}
+\ No newline at end of file
+Index: indra/newview/skins/default/xui/en-us/panel_login.xml
+===================================================================
+--- indra/newview/skins/default/xui/en-us/panel_login.xml	(revision 2562)
++++ indra/newview/skins/default/xui/en-us/panel_login.xml	(working copy)
+@@ -17,10 +17,10 @@
+ 	     left="32" mouse_opaque="true" name="first_name_text" v_pad="0" width="120">
+ 		First Name:
+ 	</text>
+-	<line_editor bevel_style="in" border_style="line" border_thickness="1" bottom_delta="-24"
+-	     follows="left|bottom" font="SansSerif" handle_edit_keys_directly="true"
+-	     height="20" left="32" max_length="31" mouse_opaque="true"
+-	     name="first_name_edit" select_all_on_focus_received="true" width="120" />
++	<combo_box bevel_style="in" border_style="line" border_thickness="1" bottom_delta="-24"
++	     font="SansSerif" handle_edit_keys_directly="true" height="20" left="32"
++       max_chars="31" mouse_opaque="true" name="first_name_combo"
++       select_all_on_focus_received="true" width="120" allow_text_entry="true" />
+ 	<text bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
+ 	     bottom="54" drop_shadow_visible="true" follows="left|bottom"
+ 	     font="SansSerif" h_pad="0" halign="left" height="16"
+@@ -28,7 +28,7 @@
+ 		Last Name:
+ 	</text>
+ 	<line_editor bevel_style="in" border_style="line" border_thickness="1" bottom_delta="-24"
+-	     follows="left|bottom" font="SansSerif" handle_edit_keys_directly="true"
++	     follows="left|bottom" font="SansSerifSmall" handle_edit_keys_directly="true"
+ 	     height="20" left="164" max_length="31" mouse_opaque="true"
+ 	     name="last_name_edit" select_all_on_focus_received="true" width="120" />
+ 	<text bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
+@@ -38,18 +38,33 @@
+ 		Password:
+ 	</text>
+ 	<line_editor bevel_style="in" border_style="line" border_thickness="1" bottom_delta="-24"
+-	     follows="left|bottom" font="SansSerif" handle_edit_keys_directly="true"
++	     follows="left|bottom" font="SansSerifSmall" handle_edit_keys_directly="true"
+ 	     height="20" left="296" max_length="16" mouse_opaque="true"
+ 	     name="password_edit" select_all_on_focus_received="true" width="120" />
++	<check_box bottom="10" control_name="RememberName" 
++         follows="left|bottom" font="SansSerifSmall" height="16"
++	     initial_value="true" label="Remember resident name"
++	     left="28" mouse_opaque="true" name="remember_name_check" width="158" />
++	<check_box bottom="10" control_name="RememberPassword" 
++         follows="left|bottom" font="SansSerifSmall" height="16"
++	     initial_value="false" label="Remember password"
++	     left="292" mouse_opaque="true" name="remember_check" width="138" />
++	<button bottom="28" follows="left|bottom" font="SansSerif" halign="center"
++	     height="24" label="Log In" label_selected="Log In"
++	     left="435" mouse_opaque="true" name="connect_btn" scale_image="TRUE"
++	     width="120" />
++	<combo_box allow_text_entry="true" bottom="32" follows="left|bottom" height="18"
++	     left_delta="135" max_chars="20" mouse_opaque="true"
++	     name="server_combo" width="120" />
+ 	<text bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
+ 	     bottom="10" drop_shadow_visible="true" follows="left|bottom"
+ 	     font="SansSerif" h_pad="0" halign="left" height="16"
+-	     left="32" mouse_opaque="true" name="start_location_text" v_pad="0"
++	     left="455" mouse_opaque="true" name="start_location_text" v_pad="0"
+ 	     width="95">
+ 		Start Location:
+ 	</text>
+ 	<combo_box allow_text_entry="true" bottom="8" follows="left|bottom" height="18"
+-	     left_delta="97" max_chars="128" mouse_opaque="true"
++	     left="570" max_chars="128" mouse_opaque="true"
+ 	     name="start_location_combo" width="155">
+ 		<combo_item name="MyHome" value="My Home">
+ 			My Home
+@@ -61,17 +76,6 @@
+ 			&lt;Type region name&gt;
+ 		</combo_item>
+ 	</combo_box>
+-	<check_box bottom="10" control_name="RememberPassword" 
+-         follows="left|bottom" font="SansSerifSmall" height="16"
+-	     initial_value="false" label="Remember password"
+-	     left_delta="163" mouse_opaque="true" name="remember_check" width="138" />
+-	<button bottom="28" follows="left|bottom" font="SansSerif" halign="center"
+-	     height="24" label="Log In" label_selected="Log In"
+-	     left="435" mouse_opaque="true" name="connect_btn" scale_image="TRUE"
+-	     width="120" />
+-	<combo_box allow_text_entry="true" bottom="32" follows="left|bottom" height="18"
+-	     left_delta="135" max_chars="20" mouse_opaque="true"
+-	     name="server_combo" width="120" />
+ 	<text bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
+ 	     bottom="45" drop_shadow_visible="true" follows="right|bottom"
+ 	     font="SansSerifSmall" font-style="UNDERLINE" h_pad="0" halign="right" height="16"
+Index: indra/newview/CMakeLists.txt
+===================================================================
+--- indra/newview/CMakeLists.txt	(revision 2562)
++++ indra/newview/CMakeLists.txt	(working copy)
+@@ -234,6 +234,7 @@
+     lllandmarklist.cpp
+     lllogchat.cpp
+     llloginhandler.cpp
++    llsavedlogins.cpp
+     llmanip.cpp
+     llmaniprotate.cpp
+     llmanipscale.cpp
+@@ -644,6 +645,7 @@
+     lllightconstants.h
+     lllogchat.h
+     llloginhandler.h
++    llsavedlogins.h
+     llmanip.h
+     llmaniprotate.h
+     llmanipscale.h
+Index: indra/newview/llsavedlogins.h
+===================================================================
+--- indra/newview/llsavedlogins.h	(revision 0)
++++ indra/newview/llsavedlogins.h	(revision 0)
+@@ -0,0 +1,250 @@
++/**
++ * @file llsavedlogins.h
++ * @brief Manages a list of previous successful logins
++ *
++ * $LicenseInfo:firstyear=2009&license=viewergpl$
++ * 
++ * Copyright (c) 2009, Linden Research, Inc.
++ * 
++ * Second Life Viewer Source Code
++ * The source code in this file ("Source Code") is provided by Linden Lab
++ * to you under the terms of the GNU General Public License, version 2.0
++ * ("GPL"), unless you have obtained a separate licensing agreement
++ * ("Other License"), formally executed by you and Linden Lab.  Terms of
++ * the GPL can be found in doc/GPL-license.txt in this distribution, or
++ * online at http://secondlifegrid.net/programs/open_source/licensing/gplv2
++ * 
++ * There are special exceptions to the terms and conditions of the GPL as
++ * it is applied to this Source Code. View the full text of the exception
++ * in the file doc/FLOSS-exception.txt in this software distribution, or
++ * online at
++ * http://secondlifegrid.net/programs/open_source/licensing/flossexception
++ * 
++ * By copying, modifying or distributing this software, you acknowledge
++ * that you have read and understood your obligations described above,
++ * and agree to abide by those obligations.
++ * 
++ * ALL LINDEN LAB SOURCE CODE IS PROVIDED "AS IS." LINDEN LAB MAKES NO
++ * WARRANTIES, EXPRESS, IMPLIED OR OTHERWISE, REGARDING ITS ACCURACY,
++ * COMPLETENESS OR PERFORMANCE.
++ * $/LicenseInfo$
++ */
++
++#ifndef LLLOGINHISTORY_H
++#define LLLOGINHISTORY_H
++
++#include "llviewernetwork.h"
++
++class LLSD;
++
++/**
++ * @brief	Holds data for a single login attempt.
++ */
++class LLSavedLoginEntry
++{
++public:
++	/**
++	 * @brief	Constructs a history entry from an appropriate LLSD.
++	 * @param	LLSD containing serialized LLSavedLoginEntry.
++	 * @throw	invalid_argument	If the LLSD is null or does not contain the required fields.
++	 */
++	LLSavedLoginEntry(const LLSD& entry_data);
++	/**
++	 * @brief	Constructs a history entry from individual fields.
++	 * @param	gridinfo	Grid as EGridInfo enumeration.
++	 * @param	firstname	Resident first name.
++	 * @param	lastname	Resident last name.
++	 * @param	password	Munged password of PASSWORD_HASH_LENGTH.
++	 */
++	LLSavedLoginEntry(const EGridInfo gridinfo, const std::string& firstname, 
++					  const std::string& lastname, const std::string& password);
++	/**
++	 * @brief	Returns the display name of the grid ID associated with this entry.
++	 * @return	String containing grid name.
++	 */
++	const std::string getGridName() const;
++	
++	/**
++	 * @brief	Gets the grid ID associated with this entry.
++	 * @return	EGridInfo enumeration corresponding to grid.
++	 */
++	const EGridInfo getGrid() const
++	{
++		return (mEntry.has("grid") ? static_cast<EGridInfo>(mEntry.get("grid").asInteger()) : GRID_INFO_OTHER);
++	}
++	/**
++	 * @brief	Sets the grid associated with the entry.
++	 */
++	void setGrid(EGridInfo value)
++	{
++		mEntry.insert("grid", LLSD(value));
++	}
++	/**
++	 * @brief	Gets the grid URI associated with the entry, if any.
++	 */
++	const LLURI getGridURI() const
++	{
++		return (getGrid() == GRID_INFO_OTHER && mEntry.has("griduri") ? mEntry.get("griduri").asURI() : LLURI());
++	}
++	/**
++	 * @brief	Sets the grid URI associated with the entry.
++	 */
++	void setGridURI(const LLURI& uri)
++	{
++		mEntry.insert("griduri", uri);
++	}
++	/**
++	 * @brief	Gets the login page URI associated with the entry, if any.
++	 */
++	const LLURI getLoginPageURI() const
++	{
++		return (getGrid() == GRID_INFO_OTHER && mEntry.has("loginpageuri") ? mEntry.get("loginpageuri").asURI() : LLURI());
++	}
++	/**
++	 * @brief	Sets the login page URI associated with the entry.
++	 */
++	void setLoginPageURI(const LLURI& uri)
++	{
++		mEntry.insert("loginpageuri", uri);
++	}
++	/**
++	 * @brief	Gets the helper URI associated with the entry, if any.
++	 */
++	const LLURI getHelperURI() const
++	{
++		return (getGrid() == GRID_INFO_OTHER && mEntry.has("helperuri") ? mEntry.get("helperuri").asURI() : LLURI());
++	}
++	/**
++	 * @brief	Sets the helper URI associated with the entry.
++	 */
++	void setHelperURI(const LLURI& uri)
++	{
++		mEntry.insert("helperuri", uri);
++	}
++	/**
++	 * @brief	Returns the first name associated with this login entry.
++	 * @return	First name as string.
++	 */
++	const std::string getFirstName() const
++	{
++		return (mEntry.has("firstname") ? mEntry.get("firstname").asString() : std::string());
++	}
++	/**
++	 * @brief	Sets the first name associated with this login entry.
++	 * @param	value	String value to set.
++	 */
++	void setFirstName(std::string& value)
++	{
++		mEntry.insert("firstname", LLSD(value));
++	}
++	/**
++	 * @brief	Returns the last name associated with this login entry.
++	 * @return	Last name as string.
++	 */
++	const std::string getLastName() const
++	{
++		return (mEntry.has("lastname") ? mEntry.get("lastname").asString() : std::string());
++	}
++	/**
++	 * @brief	Sets the last name associated with this login entry.
++	 * @param	value	String value to set.
++	 */
++	void setLastName(std::string& value)
++	{
++		mEntry.insert("lastname", LLSD(value));
++	}
++	/**
++	 * @brief	Returns the password associated with this entry.
++	 * @note	The password is stored encrypted, but will be returned as
++	 *			a plain-text, pre-munged string of PASSWORD_HASH_LENGTH.
++	 * @return	Munged password suitable for login.
++	 */
++	const std::string getPassword() const;
++	/**
++	 * @brief	Sets the password associated with this entry.
++	 * @note	The password is stored with system-specific encryption
++	 *			internally. It must be supplied to this method as a 
++	 *			munged string of PASSWORD_HASH_LENGTH.
++	 * @param	value	Munged password suitable for login.
++	 */
++	void setPassword(const std::string& value);
++	/**
++	 * @brief	Returns the login entry as an LLSD for serialization.
++	 * *return	LLSD containing login entry details.
++	 */
++	LLSD asLLSD() const;
++	/**
++	 * @brief	Provides a string containing the username and grid for display.
++	 * @return	Formatted string with login details.
++	 */
++	const std::string getDisplayString() const;
++	static const size_t PASSWORD_HASH_LENGTH = 32;
++private:
++	static const std::string decryptPassword(const LLSD& pwdata);
++	static const LLSD encryptPassword(const std::string& password);
++	LLSD mEntry;
++};
++
++typedef std::vector<LLSavedLoginEntry> LLSavedLoginsVector;
++
++/**
++ * @brief Holds a user's login history.
++ */
++class LLSavedLogins
++{
++public:
++	/**
++	 * @brief	Constructs an empty login history.
++	 */
++	LLSavedLogins();
++	/**
++	 * @brief	Constructs a login history from an LLSD array of history entries.
++	 * @param	LLSD containing serialized history data.
++	 * @throw	invalid_argument	If the LLSD is not in array form.
++	 */
++	LLSavedLogins(const LLSD& history_data);
++	/**
++	 * @brief	Add a new login history entry.
++	 * @param	Entry to add.
++	 */
++	void addEntry(const LLSavedLoginEntry& entry);
++	/**
++	 * @brief	Deletes a login history entry by looking up its name and grid.
++	 * @param	grid	EGridInfo enumeration of the grid.
++	 * @param	firstname	First name to find and delete.
++	 * @param	lastname	Last name to find and delete.
++	 */
++	void deleteEntry(const EGridInfo grid, const std::string& firstname, const std::string& lastname);
++	/**
++	 * @brief	Access internal vector of login entries from the history.
++	 * @return	Const reference to internal login history storage.
++	 */
++	const LLSavedLoginsVector& getEntries() const { return mEntries; }
++	/**
++	 * @brief	Return the login history as an LLSD for serialization.
++	 * @return	LLSD containing history data.
++	 */
++	LLSD asLLSD() const;
++	/**
++	 * @brief	Get the count of login entries in the history.
++	 * @return	Count of login entries.
++	 */
++	const size_t size() const {	return mEntries.size(); }
++	/**
++	 * @brief	Loads a login history object from disk.
++	 * @param	filepath	Absolute path of history file.
++	 * @return	History object; if the load failed, the history will be empty.
++	 */
++	static LLSavedLogins loadFile(const std::string& filepath);
++	/**
++	 * @brief	Saves a login history object to an absolute path on disk as XML.
++	 * @param	history		History object to save.
++	 * @param	filepath	Absolute path of output file.
++	 * @return	True if history was successfully saved; false if it was not.
++	 */
++	static bool saveFile(const LLSavedLogins& history, const std::string& filepath);
++private:
++	LLSavedLoginsVector mEntries;
++};
++
++#endif // LLLOGINHISTORY_H
+Index: indra/llui/llcombobox.cpp
+===================================================================
+--- indra/llui/llcombobox.cpp	(revision 2562)
++++ indra/llui/llcombobox.cpp	(working copy)
+@@ -74,6 +74,7 @@
+ 	mListPosition(BELOW),
+ 	mPrearrangeCallback( NULL ),
+ 	mTextEntryCallback( NULL ),
++	mSuppressTentative( false ),
+ 	mLabel(label)
+ {
+ 	// Always use text box 
+@@ -258,6 +259,16 @@
+ 	return grubby;
+ }
+ 
++BOOL LLComboBox::isTextDirty() const
++{
++	BOOL grubby = FALSE;
++	if ( mTextEntry )
++	{
++		grubby = mTextEntry->isDirty();
++	}
++	return grubby;
++}
++
+ // virtual   Clear dirty state
+ void	LLComboBox::resetDirty()
+ {
+@@ -267,7 +278,15 @@
+ 	}
+ }
+ 
++void LLComboBox::resetTextDirty()
++{
++	if ( mTextEntry )
++	{
++		mTextEntry->resetDirty();
++	}
++}
+ 
++
+ // add item "name" to menu
+ LLScrollListItem* LLComboBox::add(const std::string& name, EAddPosition pos, BOOL enabled)
+ {
+@@ -403,7 +422,7 @@
+ 		}
+ 		else
+ 		{
+-			mTextEntry->setTentative(mTextEntryTentative);
++			if (!mSuppressTentative) mTextEntry->setTentative(mTextEntryTentative);
+ 		}
+ 	}
+ 	
+@@ -895,7 +914,7 @@
+ 		}
+ 		else
+ 		{
+-			line_editor->setTentative(self->mTextEntryTentative);
++			if (!self->mSuppressTentative) line_editor->setTentative(self->mTextEntryTentative);
+ 			self->mList->deselectAllItems();
+ 		}
+ 		return;
+@@ -977,7 +996,7 @@
+ 	{
+ 		mList->deselectAllItems();
+ 		mTextEntry->setText(wstring_to_utf8str(user_wstring));
+-		mTextEntry->setTentative(mTextEntryTentative);
++		if (!mSuppressTentative) mTextEntry->setTentative(mTextEntryTentative);
+ 	}
+ 	else
+ 	{
+@@ -1000,6 +1019,26 @@
+ 	self->mTextEntry->selectAll();
+ }
+ 
++void LLComboBox::setSuppressTentative(bool suppress)
++{
++	mSuppressTentative = suppress;
++	if (mTextEntry && mSuppressTentative) mTextEntry->setTentative(FALSE);
++}
++
++
++void LLComboBox::setFocusText(BOOL b)
++{
++	LLUICtrl::setFocus(b);
++	
++	if (b && mTextEntry)
++	{
++		if (mTextEntry->getVisible())
++		{
++			mTextEntry->setFocus(TRUE);
++		}
++	}
++}
++
+ void LLComboBox::setFocus(BOOL b)
+ {
+ 	LLUICtrl::setFocus(b);
+@@ -1014,6 +1053,11 @@
+ 	}
+ }
+ 
++void LLComboBox::setPrevalidate( BOOL (*func)(const LLWString &) )
++{
++	if (mTextEntry) mTextEntry->setPrevalidate(func);
++}
++
+ //============================================================================
+ // LLCtrlListInterface functions
+ 
+@@ -1272,4 +1316,3 @@
+ {
+ 	mToggleState = state;
+ }
+-
+Index: indra/llui/llcombobox.h
+===================================================================
+--- indra/llui/llcombobox.h	(revision 2562)
++++ indra/llui/llcombobox.h	(working copy)
+@@ -96,6 +96,9 @@
+ 	virtual void	resetDirty();				// Clear dirty state
+ 
+ 	virtual void	setFocus(BOOL b);
++	
++	// Allow prevalidation of text input field
++	void			setPrevalidate( BOOL (*func)(const LLWString &) );
+ 
+ 	// Selects item by underlying LLSD value, using LLSD::asString() matching.  
+ 	// For simple items, this is just the name of the label.
+@@ -107,6 +110,9 @@
+ 
+ 	void			setAllowTextEntry(BOOL allow, S32 max_chars = 50, BOOL make_tentative = TRUE);
+ 	void			setTextEntry(const LLStringExplicit& text);
++	void			setFocusText(BOOL b);	// Sets focus to the text input area instead of the list
++	BOOL			isTextDirty() const;	// Returns TRUE if the user has modified the text input area
++	void			resetTextDirty();		// Resets the dirty flag on the input field
+ 
+ 	LLScrollListItem*	add(const std::string& name, EAddPosition pos = ADD_BOTTOM, BOOL enabled = TRUE);	// add item "name" to menu
+ 	LLScrollListItem*	add(const std::string& name, const LLUUID& id, EAddPosition pos = ADD_BOTTOM, BOOL enabled = TRUE);
+@@ -179,6 +185,8 @@
+ 	static void		onItemSelected(LLUICtrl* item, void *userdata);
+ 	static void		onTextEntry(LLLineEditor* line_editor, void* user_data);
+ 	static void		onTextCommit(LLUICtrl* caller, void* user_data);
++	
++	void			setSuppressTentative(bool suppress);
+ 
+ 	void			updateSelection();
+ 	virtual void	showList();
+@@ -197,6 +205,7 @@
+ 	BOOL				mAllowTextEntry;
+ 	S32					mMaxChars;
+ 	BOOL				mTextEntryTentative;
++	bool				mSuppressTentative;
+ 	void				(*mPrearrangeCallback)(LLUICtrl*,void*);
+ 	void				(*mTextEntryCallback)(LLLineEditor*, void*);
+ };

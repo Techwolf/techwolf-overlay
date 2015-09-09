@@ -1,0 +1,236 @@
+--- linden/indra/newview/llagent.h.orig	2008-04-17 02:01:45.000000000 +0100
++++ linden/indra/newview/llagent.h	2008-04-17 02:23:53.000000000 +0100
+@@ -411,7 +411,7 @@
+ 	void			moveLeftNudge(S32 direction);
+ 	void			moveUp(S32 direction);
+ 	void			moveYaw(F32 mag, bool reset_view = true);
+-	void			movePitch(S32 direction);
++	void			movePitch(F32 mag);
+ 
+ 	void			setOrbitLeftKey(F32 mag)				{ mOrbitLeftKey = mag; }
+ 	void			setOrbitRightKey(F32 mag)				{ mOrbitRightKey = mag; }
+--- linden/indra/newview/llagent.cpp.orig	2008-04-17 02:02:32.000000000 +0100
++++ linden/indra/newview/llagent.cpp	2008-04-17 15:23:47.000000000 +0100
+@@ -393,7 +393,7 @@
+ 	mLeftKey			= 0;
+ 	mUpKey				= 0;
+ 	mYawKey				= 0.f;
+-	mPitchKey			= 0;
++	mPitchKey			= 0.f;
+ 
+ 	mOrbitLeftKey		= 0.f;
+ 	mOrbitRightKey		= 0.f;
+@@ -716,15 +716,15 @@
+ //-----------------------------------------------------------------------------
+ // movePitch()
+ //-----------------------------------------------------------------------------
+-void LLAgent::movePitch(S32 direction)
++void LLAgent::movePitch(F32 mag)
+ {
+-	setKey(direction, mPitchKey);
++	mPitchKey = mag;
+ 
+-	if (direction > 0)
++	if (mag > 0)
+ 	{
+-		setControlFlags(AGENT_CONTROL_PITCH_POS );
++		setControlFlags(AGENT_CONTROL_PITCH_POS);
+ 	}
+-	else if (direction < 0)
++	else if (mag < 0)
+ 	{
+ 		setControlFlags(AGENT_CONTROL_PITCH_NEG);
+ 	}
+@@ -2494,10 +2494,10 @@
+ 
+ 	// handle rotation based on keyboard levels
+ 	const F32 YAW_RATE = 90.f * DEG_TO_RAD;				// radians per second
+-	yaw( YAW_RATE * mYawKey * dt );
++	yaw(YAW_RATE * mYawKey * dt);
+ 
+ 	const F32 PITCH_RATE = 90.f * DEG_TO_RAD;			// radians per second
+-	pitch(PITCH_RATE * (F32) mPitchKey * dt);
++	pitch(PITCH_RATE * mPitchKey * dt);
+ 	
+ 	// handle auto-land behavior
+ 	if (mAvatarObject)
+@@ -4208,7 +4208,7 @@
+ 	{
+ 		if(avatar_animate)
+ 		{
+-				// Remove any pitch from the avatar
++			// Remove any pitch from the avatar
+ 			LLVector3 at = mFrameAgent.getAtAxis();
+ 			at.mV[VZ] = 0.f;
+ 			at.normVec();
+--- linden/indra/newview/llviewerjoystick.h.orig	2008-04-17 15:34:20.000000000 +0100
++++ linden/indra/newview/llviewerjoystick.h	2008-04-17 15:36:12.000000000 +0100
+@@ -81,8 +81,9 @@
+ 	void agentSlide(F32 inc);
+ 	void agentPush(F32 inc);
+ 	void agentFly(F32 inc);
+-	void agentRotate(F32 pitch_inc, F32 turn_inc);
+-    void agentJump();
++	void agentPitch(F32 pitch_inc);
++	void agentYaw(F32 yaw_inc);
++	void agentJump();
+ 	void resetDeltas(S32 axis[]);
+ #if LIB_NDOF
+ 	static NDOF_HotPlugResult HotPlugAddCallback(NDOF_Device *dev);
+--- linden/indra/newview/llviewerjoystick.cpp.orig	2008-04-17 15:54:18.000000000 +0100
++++ linden/indra/newview/llviewerjoystick.cpp	2008-04-17 15:55:39.000000000 +0100
+@@ -323,13 +323,15 @@
+ {
+ 	if (inc < 0)
+ 	{
+-		if (gAgent.getFlying())
++		if (gAgent.getFlying() || !gAgent.canFly() || gAgent.upGrabbed()
++			|| !gSavedSettings.getBOOL("AutomaticFly"))
+ 		{
+ 			gAgent.moveUp(1);
+ 		}
+ 		else
+ 		{
+ 			gAgent.setFlying(true);
++			gAgent.moveUp(1);			
+ 		}
+ 	}
+ 	else if (inc > 0)
+@@ -340,14 +342,41 @@
+ }
+ 
+ // -----------------------------------------------------------------------------
+-void LLViewerJoystick::agentRotate(F32 pitch_inc, F32 yaw_inc)
++void LLViewerJoystick::agentPitch(F32 pitch_inc)
+ {
+-	LLQuaternion new_rot;
+-	pitch_inc = gAgent.clampPitchToLimits(-pitch_inc);
+-	const LLQuaternion qx(pitch_inc, gAgent.getLeftAxis());
+-	const LLQuaternion qy(-yaw_inc, gAgent.getReferenceUpVector());
+-	new_rot.setQuat(qx * qy);
+-	gAgent.rotate(new_rot);
++	if (pitch_inc < 0)
++	{
++		gAgent.setControlFlags(AGENT_CONTROL_PITCH_POS);
++	}
++	else if (pitch_inc > 0)
++	{
++		gAgent.setControlFlags(AGENT_CONTROL_PITCH_NEG);
++	}
++	
++	gAgent.pitch(-pitch_inc);
++}
++
++// -----------------------------------------------------------------------------
++void LLViewerJoystick::agentYaw(F32 yaw_inc)
++{	
++	// Cannot steer some vehicles in mouselook if the script grabs the controls
++	if (gAgent.cameraMouselook() && !gSavedSettings.getBOOL("JoystickMouselookYaw"))
++	{
++		gAgent.rotate(-yaw_inc, gAgent.getReferenceUpVector());
++	}
++	else
++	{
++		if (yaw_inc < 0)
++		{
++			gAgent.setControlFlags(AGENT_CONTROL_YAW_POS);
++		}
++		else if (yaw_inc > 0)
++		{
++			gAgent.setControlFlags(AGENT_CONTROL_YAW_NEG);
++		}
++
++		gAgent.yaw(-yaw_inc);
++	}
+ }
+ 
+ // -----------------------------------------------------------------------------
+@@ -668,11 +696,13 @@
+ 		{
+ 			if (gAgent.getFlying())
+ 			{
+-				agentRotate(eff_rx, eff_ry);
++				agentPitch(eff_rx);
++				agentYaw(eff_ry);
+ 			}
+ 			else
+ 			{
+-				agentRotate(eff_rx, 2.f * eff_ry);
++				agentPitch(eff_rx);
++				agentYaw(2.f * eff_ry);
+ 			}
+ 		}
+ 	}
+@@ -681,7 +711,8 @@
+ 		agentSlide(sDelta[X_I]);		// move sideways
+ 		agentFly(sDelta[Y_I]);			// up/down & crouch
+ 		agentPush(sDelta[Z_I]);			// forward/back
+-		agentRotate(sDelta[RX_I], sDelta[RY_I]);	// pitch & turn
++		agentPitch(sDelta[RX_I]);		// pitch
++		agentYaw(sDelta[RY_I]);			// turn
+ 	}
+ }
+ 
+--- linden/indra/newview/app_settings/settings.xml.orig	2008-04-17 16:01:43.000000000 +0100
++++ linden/indra/newview/app_settings/settings.xml	2008-04-17 16:02:41.000000000 +0100
+@@ -1959,10 +1959,21 @@
+       <key>Value</key>
+       <integer>0</integer>
+     </map>
++    <key>JoystickMouselookYaw</key>
++        <map>
++        <key>Comment</key>
++            <string>Pass joystick yaw to scripts in Mouselook.</string>
++        <key>Persist</key>
++            <integer>1</integer>
++        <key>Type</key>
++            <string>Boolean</string>
++        <key>Value</key>
++            <integer>1</integer>
++        </map>
+     <key>Cursor3D</key>
+     <map>
+       <key>Comment</key>
+-      <string>Tread Joystick values as absolute positions (not deltas).</string>
++            <string>Treat Joystick values as absolute positions (not deltas).</string>
+       <key>Persist</key>
+       <integer>1</integer>
+       <key>Type</key>
+--- linden/indra/newview/skins/default/xui/en-us/floater_joystick.xml.orig	2008-04-17 14:56:37.000000000 +0100
++++ linden/indra/newview/skins/default/xui/en-us/floater_joystick.xml	2008-04-17 14:58:25.000000000 +0100
+@@ -17,6 +17,7 @@
+ 	<check_box bottom="-96" left="185" control_name="ZoomDirect" label="Direct Zoom" name="ZoomDirect" />
+ 	<check_box bottom="-96" left="310" control_name="Cursor3D" label="3D Cursor" name="Cursor3D" />
+ 	<check_box bottom="-96" left="420" control_name="AutoLeveling" label="Auto Level" name="AutoLeveling" />
++	<check_box bottom="-112" left="420" control_name="JoystickMouselookYaw" label="Mouselook Steers" name="MouselookSteers" />
+ 
+ 	<text type="string" length="1" bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
+ 	     bottom="-120" drop_shadow_visible="true" enabled="true" follows="left|top"
+--- linden/indra/newview/llfloaterjoystick.cpp.orig	2008-04-19 15:39:25.000000000 +0100
++++ linden/indra/newview/llfloaterjoystick.cpp	2008-04-19 15:46:14.000000000 +0100
+@@ -143,6 +143,7 @@
+ 	
+ 	m3DCursor = gSavedSettings.getBOOL("Cursor3D");
+ 	mAutoLeveling = gSavedSettings.getBOOL("AutoLeveling");
++	mMouselookYaw = gSavedSettings.getBOOL("JoystickMouselookYaw");
+ 	mZoomDirect  = gSavedSettings.getBOOL("ZoomDirect");
+ 
+ 	mAvatarAxisScale[0] = gSavedSettings.getF32("AvatarAxisScale0");
+@@ -210,6 +211,7 @@
+ 
+ 	gSavedSettings.setBOOL("Cursor3D", m3DCursor);
+ 	gSavedSettings.setBOOL("AutoLeveling", mAutoLeveling);
++	gSavedSettings.setBOOL("JoystickMouselookYaw", mMouselookYaw);
+ 	gSavedSettings.setBOOL("ZoomDirect", mZoomDirect );
+ 
+ 	gSavedSettings.setF32("AvatarAxisScale0", mAvatarAxisScale[0]);
+--- linden/indra/newview/llfloaterjoystick.h.orig	2008-04-19 15:35:19.000000000 +0100
++++ linden/indra/newview/llfloaterjoystick.h	2008-04-19 15:45:12.000000000 +0100
+@@ -56,6 +56,7 @@
+ 	S32 mJoystickAxis[7];
+ 	bool m3DCursor;
+ 	bool mAutoLeveling;
++	bool mMouselookYaw;
+ 	bool mZoomDirect;
+ 
+ 	// Modes prefs

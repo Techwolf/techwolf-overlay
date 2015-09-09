@@ -1,0 +1,46 @@
+Index: indra/newview/character/avatar_lad.xml
+===================================================================
+--- indra/newview/character/avatar_lad.xml	(revision 2584)
++++ indra/newview/character/avatar_lad.xml	(working copy)
+@@ -393,7 +393,40 @@
+        hud="true"
+        max_attachment_offset="2.0"
+        visible_in_first_person="true" />
+-       
++
++    <attachment_point
++       id="39"
++       group=""
++       name="Scripts 1"
++       joint="mScreen"
++       position="0 -0.5 -0.5"
++       rotation="0 0 0"
++       hud="true"
++       max_attachment_offset="2.0"
++       visible_in_first_person="true" />
++
++    <attachment_point
++       id="40"
++       group=""
++       name="Scripts 2"
++       joint="mScreen"
++       position="0 -0.5 -0.5"
++       rotation="0 0 0"
++       hud="true"
++       max_attachment_offset="2.0"
++       visible_in_first_person="true" />
++
++    <attachment_point
++       id="41"
++       group=""
++       name="Scripts 3"
++       joint="mScreen"
++       position="0 -0.5 -0.5"
++       rotation="0 0 0"
++       hud="true"
++       max_attachment_offset="2.0"
++       visible_in_first_person="true" />
++
+     <param
+        id="32"
+        group="1"

@@ -1,0 +1,10 @@
+--- gmock-1.4.0.orig/Makefile.am	2009-10-10 09:13:28.282994363 +0200
++++ gmock-1.4.0/Makefile.am	2009-10-10 09:39:00.662057198 +0200
+@@ -25,6 +25,7 @@
+                           src/gmock-matchers.cc \
+                           src/gmock-printers.cc \
+                           src/gmock-spec-builders.cc
++lib_libgmock_la_LIBADD = $(GTEST_LIBS)
+ 
+ pkginclude_HEADERS = include/gmock/gmock.h \
+                      include/gmock/gmock-actions.h \

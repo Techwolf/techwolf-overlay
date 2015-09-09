@@ -1,0 +1,993 @@
+diff -urN linden/indra/newview/app_settings/grids.xml linden-patched/indra/newview/app_settings/grids.xml
+--- linden/indra/newview/app_settings/grids.xml	1970-01-01 01:00:00.000000000 +0100
++++ linden-patched/indra/newview/app_settings/grids.xml	2009-03-14 15:23:20.000000000 +0100
+@@ -0,0 +1,283 @@
++<?xml version="1.0" encoding="utf-8" standalone="yes"?>
++<!-- this is the LLSD version -->
++<llsd>
++	<map>
++		<key>grids</key>
++		<array>
++			<map>
++				<key>name</key><string>util.aditi.lindenlab.com</string>
++				<key>label</key><string>SecondLife Beta</string>
++				<key>login_uri</key><string>https://login.aditi.lindenlab.com/cgi-bin/login.cgi</string>
++				<key>helper_uri</key><string>http://aditi-secondlife.webdev.lindenlab.com/helpers/</string>
++				<key>login_page</key><string>http://secondlife.com/app/login/</string>
++			</map>
++			<map>
++				<key>name</key><string>util.osgrid.org</string>
++				<key>label</key><string>OSGrid</string>
++				<key>login_uri</key><string>http://osgrid.org:8002/</string>
++				<key>helper_uri</key><string>http://osgrid.org/</string>
++				<key>login_page</key><string>http://osgrid.org/loginscreen.php</string>
++			</map>
++			<map>
++				<key>name</key><string>util.deepgrid.com</string>
++				<key>label</key><string>DeepGrid</string>
++				<key>login_uri</key><string>http://login.deepgrid.com:8002/</string>
++				<key>helper_uri</key><string></string>
++			</map>
++			<map>
++				<key>name</key><string>util.emerald.webhop.net</string>
++				<key>label</key><string>Emerald Network</string>
++				<key>login_uri</key><string>http://emerald.webhop.net:8002/</string>
++				<key>helper_uri</key><string></string>
++			</map>
++			<map>
++				<key>name</key><string>util.francogrid.org</string>
++				<key>label</key><string>FrancoGrid</string>
++				<key>login_uri</key><string>http://grid.francogrid.com:8002/</string>
++				<key>helper_uri</key><string></string>
++			</map>
++			<map>
++				<key>name</key><string>util.lemondededarwin.com</string>
++				<key>label</key><string>Le Monde de Darwin</string>
++				<key>login_uri</key><string>http://94.23.8.158:8002/</string>
++				<key>helper_uri</key><string></string>
++			</map>
++			<map>
++				<key>name</key><string>eu-grid.org</string>
++				<key>label</key><string>EU-Grid</string>
++				<key>login_uri</key><string>http://eu-grid.org:8002/</string>
++				<key>helper_uri</key><string></string>
++			</map>
++			<map>
++				<key>name</key><string>giantgrid.no-ip.biz</string>
++				<key>label</key><string>GiantGrid</string>
++				<key>login_uri</key><string>http://Gianttest.no-ip.biz:8002/</string>
++				<key>helper_uri</key><string></string>
++				<key>login_page</key><string>http://gianttest.no-ip.biz/GiantMap/loginscreen.php</string>
++			</map>
++			<map>
++				<key>name</key><string>newworldgrid.com</string>
++				<key>label</key><string>The New World Grid</string>
++				<key>login_uri</key><string>http://grid.newworldgrid.com:8002/</string>
++				<key>helper_uri</key><string></string>
++				<key>login_page</key><string>http://grid.newworldgrid.com:8002/?method=login</string>
++			</map>
++			<map>
++				<key>name</key><string>3rg.changeip.org</string>
++				<key>label</key><string>3rd Rock Grid</string>
++				<key>login_uri</key><string>http://3rg.changeip.org:8002/</string>
++				<key>helper_uri</key><string></string>
++				<key>login_page</key><string>http://www.3rdrockgrid.com/startpage.php</string>
++			</map>
++			<map>
++				<key>name</key><string>legendcityonline.com</string>
++				<key>label</key><string>Legend City Online</string>
++				<key>login_uri</key><string>http://login.legendcityonline.com:8002/</string>
++				<key>helper_uri</key><string>https://secure.legendcityonline.com/</string>
++				<key>login_page</key><string>http://www.legendcityonline.com/welcome.php</string>
++			</map>
++			<map>
++				<key>name</key><string>uvatar.com</string>
++				<key>label</key><string>Uvatar</string>
++				<key>login_uri</key><string>http://uvatar.com:8002/</string>
++				<key>helper_uri</key><string></string>
++				<key>login_page</key><string>http://www.uvatar.com/welcome/</string>
++			</map>
++			<map>
++				<key>name</key><string>gridsplash.com",</string>
++				<key>label</key><string>Grid Splash</string>
++				<key>login_uri</key><string>http://grid.gridsplash.com:8002/</string>
++				<key>helper_uri</key><string></string>
++			</map>
++			<map>
++				<key>name</key><string>wsterra.com</string>
++				<key>label</key><string>World Sim Terra</string>
++				<key>login_uri</key><string>http://wsterra.com:8002/</string>
++				<key>helper_uri</key><string>http://wsterra.com/</string>
++				<key>login_page</key><string>http://wsterra.com/log.php</string>
++			</map>
++			<map>
++				<key>name</key><string>cyberlandia.net",</string>
++				<key>label</key><string>Cyberlandia</string>
++				<key>login_uri</key><string>http://grid.cyberlandia.net:8002/</string>
++				<key>helper_uri</key><string></string>
++				<key>login_page</key><string>http://www.cyberlandia.net/loginscreen.php</string>
++			</map>
++			<map>
++				<key>name</key><string>tribalnet.se</string>
++				<key>label</key><string>Tribal Net</string>
++				<key>login_uri</key><string>http://login.tribalnet.se/</string>
++				<key>helper_uri</key><string></string>
++			</map>
++			<map>
++				<key>name</key><string>hypergrid.org</string>
++				<key>label</key><string>Metropolis</string>
++				<key>login_uri</key><string>http://hypergrid.org:8002/</string>
++				<key>helper_uri</key><string></string>
++				<key>login_page</key><string>http://metropolis.hypergrid.org/</string>
++			</map>
++			<map>
++				<key>name</key><string>augrid.org</string>
++				<key>label</key><string>AUGrid</string>
++				<key>login_uri</key><string>http://augrid.org:8002/</string>
++				<key>helper_uri</key><string>http://augrid.org/</string>
++				<key>login_page</key><string>http://augrid.org/loginscreen.php</string>
++			</map>
++			<map>
++				<key>name</key><string>avatarhangout.com</string>
++				<key>label</key><string>Avatar Hangout</string>
++				<key>login_uri</key><string>http://login.avatarhangout.com:8002/</string>
++				<key>helper_uri</key><string>http://avatarhangout.com/</string>
++				<key>login_page</key><string>http://www.avatarhangout.com/loginscreen.php</string>
++			</map>
++			<map>
++				<key>name</key><string>germangrid.eu</string>
++				<key>label</key><string>German Grid</string>
++				<key>login_uri</key><string>http://germangrid.eu:8002/</string>
++				<key>helper_uri</key><string>http://germangrid.eu/</string>
++				<key>login_page</key><string>http://germangrid.eu/loginscreen.php</string>
++			</map>
++			<map>
++				<key>name</key><string>dgpgrid.selfip.org</string>
++				<key>label</key><string>DGP Grid</string>
++				<key>login_uri</key><string>http://dgpgrid.selfip.org:8002/</string>
++				<key>helper_uri</key><string></string>
++			</map>
++			<map>
++				<key>name</key><string>lifesim.com.br</string>
++				<key>label</key><string>LifeSim</string>
++				<key>login_uri</key><string>http://216.40.235.66:8002/</string>
++				<key>helper_uri</key><string></string>
++			</map>
++			<map>
++				<key>name</key><string>fw-estates.com</string>
++				<key>label</key><string>Fantasy World Estates</string>
++				<key>login_uri</key><string>http://maingrid.fw-estates.com:8002/</string>
++				<key>helper_uri</key><string>http://grid006.fw-estates.com/</string>
++			</map>
++			<map>
++				<key>name</key><string>rmhdesignestate.com</string>
++				<key>label</key><string>RMH Design Estate</string>
++				<key>login_uri</key><string>http://maingrid.rmhdesignestate.com:8002/</string>
++				<key>helper_uri</key><string>http://grid006.rmhdesignestate.com/</string>
++			</map>
++			<map>
++				<key>name</key><string>gsquared.info</string>
++				<key>label</key><string>ReactionGrid</string>
++				<key>login_uri</key><string>http://gsquared.info:8008/</string>
++				<key>helper_uri</key><string></string>
++				<key>login_page</key><string>http://gsquared.info/portal/</string>
++			</map>
++			<map>
++				<key>name</key><string>afuturelife.com</string>
++				<key>label</key><string>A Future Life</string>
++				<key>login_uri</key><string>http://66.240.233.142/</string>
++				<key>helper_uri</key><string></string>
++				<key>login_page</key><string>http://www.afuturelife.com/</string>
++			</map>
++			<map>
++				<key>name</key><string>pseudospace.net</string>
++				<key>label</key><string>Pseudospace</string>
++				<key>login_uri</key><string>http://grid.pseudospace.net:8002/</string>
++				<key>helper_uri</key><string>http://www.pseudospace.net/</string>
++				<key>login_page</key><string>http://www.pseudospace.net/loginscreen.php</string>
++			</map>
++			<map>
++				<key>name</key><string>yourgrid.de</string>
++				<key>label</key><string>YourGrid</string>
++				<key>login_uri</key><string>http://yourgrid.de:8002/</string>
++				<key>helper_uri</key><string></string>
++				<key>login_page</key><string>http://yourgrid.de/interface/loginscreen.php</string>
++			</map>
++			<map>
++				<key>name</key><string>myopengrid.com</string>
++				<key>label</key><string>MyOpenGrid</string>
++				<key>login_uri</key><string>http://www.myopengrid.com:8002/</string>
++				<key>helper_uri</key><string>http://www.myopengrid.com/</string>
++				<key>login_page</key><string>http://www.myopengrid.com/loginscreen.php</string>
++			</map>
++			<map>
++				<key>name</key><string>phoenix-community.net</string>
++				<key>label</key><string>PhoenixSim</string>
++				<key>login_uri</key><string>http://ps.phoenix-community.net:8002/</string>
++				<key>helper_uri</key><string>http://ps.phoenix-community.net/os/</string>
++				<key>login_page</key><string>http://ps.phoenix-community.net/os/loginscreen.php</string>
++			</map>
++			<map>
++				<key>name</key><string>virtualsims.net</string>
++				<key>label</key><string>Virtual Sims</string>
++				<key>login_uri</key><string>http://virtualsims.net:8002/</string>
++				<key>helper_uri</key><string>http://66.71.246.212/</string>
++				<key>login_page</key><string>http://virtualsims.net/</string>
++			</map>
++			<map>
++				<key>name</key><string>grid4us.net</string>
++				<key>label</key><string>Grid4Us</string>
++				<key>login_uri</key><string>http://grid4us.net:8002/</string>
++				<key>helper_uri</key><string>http://grid4us.net/</string>
++				<key>login_page</key><string>http://grid4us.net/login.php</string>
++			</map>
++			<map>
++				<key>name</key><string>os.taf-jp.com</string>
++				<key>label</key><string>OpenKansai</string>
++				<key>login_uri</key><string>http://os.taf-jp.com:8002/</string>
++				<key>helper_uri</key><string></string>
++				<key>login_page</key><string>http://os.taf-jp.com/</string>
++			</map>
++			<map>
++				<key>name</key><string>2lifegrid.game-host.org</string>
++				<key>label</key><string>Schweiz</string>
++				<key>login_uri</key><string>http://2lifegrid.game-host.org:8002/</string>
++				<key>helper_uri</key><string></string>
++				<key>login_page</key><string>http://2lifegrid.game-host.org/loginscreen.php</string>
++			</map>
++			<map>
++				<key>name</key><string>dreamlandgrid.com</string>
++				<key>label</key><string>Dreamland Grid</string>
++				<key>login_uri</key><string>http://dreamlandgrid.com:8002/</string>
++				<key>helper_uri</key><string></string>
++				<key>login_page</key><string>http://www.dreamlandgrid.com/opensimwi/loginscreen.php</string>
++			</map>
++			<map>
++				<key>name</key><string>tiog.ath.cx</string>
++				<key>label</key><string>Your Alternative Life</string>
++				<key>login_uri</key><string>http://tiog.ath.cx:8002/</string>
++				<key>helper_uri</key><string>http://yal.ath.cx/tios/</string>
++			</map>
++			<map>
++				<key>name</key><string>sciencesim.com</string>
++				<key>label</key><string>ScienceSim</string>
++				<key>login_uri</key><string>http://island.sciencesim.com:8002/</string>
++				<key>helper_uri</key><string>http://sciencesim.com/scisim/</string>
++				<key>login_page</key><string>http://sciencesim.com/scisim/loginscreen.php</string>
++			</map>
++			<map>
++				<key>name</key><string>unica.it</string>
++				<key>label</key><string>Unica</string>
++				<key>login_uri</key><string>http://grid.unica.it:9000/</string>
++				<key>helper_uri</key><string></string>
++				<key>login_page</key><string>http://grid.unica.it/loginscreen.php</string>
++			</map>
++			<map>
++				<key>name</key><string>thegorgrid.com</string>
++				<key>label</key><string>The Gor Grid</string>
++				<key>login_uri</key><string>http://thegorgrid.com:8002/</string>
++				<key>helper_uri</key><string>http://thegorgrid.com/</string>
++				<key>login_page</key><string>http://thegorgrid.com/loginscreen.php</string>
++			</map>
++			<map>
++				<key>name</key><string>sim-linuxmain.org</string>
++				<key>label</key><string>Cuon Grid</string>
++				<key>login_uri</key><string>http://sim-linuxmain.org:8002/</string>
++				<key>helper_uri</key><string></string>
++			</map>
++			<map>
++				<key>name</key><string>artgridonline.com</string>
++				<key>label</key><string>ArtgridOnLine</string>
++				<key>login_uri</key><string>http://artgridonline.com:8002/</string>
++				<key>helper_uri</key><string></string>
++				<key>login_page</key><string>http://artgridonline.com/opensim/loginscreen.php</string>
++			</map>
++		</array>
++	</map>
++</llsd>
+diff -urN linden/indra/newview/app_settings/settings.xml linden-patched/indra/newview/app_settings/settings.xml
+--- linden/indra/newview/app_settings/settings.xml	2009-03-11 18:46:05.000000000 +0100
++++ linden-patched/indra/newview/app_settings/settings.xml	2009-03-14 15:26:17.000000000 +0100
+@@ -3587,7 +3587,7 @@
+       <key>Type</key>
+       <string>Boolean</string>
+       <key>Value</key>
+-      <integer>0</integer>
++      <integer>1</integer>
+     </map>
+     <key>ForceMandatoryUpdate</key>
+     <map>
+diff -urN linden/indra/newview/CMakeLists.txt linden-patched/indra/newview/CMakeLists.txt
+--- linden/indra/newview/CMakeLists.txt	2009-03-11 18:46:00.000000000 +0100
++++ linden-patched/indra/newview/CMakeLists.txt	2009-03-14 15:23:20.000000000 +0100
+@@ -1207,6 +1207,7 @@
+     app_settings/anim.ini
+     app_settings/cmd_line.xml
+     app_settings/grass.xml
++    app_settings/grids.xml
+     app_settings/high_graphics.xml
+     app_settings/keys.ini
+     app_settings/keywords.ini
+diff -urN linden/indra/newview/llappviewer.cpp linden-patched/indra/newview/llappviewer.cpp
+--- linden/indra/newview/llappviewer.cpp	2009-03-11 18:46:04.000000000 +0100
++++ linden-patched/indra/newview/llappviewer.cpp	2009-03-14 15:23:20.000000000 +0100
+@@ -467,7 +467,7 @@
+ 	if(grid_choice.empty())
+ 	{
+ 		S32	server = gSavedSettings.getS32("ServerChoice");
+-		server = llclamp(server, 0,	(S32)GRID_INFO_COUNT - 1);
++		//server = llclamp(server, 0,	(S32)GRID_INFO_COUNT - 1);
+ 		if(server == GRID_INFO_OTHER)
+ 		{
+ 			std::string custom_server = gSavedSettings.getString("CustomServer");
+@@ -475,7 +475,7 @@
+ 		}
+ 		else if(server != (S32)GRID_INFO_NONE)
+ 		{
+-			LLViewerLogin::getInstance()->setGridChoice((EGridInfo)server);
++			LLViewerLogin::getInstance()->setGridChoice(server);
+ 		}
+ 	}
+ }
+diff -urN linden/indra/newview/llpanellogin.cpp linden-patched/indra/newview/llpanellogin.cpp
+--- linden/indra/newview/llpanellogin.cpp	2009-03-11 18:46:02.000000000 +0100
++++ linden-patched/indra/newview/llpanellogin.cpp	2009-03-14 15:23:20.000000000 +0100
+@@ -131,96 +131,9 @@
+ 	mWebLoginKey = queryMap["web_login_key"].asUUID();
+ 	mFirstName = queryMap["first_name"].asString();
+ 	mLastName = queryMap["last_name"].asString();
+-	
+-	EGridInfo grid_choice = GRID_INFO_NONE;
+-	if (queryMap["grid"].asString() == "aditi")
+-	{
+-		grid_choice = GRID_INFO_ADITI;
+-	}
+-	else if (queryMap["grid"].asString() == "agni")
+-	{
+-		grid_choice = GRID_INFO_AGNI;
+-	}
+-	else if (queryMap["grid"].asString() == "siva")
+-	{
+-		grid_choice = GRID_INFO_SIVA;
+-	}
+-	else if (queryMap["grid"].asString() == "damballah")
+-	{
+-		grid_choice = GRID_INFO_DAMBALLAH;
+-	}
+-	else if (queryMap["grid"].asString() == "durga")
+-	{
+-		grid_choice = GRID_INFO_DURGA;
+-	}
+-	else if (queryMap["grid"].asString() == "shakti")
+-	{
+-		grid_choice = GRID_INFO_SHAKTI;
+-	}
+-	else if (queryMap["grid"].asString() == "soma")
+-	{
+-		grid_choice = GRID_INFO_SOMA;
+-	}
+-	else if (queryMap["grid"].asString() == "ganga")
+-	{
+-		grid_choice = GRID_INFO_GANGA;
+-	}
+-	else if (queryMap["grid"].asString() == "vaak")
+-	{
+-		grid_choice = GRID_INFO_VAAK;
+-	}
+-	else if (queryMap["grid"].asString() == "uma")
+-	{
+-		grid_choice = GRID_INFO_UMA;
+-	}
+-	else if (queryMap["grid"].asString() == "mohini")
+-	{
+-		grid_choice = GRID_INFO_MOHINI;
+-	}
+-	else if (queryMap["grid"].asString() == "yami")
+-	{
+-		grid_choice = GRID_INFO_YAMI;
+-	}
+-	else if (queryMap["grid"].asString() == "nandi")
+-	{
+-		grid_choice = GRID_INFO_NANDI;
+-	}
+-	else if (queryMap["grid"].asString() == "mitra")
+-	{
+-		grid_choice = GRID_INFO_MITRA;
+-	}
+-	else if (queryMap["grid"].asString() == "radha")
+-	{
+-		grid_choice = GRID_INFO_RADHA;
+-	}
+-	else if (queryMap["grid"].asString() == "ravi")
+-	{
+-		grid_choice = GRID_INFO_RAVI;
+-	}
+-	else if (queryMap["grid"].asString() == "aruna")
+-	{
+-		grid_choice = GRID_INFO_ARUNA;
+-	}
+-	else if (queryMap["grid"].asString() == "bharati")
+-	{
+-		grid_choice = GRID_INFO_BHARATI;
+-	}
+-	else if (queryMap["grid"].asString() == "chandra")
+-	{
+-		grid_choice = GRID_INFO_CHANDRA;
+-	}
+-	else if (queryMap["grid"].asString() == "danu")
+-	{
+-		grid_choice = GRID_INFO_DANU;
+-	}
+-	else if (queryMap["grid"].asString() == "parvati")
+-	{
+-		grid_choice = GRID_INFO_PARVATI;
+-	}
+-	else if (queryMap["grid"].asString() == "skanda")
+-	{
+-		grid_choice = GRID_INFO_SKANDA;
+-	}
++	int grid_choice = GRID_INFO_NONE;
++
++	LLViewerLogin::getInstance()->setGridChoice(queryMap["grid"].asString());
+ 
+ 	if(grid_choice != GRID_INFO_NONE)
+ 	{
+@@ -909,7 +822,11 @@
+ 	
+ 	std::ostringstream oStr;
+ 
+-	std::string login_page = gSavedSettings.getString("LoginPage");
++	std::string login_page = LLViewerLogin::getInstance()->getGridPage();
++	if (login_page.empty())
++	{
++		login_page = gSavedSettings.getString("LoginPage");
++	}
+ 	if (login_page.empty())
+ 	{
+ 		login_page = sInstance->getString( "real_url" );
+@@ -949,10 +866,19 @@
+ 
+ 	// Grid
+ 	char* curl_grid = curl_escape(LLViewerLogin::getInstance()->getGridLabel().c_str(), 0);
++	if (strcmp(curl_grid, "SecondLife") == 0)
++	{
++		strcpy(curl_grid, "agni");
++	}
++	else if (strcmp(curl_grid, "SecondLife%20Beta") == 0)
++	{
++		strcpy(curl_grid, "aditi");
++	}
+ 	oStr << "&grid=" << curl_grid;
+ 	curl_free(curl_grid);
+ 
+ 	gViewerWindow->setMenuBackgroundColor(false, !LLViewerLogin::getInstance()->isInProductionGrid());
++	LLViewerLogin::getInstance()->setMenuColor();
+ 	gLoginMenuBarView->setBackgroundColor(gMenuBarView->getBackgroundColor());
+ 
+ 
+@@ -1195,13 +1121,22 @@
+ 	vl->resetURIs();
+ 	if(grid_index != GRID_INFO_OTHER)
+ 	{
+-		vl->setGridChoice((EGridInfo)grid_index);
++		vl->setGridChoice(grid_index);
+ 	}
+ 	else
+ 	{
+ 		vl->setGridChoice(grid_label);
+ 	}
+ 
++	// clear the password if we are switching grids so we don't send
++	// the wrong pass to the wrong grid.
++	if (sInstance)
++	{
++		// no method to clear a text box?
++		const std::string nothing("");
++		sInstance->childSetText("password_edit", nothing);		
++	}	
++	
+ 	// grid changed so show new splash screen (possibly)
+ 	loadLoginPage();
+ }
+diff -urN linden/indra/newview/llstartup.cpp linden-patched/indra/newview/llstartup.cpp
+--- linden/indra/newview/llstartup.cpp	2009-03-11 18:46:05.000000000 +0100
++++ linden-patched/indra/newview/llstartup.cpp	2009-03-14 15:23:20.000000000 +0100
+@@ -2528,9 +2528,9 @@
+ 	LLPanelLogin::addServer(LLViewerLogin::getInstance()->getGridLabel(), LLViewerLogin::getInstance()->getGridChoice());
+ 
+ 	LLViewerLogin* vl = LLViewerLogin::getInstance();
+-	for(int grid_index = GRID_INFO_ADITI; grid_index < GRID_INFO_OTHER; ++grid_index)
++	for (int grid_index = 1; grid_index < GRID_INFO_OTHER; ++grid_index)
+ 	{
+-		LLPanelLogin::addServer(vl->getKnownGridLabel((EGridInfo)grid_index), grid_index);
++		LLPanelLogin::addServer(vl->getKnownGridLabel(grid_index).c_str(), grid_index);
+ 	}
+ }
+ 
+diff -urN linden/indra/newview/llviewernetwork.cpp linden-patched/indra/newview/llviewernetwork.cpp
+--- linden/indra/newview/llviewernetwork.cpp	2009-03-11 18:46:05.000000000 +0100
++++ linden-patched/indra/newview/llviewernetwork.cpp	2009-03-14 15:23:20.000000000 +0100
+@@ -34,152 +34,144 @@
+ 
+ #include "llviewernetwork.h"
+ #include "llviewercontrol.h"
++#include "llsd.h"
++#include "llsdserialize.h"
++#include "llviewermenu.h"
+ 
+-struct LLGridData
+-{
+-	const char* mLabel;
+-	const char* mName;
+-	const char* mLoginURI;
+-	const char* mHelperURI;
+-};
+-
+-static LLGridData gGridInfo[GRID_INFO_COUNT] = 
+-{
+-	{ "None", "", "", ""},
+-	{ "Aditi", 
+-	  "util.aditi.lindenlab.com", 
+-	  "https://login.aditi.lindenlab.com/cgi-bin/login.cgi",
+-	  "http://aditi-secondlife.webdev.lindenlab.com/helpers/" },
+-	{ "Agni", 
+-	  "util.agni.lindenlab.com", 
+-	  "https://login.agni.lindenlab.com/cgi-bin/login.cgi",
+-	  "https://secondlife.com/helpers/" },
+-	{ "Aruna",
+-	  "util.aruna.lindenlab.com",
+-	  "https://login.aruna.lindenlab.com/cgi-bin/login.cgi",
+-	  "http://aruna-secondlife.webdev.lindenlab.com/helpers/" },
+-	{ "Bharati",
+-	  "util.bharati.lindenlab.com",
+-	  "https://login.bharati.lindenlab.com/cgi-bin/login.cgi",
+-	  "http://bharati-secondlife.webdev.lindenlab.com/helpers/" },
+-	{ "Chandra",
+-	  "util.chandra.lindenlab.com",
+-	  "https://login.chandra.lindenlab.com/cgi-bin/login.cgi",
+-	  "http://chandra-secondlife.webdev.lindenlab.com/helpers/" },
+-	{ "Damballah",
+-	  "util.damballah.lindenlab.com",
+-	  "https://login.damballah.lindenlab.com/cgi-bin/login.cgi",
+-	  "http://damballah-secondlife.webdev.lindenlab.com/helpers/" },
+-	{ "Danu",
+-	  "util.danu.lindenlab.com",
+-	  "https://login.danu.lindenlab.com/cgi-bin/login.cgi",
+-	  "http://danu-secondlife.webdev.lindenlab.com/helpers/" },
+-	{ "Durga",
+-	  "util.durga.lindenlab.com",
+-	  "https://login.durga.lindenlab.com/cgi-bin/login.cgi",
+-	  "http://durga-secondlife.webdev.lindenlab.com/helpers/" },
+-	{ "Ganga",
+-	  "util.ganga.lindenlab.com",
+-	  "https://login.ganga.lindenlab.com/cgi-bin/login.cgi",
+-	  "http://ganga-secondlife.webdev.lindenlab.com/helpers/" },
+-	{ "Mitra",
+-	  "util.mitra.lindenlab.com",
+-	  "https://login.mitra.lindenlab.com/cgi-bin/login.cgi",
+-	  "http://mitra-secondlife.webdev.lindenlab.com/helpers/" },
+-	{ "Mohini",
+-	  "util.mohini.lindenlab.com",
+-	  "https://login.mohini.lindenlab.com/cgi-bin/login.cgi",
+-	  "http://mohini-secondlife.webdev.lindenlab.com/helpers/" },
+-  	{ "Nandi",
+-	  "util.nandi.lindenlab.com",
+-	  "https://login.nandi.lindenlab.com/cgi-bin/login.cgi",
+-	  "http://nandi-secondlife.webdev.lindenlab.com/helpers/" },
+-	{ "Parvati",
+-	  "util.parvati.lindenlab.com",
+-	  "https://login.parvati.lindenlab.com/cgi-bin/login.cgi",
+-	  "http://parvati-secondlife.webdev.lindenlab.com/helpers/" },
+-	{ "Radha",
+-	  "util.radha.lindenlab.com",
+-	  "https://login.radha.lindenlab.com/cgi-bin/login.cgi",
+-	  "http://radha-secondlife.webdev.lindenlab.com/helpers/" },
+-	{ "Ravi",
+-	  "util.ravi.lindenlab.com",
+-	  "https://login.ravi.lindenlab.com/cgi-bin/login.cgi",
+-	  "http://ravi-secondlife.webdev.lindenlab.com/helpers/" },
+-	{ "Siva", 
+-	  "util.siva.lindenlab.com",
+-	  "https://login.siva.lindenlab.com/cgi-bin/login.cgi",
+-	  "http://siva-secondlife.webdev.lindenlab.com/helpers/" },
+-	{ "Shakti",
+-	  "util.shakti.lindenlab.com",
+-	  "https://login.shakti.lindenlab.com/cgi-bin/login.cgi",
+-	  "http://shakti-secondlife.webdev.lindenlab.com/helpers/" },
+-	{ "Skanda",
+-	  "util.skanda.lindenlab.com",
+-	  "https://login.skanda.lindenlab.com/cgi-bin/login.cgi",
+-	  "http://skanda-secondlife.webdev.lindenlab.com/helpers/" },
+-	{ "Soma",
+-	  "util.soma.lindenlab.com",
+-	  "https://login.soma.lindenlab.com/cgi-bin/login.cgi",
+-	  "http://soma-secondlife.webdev.lindenlab.com/helpers/" },
+-	{ "Uma",
+-	  "util.uma.lindenlab.com",
+-	  "https://login.uma.lindenlab.com/cgi-bin/login.cgi",
+-	  "http://uma-secondlife.webdev.lindenlab.com/helpers/" },
+-	{ "Vaak",
+-	  "util.vaak.lindenlab.com",
+-	  "https://login.vaak.lindenlab.com/cgi-bin/login.cgi",
+-	  "http://vaak-secondlife.webdev.lindenlab.com/helpers/" },
+-	{ "Yami",
+-	  "util.yami.lindenlab.com",
+-	  "https://login.yami.lindenlab.com/cgi-bin/login.cgi",
+-	  "http://yami-secondlife.webdev.lindenlab.com/helpers/" },
+-	{ "Local", 
+-	  "localhost", 
+-	  "https://login.dmz.lindenlab.com/cgi-bin/login.cgi",
+-	  "" },
+-	{ "Other", 
+-	  "", 
+-	  "https://login.dmz.lindenlab.com/cgi-bin/login.cgi",
+-	  "" }
+-};
+-
+-const EGridInfo DEFAULT_GRID_CHOICE = GRID_INFO_AGNI;
++const int DEFAULT_GRID_CHOICE = 1;
+ 
++const int GRID_INFO_NONE = 0;
++int GRID_INFO_OTHER;
+ 
+ unsigned char gMACAddress[MAC_ADDRESS_BYTES];		/* Flawfinder: ignore */
+ 
+ LLViewerLogin::LLViewerLogin() :
+ 	mGridChoice(DEFAULT_GRID_CHOICE)
+ {
++	LLSD array = mGridList.emptyArray();
++	LLSD entry = mGridList.emptyMap();
++	entry.insert("label", "None");
++	entry.insert("name", "");
++	entry.insert("login_uri", "");
++	entry.insert("helper_uri", "");
++	entry.insert("login_page", "");
++	array.append(entry);
++
++	entry = mGridList.emptyMap();
++	entry.insert("label", "SecondLife");
++	entry.insert("name", "util.agni.lindenlab.com");
++	entry.insert("login_uri", "https://login.agni.lindenlab.com/cgi-bin/login.cgi");
++	entry.insert("helper_uri", "https://secondlife.com/helpers/");
++	entry.insert("login_page", "http://secondlife.com/app/login/");
++	array.append(entry);
++
++	mGridList.insert("grids", array);
++
++	// load the linden grids if available
++	loadGridsLLSD(gDirUtilp->getExpandedFilename(LL_PATH_APP_SETTINGS,"grids.xml"));
++	// see if we have a grids.xml file in "user_settings" to append
++	loadGridsLLSD(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS,"grids.xml"));
++
++	entry = mGridList.emptyMap();
++	entry.insert("label", "Other");
++	entry.insert("name", "");
++	entry.insert("login_uri", "");
++	entry.insert("helper_uri", "");
++	mGridList["grids"].append(entry);
++
++	GRID_INFO_OTHER = mGridList.get("grids").size() - 1;
+ }
+ 
+-void LLViewerLogin::setGridChoice(EGridInfo grid)
+-{	
+-	if(grid < 0 || grid >= GRID_INFO_COUNT)
++void LLViewerLogin::loadGridsLLSD(std::string xml_filename)
++{
++	LLSD other_grids;
++	llifstream llsd_xml;
++	llsd_xml.open(xml_filename.c_str(), std::ios::in | std::ios::binary);
++
++	if (llsd_xml.is_open())
++	{
++		llinfos << "Reading grid info: " << xml_filename << llendl;
++		LLSDSerialize::fromXML(other_grids, llsd_xml);
++		for (LLSD::map_iterator grid_itr = other_grids.beginMap(); 
++			grid_itr != other_grids.endMap(); ++grid_itr)
++		{
++			LLSD::String key_name = grid_itr->first;
++			LLSD grid_array = grid_itr->second;
++			llinfos << "reading: " << key_name << llendl;
++			if (grid_array.isArray())
++			{
++				for (int i = 0; i < grid_array.size(); i++)
++				{
++					LLSD gmap = grid_array[i];
++					if (gmap.has("name") && gmap.has("label") && 
++						gmap.has("login_uri") && gmap.has("helper_uri"))
++					{
++						mGridList["grids"].append(gmap);
++						llinfos << "Added grid: " << gmap.get("name") << llendl;
++					}
++					else
++					{
++						if (gmap.has("name"))
++						{
++							llwarns << "Incomplete grid definition: " << gmap.get("name") << llendl;													
++						}
++						else
++						{
++							llwarns << "Incomplete grid definition: no name specified" << llendl;					
++						}
++					}
++				}
++			}
++			else
++			{
++				llwarns << "\"grids\" is not an array" << llendl;										
++			}
++		}
++		llsd_xml.close();
++	}	
++}
++
++void LLViewerLogin::setMenuColor() const
++{
++	if (mGridList["grids"][mGridChoice].has("menu_color"))
+ 	{
+-		llerrs << "Invalid grid index specified." << llendl;
++		std::string colorName = mGridList["grids"][mGridChoice].get("menu_color").asString();
++		LLColor4 color4;
++		LLColor4::parseColor(colorName.c_str(), &color4);
++		if (color4 != LLColor4::black)
++		{
++			gMenuBarView->setBackgroundColor(color4);			
++		}
+ 	}
++}
++
++void LLViewerLogin::setGridChoice(int grid)
++{	
++	if (grid < 0 || grid >= mGridList.get("grids").size())
++  	{
++		llwarns << "Invalid grid index specified." << llendl;
++		grid = DEFAULT_GRID_CHOICE;
++  	}
+ 
+-	if(mGridChoice != grid || gSavedSettings.getS32("ServerChoice") != grid)
++	if (mGridChoice != grid || gSavedSettings.getS32("ServerChoice") != grid)
+ 	{
+ 		mGridChoice = grid;
+-		if(GRID_INFO_LOCAL == mGridChoice)
++		if (mGridList.get("grids")[mGridChoice].get("label").asString() == "Local")
+ 		{
+ 			mGridName = LOOPBACK_ADDRESS_STRING;
+ 		}
+-		else if(GRID_INFO_OTHER == mGridChoice)
++		else if (mGridList.get("grids")[mGridChoice].get("label").asString() == "Other")
+ 		{
+ 			// *FIX:Mani - could this possibly be valid?
+-			mGridName = "other"; 
++			mGridName = "other";
+ 		}
+ 		else
+ 		{
+-			mGridName = gGridInfo[mGridChoice].mLabel;
++			mGridName = mGridList.get("grids")[mGridChoice].get("label").asString();
+ 		}
+ 
+-		gSavedSettings.setS32("ServerChoice", mGridChoice);
+-		gSavedSettings.setString("CustomServer", "");
++  		gSavedSettings.setS32("ServerChoice", mGridChoice);
++		gSavedSettings.setString("CustomServer", mGridName);
+ 	}
+ }
+ 
+@@ -189,29 +181,29 @@
+ 	// The string can be:
+ 	// - a grid label from the gGridInfo table 
+ 	// - an ip address
+-    if(!grid_name.empty())
+-    {
+-        // find the grid choice from the user setting.
+-        int grid_index = GRID_INFO_NONE; 
+-        for(;grid_index < GRID_INFO_OTHER; ++grid_index)
+-        {
+-            if(0 == LLStringUtil::compareInsensitive(gGridInfo[grid_index].mLabel, grid_name))
+-            {
++	if (!grid_name.empty())
++	{
++		// find the grid choice from the user setting.
++		int grid_index = GRID_INFO_NONE; 
++		for (;grid_index < mGridList["grids"].size(); ++grid_index)
++		{
++			if (mGridList["grids"][grid_index].get("label").asString() == grid_name.c_str())
++			{
+ 				// Founding a matching label in the list...
+-				setGridChoice((EGridInfo)grid_index);
++				setGridChoice(grid_index);
+ 				break;
+-            }
+-        }
++			}
++		}
+ 
+-        if(GRID_INFO_OTHER == grid_index)
+-        {
+-            // *FIX:MEP Can and should we validate that this is an IP address?
+-            mGridChoice = GRID_INFO_OTHER;
+-            mGridName = grid_name;
++		if (GRID_INFO_OTHER == grid_index)
++		{
++			// *FIX:MEP Can and should we validate that this is an IP address?
++			mGridChoice = GRID_INFO_OTHER;
++			mGridName = grid_name;
+ 			gSavedSettings.setS32("ServerChoice", mGridChoice);
+ 			gSavedSettings.setString("CustomServer", mGridName);
+-        }
+-    }
++		}
++	}
+ }
+ 
+ void LLViewerLogin::resetURIs()
+@@ -221,7 +213,7 @@
+ 	gSavedSettings.setString("CmdLineHelperURI", "");
+ }
+ 
+-EGridInfo LLViewerLogin::getGridChoice() const
++int LLViewerLogin::getGridChoice() const
+ {
+ 	return mGridChoice;
+ }
+@@ -234,19 +226,33 @@
+ 	}
+ 	else if(mGridChoice < GRID_INFO_OTHER)
+ 	{
+-		return gGridInfo[mGridChoice].mLabel;
++		return mGridList["grids"][mGridChoice].get("label").asString();
+ 	}
+ 
+ 	return mGridName;
+ }
+ 
+-std::string LLViewerLogin::getKnownGridLabel(EGridInfo grid_index) const
++std::string LLViewerLogin::getGridPage() const
++{
++	if (mGridChoice == GRID_INFO_NONE)
++	{
++		return "";
++	}
++	else if (mGridChoice < GRID_INFO_OTHER)
++	{
++		return mGridList["grids"][mGridChoice].get("login_page").asString();
++	}
++
++	return "";
++}
++
++std::string LLViewerLogin::getKnownGridLabel(int grid_index) const
+ {
+ 	if(grid_index > GRID_INFO_NONE && grid_index < GRID_INFO_OTHER)
+ 	{
+-		return gGridInfo[grid_index].mLabel;
++		return mGridList.get("grids")[grid_index].get("label").asString();
+ 	}
+-	return gGridInfo[GRID_INFO_NONE].mLabel;
++	return mGridList.get("grids")[GRID_INFO_NONE].get("label").asString();
+ }
+ 
+ void LLViewerLogin::getLoginURIs(std::vector<std::string>& uris) const
+@@ -285,7 +291,7 @@
+ 		// else try the grid name.
+ 		if(mGridChoice > GRID_INFO_NONE && mGridChoice < GRID_INFO_OTHER)
+ 		{
+-			uris.push_back(gGridInfo[mGridChoice].mLoginURI);
++			uris.push_back(mGridList["grids"][mGridChoice].get("login_uri").asString());
+ 		}
+ 		else
+ 		{
+@@ -302,7 +308,7 @@
+ 		// grab URI from selected grid
+ 		if(mGridChoice > GRID_INFO_NONE && mGridChoice < GRID_INFO_OTHER)
+ 		{
+-			helper_uri = gGridInfo[mGridChoice].mHelperURI;
++			helper_uri = mGridList["grids"][mGridChoice].get("helper_uri").asString();
+ 		}
+ 
+ 		if (helper_uri.empty())
+@@ -316,12 +322,10 @@
+ 
+ bool LLViewerLogin::isInProductionGrid()
+ {
+-	// *NOTE:Mani This used to compare GRID_INFO_AGNI to gGridChoice,
+-	// but it seems that loginURI trumps that.
+ 	std::vector<std::string> uris;
+ 	getLoginURIs(uris);
+ 	LLStringUtil::toLower(uris[0]);
+-	if((uris[0].find("agni") != std::string::npos))
++	if((uris[0].find("aditi") == std::string::npos))
+ 	{
+ 		return true;
+ 	}
+diff -urN linden/indra/newview/llviewernetwork.h linden-patched/indra/newview/llviewernetwork.h
+--- linden/indra/newview/llviewernetwork.h	2009-03-11 18:46:01.000000000 +0100
++++ linden-patched/indra/newview/llviewernetwork.h	2009-03-14 15:23:20.000000000 +0100
+@@ -34,36 +34,10 @@
+ #define LL_LLVIEWERNETWORK_H
+ 
+ class LLHost;
++class LLSD;
+ 
+-enum EGridInfo
+-{
+-	GRID_INFO_NONE,
+-	GRID_INFO_ADITI,
+-	GRID_INFO_AGNI,
+-	GRID_INFO_ARUNA,
+-	GRID_INFO_BHARATI,
+-	GRID_INFO_CHANDRA,
+-	GRID_INFO_DAMBALLAH,
+-	GRID_INFO_DANU,
+-	GRID_INFO_DURGA,
+-	GRID_INFO_GANGA,
+-	GRID_INFO_MITRA,
+-	GRID_INFO_MOHINI,
+-	GRID_INFO_NANDI,
+-	GRID_INFO_PARVATI,
+-	GRID_INFO_RADHA,
+-	GRID_INFO_RAVI,
+-	GRID_INFO_SIVA,
+-	GRID_INFO_SHAKTI,
+-	GRID_INFO_SKANDA,
+-	GRID_INFO_SOMA,
+-	GRID_INFO_UMA,
+-	GRID_INFO_VAAK,
+-	GRID_INFO_YAMI,
+-	GRID_INFO_LOCAL,
+-	GRID_INFO_OTHER, // IP address set via command line option
+-	GRID_INFO_COUNT
+-};
++extern const int GRID_INFO_NONE;
++extern int GRID_INFO_OTHER;
+ 
+ /**
+  * @brief A class to manage the viewer's login state.
+@@ -74,7 +48,7 @@
+ public:
+ 	LLViewerLogin();
+ 
+-	void setGridChoice(EGridInfo grid);
++	void setGridChoice(const int grid);
+ 	void setGridChoice(const std::string& grid_name);
+ 	void resetURIs();
+ 
+@@ -82,26 +56,34 @@
+ 	* @brief Get the enumeration of the grid choice.
+ 	* Should only return values > 0 && < GRID_INFO_COUNT
+ 	**/
+-	EGridInfo getGridChoice() const;
++	int getGridChoice() const;
+ 
++	int getGridCount() const { return mGridList.size(); }
++	
+ 	/**
+ 	* @brief Get a readable label for the grid choice.
+ 	* Returns the readable name for the grid choice. 
+ 	* If the grid is 'other', returns something
+ 	* the string used to specifiy the grid.
+ 	**/
+-	std::string getGridLabel() const; 
++	std::string getGridLabel() const;
++	std::string getGridPage() const;
+ 
+-	std::string getKnownGridLabel(EGridInfo grid_index) const; 
++	std::string getKnownGridLabel(const int grid_index) const;
+ 
+ 	void getLoginURIs(std::vector<std::string>& uris) const;
+ 	std::string getHelperURI() const;
+ 
+ 	bool isInProductionGrid();
+ 
++	void setMenuColor() const;
++	
++	void loadGridsLLSD( std::string filename );
++	
+ private:
+-	EGridInfo mGridChoice;
++	int mGridChoice;
+ 	std::string mGridName;
++	LLSD mGridList;
+ };
+ 
+ const S32 MAC_ADDRESS_BYTES = 6;

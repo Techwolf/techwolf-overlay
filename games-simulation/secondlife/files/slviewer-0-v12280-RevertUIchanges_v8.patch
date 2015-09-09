@@ -1,0 +1,4909 @@
+diff -urN linden/indra/newview/app_settings/settings.xml linden-patched/indra/newview/app_settings/settings.xml
+--- linden/indra/newview/app_settings/settings.xml	2009-02-05 18:15:20.000000000 +0100
++++ linden-patched/indra/newview/app_settings/settings.xml	2009-02-05 23:55:11.000000000 +0100
+@@ -904,7 +904,7 @@
+       <key>Type</key>
+       <string>S32</string>
+       <key>Value</key>
+-      <integer>8</integer>
++      <integer>10</integer>
+     </map>
+     <key>ButtonFlashRate</key>
+     <map>
+@@ -915,7 +915,7 @@
+       <key>Type</key>
+       <string>F32</string>
+       <key>Value</key>
+-      <real>1.25</real>
++      <real>2.0</real>
+     </map>
+     <key>ButtonHPad</key>
+     <map>
+@@ -1105,6 +1105,17 @@
+       <key>Value</key>
+       <integer>1</integer>
+     </map>
++    <key>DisableMessagesSpacing</key>
++    <map>
++      <key>Comment</key>
++      <string>Set to TRUE to disable messages spacing in chat console</string>
++      <key>Persist</key>
++      <integer>1</integer>
++      <key>Type</key>
++      <string>Boolean</string>
++      <key>Value</key>
++      <integer>1</integer>
++    </map>
+     <key>ChatFullWidth</key>
+     <map>
+       <key>Comment</key>
+@@ -1125,7 +1136,7 @@
+       <key>Type</key>
+       <string>Boolean</string>
+       <key>Value</key>
+-      <integer>0</integer>
++      <integer>1</integer>
+     </map>
+     <key>ChatOnlineNotification</key>
+     <map>
+@@ -1147,7 +1158,7 @@
+       <key>Type</key>
+       <string>F32</string>
+       <key>Value</key>
+-      <real>20.0</real>
++      <real>15.0</real>
+     </map>
+     <key>ChatShowTimestamps</key>
+     <map>
+@@ -1869,7 +1880,7 @@
+       <key>Type</key>
+       <string>F32</string>
+       <key>Value</key>
+-      <real>0.700</real>
++      <real>0.400</real>
+     </map>
+     <key>ConsoleBufferSize</key>
+     <map>
+@@ -1893,17 +1904,6 @@
+       <key>Value</key>
+       <integer>40</integer>
+     </map>
+-    <key>ContactsTornOff</key>
+-    <map>
+-      <key>Comment</key>
+-      <string>Show contacts window separately from Communicate window.</string>
+-      <key>Persist</key>
+-      <integer>1</integer>
+-      <key>Type</key>
+-      <string>Boolean</string>
+-      <key>Value</key>
+-      <integer>0</integer>
+-    </map>
+     <key>CookiesEnabled</key>
+     <map>
+       <key>Comment</key>
+@@ -2862,6 +2862,22 @@
+         <integer>0</integer>
+       </array>
+     </map>
++    <key>FloaterGroupsRect</key>
++    <map>
++      <key>Comment</key>
++      <string>Rectangle for groups window"</string>
++      <key>Persist</key>
++      <integer>1</integer>
++      <key>Type</key>
++      <string>Rect</string>
++      <key>Value</key>
++      <array>
++        <integer>0</integer>
++        <integer>300</integer>
++        <integer>275</integer>
++        <integer>0</integer>
++      </array>
++    </map>
+     <key>FloaterGestureRect2</key>
+     <map>
+       <key>Comment</key>
+@@ -4227,7 +4243,7 @@
+         <key>Type</key>
+             <string>Boolean</string>
+         <key>Value</key>
+-            <integer>1</integer>
++            <integer>0</integer>
+         </map>
+     <key>LastFeatureVersion</key>
+     <map>
+@@ -7109,7 +7125,7 @@
+         <key>Type</key>
+             <string>Boolean</string>
+         <key>Value</key>
+-            <integer>1</integer>
++            <integer>0</integer>
+         </map>
+     <key>ShowObjectUpdates</key>
+     <map>
+@@ -7175,7 +7191,7 @@
+       <key>Type</key>
+       <string>Boolean</string>
+       <key>Value</key>
+-      <integer>1</integer>
++      <integer>0</integer>
+     </map>
+     <key>ShowSelectionBeam</key>
+     <map>
+@@ -10371,5 +10387,82 @@
+       <key>Value</key>
+       <integer>0</integer>
+     </map>
++    <key>HideMasterRemote</key>
++    <map>
++      <key>Comment</key>
++      <string>Hide the Master Remote control when useless</string>
++      <key>Persist</key>
++      <integer>1</integer>
++      <key>Type</key>
++      <string>Boolean</string>
++      <key>Value</key>
++      <integer>1</integer>
++    </map>
++    <key>ShowGroupsButton</key>
++    <map>
++      <key>Comment</key>
++      <string>Show the Groups button in the toolbar (requires a restart)</string>
++      <key>Persist</key>
++      <integer>1</integer>
++      <key>Type</key>
++      <string>Boolean</string>
++      <key>Value</key>
++      <integer>1</integer>
++    </map>
++    <key>UseOldChatHistory</key>
++    <map>
++      <key>Comment</key>
++      <string>Use the old style 'Chat history' window instead of the new 'Local chat' window (requires a restart).</string>
++      <key>Persist</key>
++      <integer>1</integer>
++      <key>Type</key>
++      <string>Boolean</string>
++      <key>Value</key>
++      <integer>1</integer>
++    </map>
++    <key>UseOldStatusBarIcons</key>
++    <map>
++      <key>Comment</key>
++      <string>Use the old style, more readable icons in the status bar (requires a restart).</string>
++      <key>Persist</key>
++      <integer>1</integer>
++      <key>Type</key>
++      <string>Boolean</string>
++      <key>Value</key>
++      <integer>1</integer>
++    </map>
++    <key>ShowFriends</key>
++    <map>
++      <key>Comment</key>
++      <string />
++      <key>Persist</key>
++      <integer>0</integer>
++      <key>Type</key>
++      <string>Boolean</string>
++      <key>Value</key>
++      <integer>0</integer>
++    </map>
++    <key>ShowGroups</key>
++    <map>
++      <key>Comment</key>
++      <string />
++      <key>Persist</key>
++      <integer>0</integer>
++      <key>Type</key>
++      <string>Boolean</string>
++      <key>Value</key>
++      <integer>0</integer>
++    </map>
++    <key>ShowAudioVolume</key>
++    <map>
++      <key>Comment</key>
++      <string />
++      <key>Persist</key>
++      <integer>0</integer>
++      <key>Type</key>
++      <string>Boolean</string>
++      <key>Value</key>
++      <integer>0</integer>
++    </map>
+   </map>
+ </llsd>
+diff -urN linden/indra/newview/llchatbar.cpp linden-patched/indra/newview/llchatbar.cpp
+--- linden/indra/newview/llchatbar.cpp	2009-02-05 18:15:17.000000000 +0100
++++ linden-patched/indra/newview/llchatbar.cpp	2009-02-05 23:55:11.000000000 +0100
+@@ -95,20 +95,46 @@
+ // Functions
+ //
+ 
+-LLChatBar::LLChatBar() 
+-:	LLPanel(LLStringUtil::null, LLRect(), BORDER_NO),
++//inline constructor
++// for chat bars embedded in floaters, etc
++LLChatBar::LLChatBar(const std::string& name) 
++:	LLPanel(name, LLRect(), BORDER_NO),
+ 	mInputEditor(NULL),
+ 	mGestureLabelTimer(),
+ 	mLastSpecialChatChannel(0),
+ 	mIsBuilt(FALSE),
+ 	mGestureCombo(NULL),
++	mSecondary(TRUE),
++	mObserver(NULL)
++{
++}
++
++LLChatBar::LLChatBar(const std::string& name, const LLRect& rect) 
++:	LLPanel(name, rect, BORDER_NO),
++	mInputEditor(NULL),
++	mGestureLabelTimer(),
++	mLastSpecialChatChannel(0),
++	mIsBuilt(FALSE),
++	mGestureCombo(NULL),
++	mSecondary(FALSE),
+ 	mObserver(NULL)
+ {
+ 	setIsChrome(TRUE);
+ 	
+-	#if !LL_RELEASE_FOR_DOWNLOAD
+-	childDisplayNotFound();
+-#endif
++	LLUICtrlFactory::getInstance()->buildPanel(this, "panel_chat_bar.xml");
++	
++	setFocusRoot(TRUE);
++
++	setRect(rect); // override xml rect
++	
++	setBackgroundOpaque(TRUE);
++	setBackgroundVisible(TRUE);
++
++	// Start visible if we left the app while chatting.
++	setVisible(gSavedSettings.getBOOL("ChatVisible"));
++
++	// Apply custom layout.
++	layout();
+ }
+ 
+ 
+@@ -122,7 +148,8 @@
+ BOOL LLChatBar::postBuild()
+ {
+ 	childSetAction("History", toggleChatHistory, this);
+-	childSetCommitCallback("Say", onClickSay, this);
++	childSetAction("Say", onClickSay, this);
++	childSetAction("Shout", onClickShout, this);
+ 
+ 	// attempt to bind to an existing combo box named gesture
+ 	setGestureCombo(getChild<LLComboBox>( "Gesture"));
+@@ -160,6 +187,16 @@
+ //-----------------------------------------------------------------------
+ 
+ // virtual
++void LLChatBar::reshape(S32 width, S32 height, BOOL called_from_parent)
++{
++	LLPanel::reshape(width, height, called_from_parent);
++	if (mIsBuilt)
++	{
++		layout();
++	}
++}
++
++// virtual
+ BOOL LLChatBar::handleKeyHere( KEY key, MASK mask )
+ {
+ 	BOOL handled = FALSE;
+@@ -191,8 +228,60 @@
+ 	return handled;
+ }
+ 
++void LLChatBar::layout()
++{
++	// If this is not the main chat bar, return
++	if (mSecondary) return;
++
++	S32 rect_width = getRect().getWidth();
++	S32 pad = 4;
++
++	LLRect gesture_rect;
++	S32 gesture_width = 0;
++	if (childGetRect("Gesture", gesture_rect))
++	{
++		gesture_width = gesture_rect.getWidth();
++	}
++	S32 input_width = 0;
++	S32 btn_width = 64;
++	S32 segment_width = btn_width + pad;
++	S32 x = pad;
++	S32 y = 3;
++	LLRect r;
++
++	r.setOriginAndSize(x, y, btn_width, BTN_HEIGHT);
++	childSetRect("History", r);
++
++	x += segment_width;
++	// Hack this one up so it looks nice.
++	if (mInputEditor)
++	{
++		input_width = rect_width - 3 * segment_width - 3 * pad - gesture_width;
++		r.setOriginAndSize(x, y + 2, input_width, 18);
++		mInputEditor->reshape(r.getWidth(), r.getHeight(), TRUE);
++		mInputEditor->setRect(r);
++	}
++
++	x += input_width + pad;
++	r.setOriginAndSize(x, y, btn_width, BTN_HEIGHT);
++	childSetRect("Say", r);
++
++	x += segment_width;
++	r.setOriginAndSize(x, y, btn_width, BTN_HEIGHT);
++	childSetRect("Shout", r);
++
++	x = rect_width - (pad + gesture_width);
++	r.setOriginAndSize(x, y, gesture_width, BTN_HEIGHT);
++	childSetRect("Gesture", r);
++}
++
+ void LLChatBar::refresh()
+ {
++	if (!mSecondary) {
++		// call superclass setVisible so that we don't overwrite the saved setting
++		LLPanel::setVisible(gSavedSettings.getBOOL("ChatVisible"));
++	}
++
+ 	// HACK: Leave the name of the gesture in place for a few seconds.
+ 	const F32 SHOW_GESTURE_NAME_TIME = 2.f;
+ 	if (mGestureLabelTimer.getStarted() && mGestureLabelTimer.getElapsedTimeF32() > SHOW_GESTURE_NAME_TIME)
+@@ -207,11 +296,15 @@
+ 		gAgent.stopTyping();
+ 	}
+ 
+-	childSetValue("History", LLFloaterChat::instanceVisible(LLSD()));
+-
+-	childSetEnabled("Say", mInputEditor->getText().size() > 0);
+-	childSetEnabled("Shout", mInputEditor->getText().size() > 0);
++	if (!mSecondary) {
++		childSetValue("History", LLFloaterChat::instanceVisible(LLSD()));
++	}
+ 
++	if (mInputEditor)
++	{
++		childSetEnabled("Say", mInputEditor->getText().size() > 0);
++		childSetEnabled("Shout", mInputEditor->getText().size() > 0);
++	}
+ }
+ 
+ void LLChatBar::refreshGestures()
+@@ -436,13 +529,16 @@
+ 	gChatBar->setKeyboardFocus(TRUE);
+ 	gSavedSettings.setBOOL("ChatVisible", TRUE);
+ 
+-	if (line && gChatBar->mInputEditor)
++	if (gChatBar->mInputEditor)
+ 	{
+-		std::string line_string(line);
+-		gChatBar->mInputEditor->setText(line_string);
++		if (line)
++		{
++			std::string line_string(line);
++			gChatBar->mInputEditor->setText(line_string);
++		}
++		// always move cursor to end so users don't obliterate chat when accidentally hitting WASD
++		gChatBar->mInputEditor->setCursorToEnd();
+ 	}
+-	// always move cursor to end so users don't obliterate chat when accidentally hitting WASD
+-	gChatBar->mInputEditor->setCursorToEnd();
+ }
+ 
+ 
+@@ -467,6 +563,15 @@
+ 	gSavedSettings.setBOOL("ChatVisible", FALSE);
+ }
+ 
++void LLChatBar::setVisible(BOOL visible)
++{
++	// If this is not the main chat bar, return
++	if (mSecondary) return;
++
++	gSavedSettings.setBOOL("ChatVisible", visible);
++	LLPanel::setVisible(visible);
++}
++
+ // static
+ void LLChatBar::onInputEditorKeystroke( LLLineEditor* caller, void* userdata )
+ {
+@@ -551,19 +656,17 @@
+ }
+ 
+ // static
+-void LLChatBar::onClickSay( LLUICtrl* ctrl, void* userdata )
++void LLChatBar::onClickSay( void* userdata )
+ {
+-	e_chat_type chat_type = CHAT_TYPE_NORMAL;
+-	if (ctrl->getValue().asString() == "shout")
+-	{
+-		chat_type = CHAT_TYPE_SHOUT;
+-	}
+-	else if (ctrl->getValue().asString() == "whisper")
+-	{
+-		chat_type = CHAT_TYPE_WHISPER;
+-	}
+ 	LLChatBar* self = (LLChatBar*) userdata;
+-	self->sendChat(chat_type);
++	self->sendChat( CHAT_TYPE_NORMAL );
++}
++
++// static
++void LLChatBar::onClickShout( void* userdata )
++{
++	LLChatBar *self = (LLChatBar *)userdata;
++	self->sendChat( CHAT_TYPE_SHOUT );
+ }
+ 
+ void LLChatBar::sendChatFromViewer(const std::string &utf8text, EChatType type, BOOL animate)
+diff -urN linden/indra/newview/llchatbar.h linden-patched/indra/newview/llchatbar.h
+--- linden/indra/newview/llchatbar.h	2009-02-05 18:15:16.000000000 +0100
++++ linden-patched/indra/newview/llchatbar.h	2009-02-05 23:55:11.000000000 +0100
+@@ -49,12 +49,17 @@
+ {
+ public:
+ 	// constructor for inline chat-bars (e.g. hosted in chat history window)
+-	LLChatBar();
++	LLChatBar(const std::string& name);
++	LLChatBar(const std::string& name, const LLRect& rect);
+ 	~LLChatBar();
+ 	virtual BOOL postBuild();
+ 
++	virtual void reshape(S32 width, S32 height, BOOL called_from_parent);
+ 	virtual BOOL handleKeyHere(KEY key, MASK mask);
+ 
++	// Adjust buttons and input field for width
++	void		layout();
++
+ 	void		refresh();
+ 	void		refreshGestures();
+ 
+@@ -81,7 +86,8 @@
+ 	LLWString stripChannelNumber(const LLWString &mesg, S32* channel);
+ 
+ 	// callbacks
+-	static void	onClickSay( LLUICtrl*, void* userdata );
++	static void	onClickSay( void* userdata );
++	static void	onClickShout( void* userdata );
+ 
+ 	static void	onTabClick( void* userdata );
+ 	static void	onInputEditorKeystroke(LLLineEditor* caller, void* userdata);
+@@ -93,11 +99,15 @@
+ 	static void startChat(const char* line);
+ 	static void stopChat();
+ 
++	/*virtual*/ void setVisible(BOOL visible);
++
+ protected:
+ 	void sendChat(EChatType type);
+ 	void updateChat();
+ 
+ protected:
++	BOOL mSecondary;
++
+ 	LLLineEditor*	mInputEditor;
+ 
+ 	LLFrameTimer	mGestureLabelTimer;
+diff -urN linden/indra/newview/llconsole.cpp linden-patched/indra/newview/llconsole.cpp
+--- linden/indra/newview/llconsole.cpp	2009-02-05 18:15:16.000000000 +0100
++++ linden-patched/indra/newview/llconsole.cpp	2009-02-05 23:55:11.000000000 +0100
+@@ -186,6 +186,10 @@
+ 	
+ //080813 Spatters:  This section makes a single huge black box behind all the text.
+ 	S32 bkg_height=4;
++	if (gSavedSettings.getBOOL("DisableMessagesSpacing")) {
++		message_spacing = 0;
++		bkg_height = 8;
++	}
+ 	S32 bkg_width=0;
+ 	for(paragraph_it = mParagraphs.rbegin(); paragraph_it != mParagraphs.rend(); paragraph_it++)
+ 	{
+diff -urN linden/indra/newview/llfloaterchat.cpp linden-patched/indra/newview/llfloaterchat.cpp
+--- linden/indra/newview/llfloaterchat.cpp	2009-02-05 18:15:17.000000000 +0100
++++ linden-patched/indra/newview/llfloaterchat.cpp	2009-02-05 23:55:11.000000000 +0100
+@@ -102,7 +102,14 @@
+ 	mFactoryMap["active_speakers_panel"] = LLCallbackMap(createSpeakersPanel, NULL);
+ 	// do not automatically open singleton floaters (as result of getInstance())
+ 	BOOL no_open = FALSE;
+-	LLUICtrlFactory::getInstance()->buildFloater(this,"floater_chat_history.xml",&getFactoryMap(),no_open);
++	if (gSavedSettings.getBOOL("UseOldChatHistory"))
++	{
++		LLUICtrlFactory::getInstance()->buildFloater(this,"floater_chat_history2.xml",&getFactoryMap(),no_open);
++	}
++	else
++	{
++		LLUICtrlFactory::getInstance()->buildFloater(this,"floater_chat_history.xml",&getFactoryMap(),no_open);
++	}
+ 
+ 	childSetCommitCallback("show mutes",onClickToggleShowMute,this); //show mutes
+ 	childSetVisible("Chat History Editor with mute",FALSE);
+@@ -501,7 +508,7 @@
+ //static
+ void* LLFloaterChat::createChatPanel(void* data)
+ {
+-	LLChatBar* chatp = new LLChatBar();
++	LLChatBar* chatp = new LLChatBar("floating_chat_bar");
+ 	return chatp;
+ }
+ 
+diff -urN linden/indra/newview/llfloaterchatterbox.cpp linden-patched/indra/newview/llfloaterchatterbox.cpp
+--- linden/indra/newview/llfloaterchatterbox.cpp	2009-02-05 18:15:18.000000000 +0100
++++ linden-patched/indra/newview/llfloaterchatterbox.cpp	2009-02-05 23:55:11.000000000 +0100
+@@ -44,48 +44,6 @@
+ #include "llimpanel.h"
+ 
+ //
+-// LLFloaterMyFriends
+-//
+-
+-LLFloaterMyFriends::LLFloaterMyFriends(const LLSD& seed)
+-{
+-	mFactoryMap["friends_panel"] = LLCallbackMap(LLFloaterMyFriends::createFriendsPanel, NULL);
+-	mFactoryMap["groups_panel"] = LLCallbackMap(LLFloaterMyFriends::createGroupsPanel, NULL);
+-	// do not automatically open singleton floaters (as result of getInstance())
+-	BOOL no_open = FALSE;
+-	LLUICtrlFactory::getInstance()->buildFloater(this, "floater_my_friends.xml", &getFactoryMap(), no_open);
+-}
+-
+-LLFloaterMyFriends::~LLFloaterMyFriends()
+-{
+-}
+-
+-BOOL LLFloaterMyFriends::postBuild()
+-{
+-	mTabs = getChild<LLTabContainer>("friends_and_groups");
+-
+-	return TRUE;
+-}
+-
+-
+-void LLFloaterMyFriends::onClose(bool app_quitting)
+-{
+-	setVisible(FALSE);
+-}
+-
+-//static
+-void* LLFloaterMyFriends::createFriendsPanel(void* data)
+-{
+-	return new LLPanelFriends();
+-}
+-
+-//static
+-void* LLFloaterMyFriends::createGroupsPanel(void* data)
+-{
+-	return new LLPanelGroups();
+-}
+-
+-//
+ // LLFloaterChatterBox
+ //
+ LLFloaterChatterBox::LLFloaterChatterBox(const LLSD& seed) :
+@@ -94,19 +52,12 @@
+ 	mAutoResize = FALSE;
+ 
+ 	LLUICtrlFactory::getInstance()->buildFloater(this, "floater_chatterbox.xml", NULL, FALSE);
+-	if (gSavedSettings.getBOOL("ContactsTornOff"))
+-	{
+-		LLFloaterMyFriends* floater_contacts = LLFloaterMyFriends::getInstance(0);
+-		// add then remove to set up relationship for re-attach
+-		addFloater(floater_contacts, FALSE);
+-		removeFloater(floater_contacts);
+-		// reparent to floater view
+-		gFloaterView->addChild(floater_contacts);
+-	}
+-	else
+-	{
+-		addFloater(LLFloaterMyFriends::getInstance(0), TRUE);
+-	}
++	addFloater(mFloaterNewIM = new LLFloaterNewIM(), FALSE);
++
++	// reposition floater from saved settings
++	LLRect rect = gSavedSettings.getRect( "ChatterboxRect" );
++	reshape( rect.getWidth(), rect.getHeight(), FALSE );
++	setRect( rect );
+ 
+ 	if (gSavedSettings.getBOOL("ChatHistoryTornOff"))
+ 	{
+@@ -219,20 +170,10 @@
+ 
+ void LLFloaterChatterBox::removeFloater(LLFloater* floaterp)
+ {
+-	if (floaterp->getName() == "chat floater")
+-	{
+-		// only my friends floater now locked
+-		mTabContainer->lockTabs(mTabContainer->getNumLockedTabs() - 1);
+-		gSavedSettings.setBOOL("ChatHistoryTornOff", TRUE);
+-		floaterp->setCanClose(TRUE);
+-	}
+-	else if (floaterp->getName() == "floater_my_friends")
+-	{
+-		// only chat floater now locked
+-		mTabContainer->lockTabs(mTabContainer->getNumLockedTabs() - 1);
+-		gSavedSettings.setBOOL("ContactsTornOff", TRUE);
+-		floaterp->setCanClose(TRUE);
+-	}
++    // only my friends floater now locked
++	mTabContainer->lockTabs(mTabContainer->getNumLockedTabs() - 1);
++	gSavedSettings.setBOOL("ChatHistoryTornOff", TRUE);
++	floaterp->setCanClose(TRUE);
+ 	LLMultiFloater::removeFloater(floaterp);
+ }
+ 
+@@ -250,33 +191,13 @@
+ 	{
+ 		mTabContainer->unlockTabs();
+ 		// add chat history as second tab if contact window is present, first tab otherwise
+-		if (getChildView("floater_my_friends"))
+-		{
+-			// assuming contacts window is first tab, select it
+-			mTabContainer->selectFirstTab();
+-			// and add ourselves after
+-			LLMultiFloater::addFloater(floaterp, select_added_floater, LLTabContainer::RIGHT_OF_CURRENT);
+-		}
+-		else
+-		{
+-			LLMultiFloater::addFloater(floaterp, select_added_floater, LLTabContainer::START);
+-		}
++		LLMultiFloater::addFloater(floaterp, select_added_floater, LLTabContainer::START);
+ 		
+ 		// make sure first two tabs are now locked
+ 		mTabContainer->lockTabs(num_locked_tabs + 1);
+ 		gSavedSettings.setBOOL("ChatHistoryTornOff", FALSE);
+ 		floaterp->setCanClose(FALSE);
+ 	}
+-	else if (floaterp->getName() == "floater_my_friends")
+-	{
+-		mTabContainer->unlockTabs();
+-		// add contacts window as first tab
+-		LLMultiFloater::addFloater(floaterp, select_added_floater, LLTabContainer::START);
+-		// make sure first two tabs are now locked
+-		mTabContainer->lockTabs(num_locked_tabs + 1);
+-		gSavedSettings.setBOOL("ContactsTornOff", FALSE);
+-		floaterp->setCanClose(FALSE);
+-	}
+ 	else
+ 	{
+ 		LLMultiFloater::addFloater(floaterp, select_added_floater, insertion_point);
+diff -urN linden/indra/newview/llfloaterchatterbox.h linden-patched/indra/newview/llfloaterchatterbox.h
+--- linden/indra/newview/llfloaterchatterbox.h	2009-02-05 18:15:15.000000000 +0100
++++ linden-patched/indra/newview/llfloaterchatterbox.h	2009-02-05 23:55:11.000000000 +0100
+@@ -38,6 +38,7 @@
+ #include "llstring.h"
+ #include "llimview.h"
+ #include "llimpanel.h"
++#include "llfloaternewim.h"
+ 
+ class LLTabContainer;
+ 
+@@ -58,6 +59,8 @@
+ 								BOOL select_added_floater, 
+ 								LLTabContainer::eInsertionPoint insertion_point = LLTabContainer::END);
+ 
++	LLFloaterNewIM* getFloaterNewIM()		{ return mFloaterNewIM; };
++
+ 	static LLFloater* getCurrentVoiceFloater();
+ 	
+ 	// visibility policy for LLUISingleton
+@@ -113,46 +116,7 @@
+ 
+ protected:
+ 	LLFloater* mActiveVoiceFloater;
+-};
+-
+-
+-class LLFloaterMyFriends : public LLFloater, public LLUISingleton<LLFloaterMyFriends, LLFloaterMyFriends>
+-{
+-public:
+-	LLFloaterMyFriends(const LLSD& seed);
+-	virtual ~LLFloaterMyFriends();
+-
+-	virtual BOOL postBuild();
+-
+-	void onClose(bool app_quitting);
+-
+-	static void* createFriendsPanel(void* data);
+-	static void* createGroupsPanel(void* data);
+-
+-	// visibility policy for LLUISingleton
+-	static bool visible(LLFloater* instance, const LLSD& key)
+-	{
+-		LLFloaterMyFriends* floaterp = (LLFloaterMyFriends*)instance;
+-		return floaterp->isInVisibleChain() && floaterp->mTabs->getCurrentPanelIndex() == key.asInteger();
+-	}
+-
+-	static void show(LLFloater* instance, const LLSD& key)
+-	{
+-		VisibilityPolicy<LLFloater>::show(instance, key);
+-		// garbage values in id will be interpreted as 0, or the friends tab
+-		((LLFloaterMyFriends*)instance)->mTabs->selectTab(key);
+-	}
+-
+-	static void hide(LLFloater* instance, const LLSD& key)
+-	{
+-		if (visible(instance, key))
+-		{
+-			LLFloaterChatterBox::hideInstance();
+-		}
+-	}
+-
+-protected:
+-	LLTabContainer* mTabs;
++	LLFloaterNewIM* mFloaterNewIM;
+ };
+ 
+ #endif // LL_LLFLOATERCHATTERBOX_H
+diff -urN linden/indra/newview/llfloaterfriends.cpp linden-patched/indra/newview/llfloaterfriends.cpp
+--- linden/indra/newview/llfloaterfriends.cpp	2009-02-05 18:15:17.000000000 +0100
++++ linden-patched/indra/newview/llfloaterfriends.cpp	2009-02-05 23:58:09.000000000 +0100
+@@ -71,7 +71,7 @@
+ class LLLocalFriendsObserver : public LLFriendObserver, public LLEventTimer
+ {
+ public: 
+-	LLLocalFriendsObserver(LLPanelFriends* floater) : mFloater(floater), LLEventTimer(OBSERVER_TIMEOUT)
++	LLLocalFriendsObserver(LLFloaterFriends* floater) : mFloater(floater), LLEventTimer(OBSERVER_TIMEOUT)
+ 	{
+ 		mEventTimer.stop();
+ 	}
+@@ -99,34 +99,42 @@
+ 	}
+ 	
+ protected:
+-	LLPanelFriends* mFloater;
++	LLFloaterFriends* mFloater;
+ 	U32 mMask;
+ };
+ 
+-LLPanelFriends::LLPanelFriends() :
+-	LLPanel(),
++LLFloaterFriends* LLFloaterFriends::sInstance = NULL;
++
++LLFloaterFriends::LLFloaterFriends() :
++	LLFloater(),
+ 	LLEventTimer(DEFAULT_PERIOD),
+ 	mObserver(NULL),
+ 	mShowMaxSelectWarning(TRUE),
+ 	mAllowRightsChange(TRUE),
+ 	mNumRightsChanged(0)
+ {
++	sInstance = this;
+ 	mEventTimer.stop();
+ 	mObserver = new LLLocalFriendsObserver(this);
+ 	LLAvatarTracker::instance().addObserver(mObserver);
+ 	// For notification when SIP online status changes.
+ 	LLVoiceClient::getInstance()->addObserver(mObserver);
++	gSavedSettings.setBOOL("ShowFriends", TRUE);
++	LLUICtrlFactory::getInstance()->buildFloater(this, "floater_friends.xml");
++	refreshUI();
+ }
+ 
+-LLPanelFriends::~LLPanelFriends()
++LLFloaterFriends::~LLFloaterFriends()
+ {
+ 	// For notification when SIP online status changes.
+ 	LLVoiceClient::getInstance()->removeObserver(mObserver);
+ 	LLAvatarTracker::instance().removeObserver(mObserver);
+ 	delete mObserver;
++	sInstance = NULL;
++	gSavedSettings.setBOOL("ShowFriends", FALSE);
+ }
+ 
+-BOOL LLPanelFriends::tick()
++BOOL LLFloaterFriends::tick()
+ {
+ 	mEventTimer.stop();
+ 	mPeriod = DEFAULT_PERIOD;
+@@ -135,19 +143,56 @@
+ 	return FALSE;
+ }
+ 
+-void LLPanelFriends::updateFriends(U32 changed_mask)
++// static
++void LLFloaterFriends::show(void*)
++{
++	if(sInstance)
++	{
++		sInstance->open();	/*Flawfinder: ignore*/
++	}
++	else
++	{
++		LLFloaterFriends* self = new LLFloaterFriends;
++		self->open(); /*Flawfinder: ignore*/
++	}
++}
++
++
++// static
++BOOL LLFloaterFriends::visible(void*)
++{
++	return sInstance && sInstance->getVisible();
++}
++
++
++// static
++void LLFloaterFriends::toggle(void*)
+ {
++	if (sInstance)
++	{
++		sInstance->close();
++	}
++	else
++	{
++		show();
++	}
++}
++
++
++void LLFloaterFriends::updateFriends(U32 changed_mask)
++{
++	if (!sInstance) return;
+ 	LLUUID selected_id;
+-	LLCtrlListInterface *friends_list = childGetListInterface("friend_list");
++	LLCtrlListInterface *friends_list = sInstance->childGetListInterface("friend_list");
+ 	if (!friends_list) return;
+-	LLCtrlScrollInterface *friends_scroll = childGetScrollInterface("friend_list");
++	LLCtrlScrollInterface *friends_scroll = sInstance->childGetScrollInterface("friend_list");
+ 	if (!friends_scroll) return;
+ 	
+ 	// We kill the selection warning, otherwise we'll spam with warning popups
+ 	// if the maximum amount of friends are selected
+ 	mShowMaxSelectWarning = false;
+ 
+-	LLDynamicArray<LLUUID> selected_friends = getSelectedIDs();
++	LLDynamicArray<LLUUID> selected_friends = sInstance->getSelectedIDs();
+ 	if(changed_mask & (LLFriendObserver::ADD | LLFriendObserver::REMOVE | LLFriendObserver::ONLINE))
+ 	{
+ 		refreshNames(changed_mask);
+@@ -183,7 +228,7 @@
+ }
+ 
+ // virtual
+-BOOL LLPanelFriends::postBuild()
++BOOL LLFloaterFriends::postBuild()
+ {
+ 	mFriendsList = getChild<LLScrollListCtrl>("friend_list");
+ 	mFriendsList->setMaxSelectable(MAX_FRIEND_SELECT);
+@@ -201,6 +246,7 @@
+ 	childSetAction("pay_btn", onClickPay, this);
+ 	childSetAction("add_btn", onClickAddFriend, this);
+ 	childSetAction("remove_btn", onClickRemove, this);
++	childSetAction("close_btn", onClickClose, this);
+ 
+ 	setDefaultBtn("im_btn");
+ 
+@@ -214,8 +260,9 @@
+ 	return TRUE;
+ }
+ 
+-BOOL LLPanelFriends::addFriend(const LLUUID& agent_id)
++BOOL LLFloaterFriends::addFriend(const LLUUID& agent_id)
+ {
++	if (!sInstance) return FALSE;
+ 	LLAvatarTracker& at = LLAvatarTracker::instance();
+ 	const LLRelationship* relationInfo = at.getBuddyInfo(agent_id);
+ 	if(!relationInfo) return FALSE;
+@@ -266,9 +313,12 @@
+ 
+ 	LLSD& edit_their_object_column = element["columns"][LIST_EDIT_THEIRS];
+ 	edit_their_object_column["column"] = "icon_edit_theirs";
+-	edit_their_object_column["type"] = "checkbox";
+-	edit_their_object_column["enabled"] = "";
+-	edit_their_object_column["value"] = relationInfo->isRightGrantedFrom(LLRelationship::GRANT_MODIFY_OBJECTS);
++	edit_their_object_column["type"] = "text";
++	if(relationInfo->isRightGrantedFrom(LLRelationship::GRANT_MODIFY_OBJECTS))
++	{
++		edit_their_object_column["type"] = "icon";
++		edit_their_object_column["value"] = "ff_edit_theirs.tga";
++	}
+ 
+ 	LLSD& update_gen_column = element["columns"][LIST_FRIEND_UPDATE_GEN];
+ 	update_gen_column["column"] = "friend_last_update_generation";
+@@ -280,8 +330,9 @@
+ 
+ // propagate actual relationship to UI.
+ // Does not resort the UI list because it can be called frequently. JC
+-BOOL LLPanelFriends::updateFriendItem(const LLUUID& agent_id, const LLRelationship* info)
++BOOL LLFloaterFriends::updateFriendItem(const LLUUID& agent_id, const LLRelationship* info)
+ {
++	if (!sInstance) return FALSE;
+ 	if (!info) return FALSE;
+ 	LLScrollListItem* itemp = mFriendsList->getItem(agent_id);
+ 	if (!itemp) return FALSE;
+@@ -322,8 +373,9 @@
+ 	return have_name;
+ }
+ 
+-void LLPanelFriends::refreshRightsChangeList()
++void LLFloaterFriends::refreshRightsChangeList()
+ {
++	if (!sInstance) return;
+ 	LLDynamicArray<LLUUID> friends = getSelectedIDs();
+ 	S32 num_selected = friends.size();
+ 
+@@ -388,8 +440,9 @@
+ 	}
+ };
+ 
+-void LLPanelFriends::refreshNames(U32 changed_mask)
++void LLFloaterFriends::refreshNames(U32 changed_mask)
+ {
++	if (!sInstance) return;
+ 	LLDynamicArray<LLUUID> selected_ids = getSelectedIDs();	
+ 	S32 pos = mFriendsList->getScrollPos();	
+ 	
+@@ -423,7 +476,7 @@
+ 	mFriendsList->setScrollPos(pos);
+ }
+ 
+-BOOL LLPanelFriends::refreshNamesSync(const LLAvatarTracker::buddy_map_t & all_buddies)
++BOOL LLFloaterFriends::refreshNamesSync(const LLAvatarTracker::buddy_map_t & all_buddies)
+ {
+ 	mFriendsList->deleteAllItems();
+ 
+@@ -438,7 +491,7 @@
+ 	return have_names;
+ }
+ 
+-BOOL LLPanelFriends::refreshNamesPresence(const LLAvatarTracker::buddy_map_t & all_buddies)
++BOOL LLFloaterFriends::refreshNamesPresence(const LLAvatarTracker::buddy_map_t & all_buddies)
+ {
+ 	std::vector<LLScrollListItem*> items = mFriendsList->getAllData();
+ 	std::sort(items.begin(), items.end(), SortFriendsByID());
+@@ -488,70 +541,54 @@
+ 	return have_names;
+ }
+ 
+-void LLPanelFriends::refreshUI()
++void LLFloaterFriends::refreshUI()
+ {	
+-	BOOL single_selected = FALSE;
+-	BOOL multiple_selected = FALSE;
++	if (!sInstance) return;
+ 	int num_selected = mFriendsList->getAllSelected().size();
+-	if(num_selected > 0)
+-	{
+-		single_selected = TRUE;
+-		if(num_selected > 1)
+-		{
+-			childSetText("friend_name_label", getString("Multiple"));
+-			multiple_selected = TRUE;		
+-		}
+-		else
+-		{			
+-			childSetText("friend_name_label", mFriendsList->getFirstSelected()->getColumn(LIST_FRIEND_NAME)->getValue().asString() + "...");
+-		}
+-	}
+-	else
+-	{
+-		childSetText("friend_name_label", LLStringUtil::null);
+-	}
+-
++	BOOL single_selected = (num_selected == 1);
++	BOOL some_selected = (num_selected > 0);
+ 
+ 	//Options that can only be performed with one friend selected
+-	childSetEnabled("profile_btn", single_selected && !multiple_selected);
+-	childSetEnabled("pay_btn", single_selected && !multiple_selected);
++	childSetEnabled("profile_btn", single_selected);
++	childSetEnabled("pay_btn", single_selected);
+ 
+ 	//Options that can be performed with up to MAX_FRIEND_SELECT friends selected
+-	//(single_selected will always be true in this situations)
+-	childSetEnabled("remove_btn", single_selected);
+-	childSetEnabled("im_btn", single_selected);
+-	childSetEnabled("friend_rights", single_selected);
++	childSetEnabled("remove_btn", some_selected);
++	childSetEnabled("im_btn", some_selected);
++	childSetEnabled("friend_rights", some_selected);
+ 
+ 	refreshRightsChangeList();
+ }
+ 
+-LLDynamicArray<LLUUID> LLPanelFriends::getSelectedIDs()
++// static
++LLDynamicArray<LLUUID> LLFloaterFriends::getSelectedIDs()
+ {
+ 	LLUUID selected_id;
+ 	LLDynamicArray<LLUUID> friend_ids;
+-	std::vector<LLScrollListItem*> selected = mFriendsList->getAllSelected();
+-	for(std::vector<LLScrollListItem*>::iterator itr = selected.begin(); itr != selected.end(); ++itr)
++	if(sInstance)
+ 	{
+-		friend_ids.push_back((*itr)->getUUID());
++		std::vector<LLScrollListItem*> selected = sInstance->mFriendsList->getAllSelected();
++		for(std::vector<LLScrollListItem*>::iterator itr = selected.begin(); itr != selected.end(); ++itr)
++		{
++			friend_ids.push_back((*itr)->getUUID());
++		}
+ 	}
+ 	return friend_ids;
+ }
+ 
+ // static
+-void LLPanelFriends::onSelectName(LLUICtrl* ctrl, void* user_data)
++void LLFloaterFriends::onSelectName(LLUICtrl* ctrl, void* user_data)
+ {
+-	LLPanelFriends* panelp = (LLPanelFriends*)user_data;
+-
+-	if(panelp)
++	if(sInstance)
+ 	{
+-		panelp->refreshUI();
++		sInstance->refreshUI();
+ 		// check to see if rights have changed
+-		panelp->applyRightsToFriends();
++		sInstance->applyRightsToFriends();
+ 	}
+ }
+ 
+ //static
+-void LLPanelFriends::onMaximumSelect(void* user_data)
++void LLFloaterFriends::onMaximumSelect(void* user_data)
+ {
+ 	LLStringUtil::format_map_t args;
+ 	args["[MAX_SELECT]"] = llformat("%d", MAX_FRIEND_SELECT);
+@@ -559,12 +596,10 @@
+ };
+ 
+ // static
+-void LLPanelFriends::onClickProfile(void* user_data)
++void LLFloaterFriends::onClickProfile(void* user_data)
+ {
+-	LLPanelFriends* panelp = (LLPanelFriends*)user_data;
+-
+-	//llinfos << "LLPanelFriends::onClickProfile()" << llendl;
+-	LLDynamicArray<LLUUID> ids = panelp->getSelectedIDs();
++	//llinfos << "LLFloaterFriends::onClickProfile()" << llendl;
++	LLDynamicArray<LLUUID> ids = sInstance->getSelectedIDs();
+ 	if(ids.size() > 0)
+ 	{
+ 		LLUUID agent_id = ids[0];
+@@ -575,12 +610,10 @@
+ }
+ 
+ // static
+-void LLPanelFriends::onClickIM(void* user_data)
++void LLFloaterFriends::onClickIM(void* user_data)
+ {
+-	LLPanelFriends* panelp = (LLPanelFriends*)user_data;
+-
+-	//llinfos << "LLPanelFriends::onClickIM()" << llendl;
+-	LLDynamicArray<LLUUID> ids = panelp->getSelectedIDs();
++	//llinfos << "LLFloaterFriends::onClickIM()" << llendl;
++	LLDynamicArray<LLUUID> ids = sInstance->getSelectedIDs();
+ 	if(ids.size() > 0)
+ 	{
+ 		if(ids.size() == 1)
+@@ -604,7 +637,7 @@
+ }
+ 
+ // static
+-void LLPanelFriends::requestFriendship(const LLUUID& target_id, const std::string& target_name, const std::string& message)
++void LLFloaterFriends::requestFriendship(const LLUUID& target_id, const std::string& target_name, const std::string& message)
+ {
+ 	LLUUID calling_card_folder_id = gInventory.findCategoryUUIDForType(LLAssetType::AT_CALLINGCARD);
+ 	send_improved_im(target_id,
+@@ -622,7 +655,7 @@
+ };
+ 
+ // static
+-void LLPanelFriends::callbackAddFriendWithMessage(S32 option, const std::string& text, void* data)
++void LLFloaterFriends::callbackAddFriendWithMessage(S32 option, const std::string& text, void* data)
+ {
+ 	LLAddFriendData* add = (LLAddFriendData*)data;
+ 	if (option == 0)
+@@ -633,7 +666,7 @@
+ }
+ 
+ // static
+-void LLPanelFriends::callbackAddFriend(S32 option, void* data)
++void LLFloaterFriends::callbackAddFriend(S32 option, void* data)
+ {
+ 	LLAddFriendData* add = (LLAddFriendData*)data;
+ 	if (option == 0)
+@@ -649,7 +682,7 @@
+ }
+ 
+ // static
+-void LLPanelFriends::onPickAvatar(const std::vector<std::string>& names,
++void LLFloaterFriends::onPickAvatar(const std::vector<std::string>& names,
+ 									const std::vector<LLUUID>& ids,
+ 									void* )
+ {
+@@ -659,7 +692,7 @@
+ }
+ 
+ // static
+-void LLPanelFriends::requestFriendshipDialog(const LLUUID& id,
++void LLFloaterFriends::requestFriendshipDialog(const LLUUID& id,
+ 											   const std::string& name)
+ {
+ 	if(id == gAgentID)
+@@ -689,24 +722,20 @@
+ }
+ 
+ // static
+-void LLPanelFriends::onClickAddFriend(void* user_data)
++void LLFloaterFriends::onClickAddFriend(void* user_data)
+ {
+-	LLPanelFriends* panelp = (LLPanelFriends*)user_data;
+-	LLFloater* root_floater = gFloaterView->getParentFloater(panelp);
+ 	LLFloaterAvatarPicker* picker = LLFloaterAvatarPicker::show(onPickAvatar, user_data, FALSE, TRUE);
+-	if (root_floater)
++	if (sInstance)
+ 	{
+-		root_floater->addDependentFloater(picker);
++		sInstance->addDependentFloater(picker);
+ 	}
+ }
+ 
+ // static
+-void LLPanelFriends::onClickRemove(void* user_data)
++void LLFloaterFriends::onClickRemove(void* user_data)
+ {
+-	LLPanelFriends* panelp = (LLPanelFriends*)user_data;
+-
+-	//llinfos << "LLPanelFriends::onClickRemove()" << llendl;
+-	LLDynamicArray<LLUUID> ids = panelp->getSelectedIDs();
++	//llinfos << "LLFloaterFriends::onClickRemove()" << llendl;
++	LLDynamicArray<LLUUID> ids = sInstance->getSelectedIDs();
+ 	LLStringUtil::format_map_t args;
+ 	if(ids.size() > 0)
+ 	{
+@@ -733,11 +762,9 @@
+ }
+ 
+ // static
+-void LLPanelFriends::onClickOfferTeleport(void* user_data)
++void LLFloaterFriends::onClickOfferTeleport(void* user_data)
+ {
+-	LLPanelFriends* panelp = (LLPanelFriends*)user_data;
+-
+-	LLDynamicArray<LLUUID> ids = panelp->getSelectedIDs();
++	LLDynamicArray<LLUUID> ids = sInstance->getSelectedIDs();
+ 	if(ids.size() > 0)
+ 	{	
+ 		handle_lure(ids);
+@@ -745,18 +772,26 @@
+ }
+ 
+ // static
+-void LLPanelFriends::onClickPay(void* user_data)
++void LLFloaterFriends::onClickPay(void* user_data)
+ {
+-	LLPanelFriends* panelp = (LLPanelFriends*)user_data;
+-
+-	LLDynamicArray<LLUUID> ids = panelp->getSelectedIDs();
++	LLDynamicArray<LLUUID> ids = sInstance->getSelectedIDs();
+ 	if(ids.size() == 1)
+ 	{	
+ 		handle_pay_by_id(ids[0]);
+ 	}
+ }
+ 
+-void LLPanelFriends::confirmModifyRights(rights_map_t& ids, EGrantRevoke command)
++// static
++void LLFloaterFriends::onClickClose(void* user_data)
++{
++	//llinfos << "LLFloaterFriends::onClickClose()" << llendl;
++	if(sInstance)
++	{
++		sInstance->onClose(false);
++	}
++}
++
++void LLFloaterFriends::confirmModifyRights(rights_map_t& ids, EGrantRevoke command)
+ {
+ 	if (ids.empty()) return;
+ 	
+@@ -766,7 +801,7 @@
+ 		// copy map of ids onto heap
+ 		rights_map_t* rights = new rights_map_t(ids); 
+ 		// package with panel pointer
+-		std::pair<LLPanelFriends*, rights_map_t*>* user_data = new std::pair<LLPanelFriends*, rights_map_t*>(this, rights);
++		std::pair<LLFloaterFriends*, rights_map_t*>* user_data = new std::pair<LLFloaterFriends*, rights_map_t*>(this, rights);
+ 
+ 		// for single friend, show their name
+ 		if(ids.size() == 1)
+@@ -802,10 +837,10 @@
+ }
+ 
+ // static
+-void LLPanelFriends::modifyRightsConfirmation(S32 option, void* user_data)
++void LLFloaterFriends::modifyRightsConfirmation(S32 option, void* user_data)
+ {
+-	std::pair<LLPanelFriends*, rights_map_t*>* data = (std::pair<LLPanelFriends*, rights_map_t*>*)user_data;
+-	LLPanelFriends* panelp = data->first;
++	std::pair<LLFloaterFriends*, rights_map_t*>* data = (std::pair<LLFloaterFriends*, rights_map_t*>*)user_data;
++	LLFloaterFriends* panelp = data->first;
+ 
+ 	if(panelp)
+ 	{
+@@ -833,8 +868,9 @@
+ 	delete data;
+ }
+ 
+-void LLPanelFriends::applyRightsToFriends()
++void LLFloaterFriends::applyRightsToFriends()
+ {
++	if (!sInstance) return;
+ 	BOOL rights_changed = FALSE;
+ 
+ 	// store modify rights separately for confirmation
+@@ -926,7 +962,7 @@
+ 	}
+ }
+ 
+-void LLPanelFriends::sendRightsGrant(rights_map_t& ids)
++void LLFloaterFriends::sendRightsGrant(rights_map_t& ids)
+ {
+ 	if (ids.empty()) return;
+ 
+@@ -954,7 +990,7 @@
+ 
+ 
+ // static
+-void LLPanelFriends::handleRemove(S32 option, void* user_data)
++void LLFloaterFriends::handleRemove(S32 option, void* user_data)
+ {
+ 	LLDynamicArray<LLUUID>* ids = static_cast<LLDynamicArray<LLUUID>*>(user_data);
+ 	for(LLDynamicArray<LLUUID>::iterator itr = ids->begin(); itr != ids->end(); ++itr)
+diff -urN linden/indra/newview/llfloaterfriends.h linden-patched/indra/newview/llfloaterfriends.h
+--- linden/indra/newview/llfloaterfriends.h	2009-02-05 18:15:16.000000000 +0100
++++ linden-patched/indra/newview/llfloaterfriends.h	2009-02-05 23:55:11.000000000 +0100
+@@ -34,7 +34,7 @@
+ #ifndef LL_LLFLOATERFRIENDS_H
+ #define LL_LLFLOATERFRIENDS_H
+ 
+-#include "llpanel.h"
++#include "llfloater.h"
+ #include "llstring.h"
+ #include "lluuid.h"
+ #include "lltimer.h"
+@@ -46,23 +46,31 @@
+ class LLScrollListCtrl;
+ 
+ /** 
+- * @class LLPanelFriends
++ * @class LLFloaterFriends
+  * @brief An instance of this class is used for displaying your friends
+  * and gives you quick access to all agents which a user relationship.
+  *
+  * @sa LLFloater
+  */
+-class LLPanelFriends : public LLPanel, public LLEventTimer
++class LLFloaterFriends : public LLFloater, public LLEventTimer
+ {
+ public:
+-	LLPanelFriends();
+-	virtual ~LLPanelFriends();
++	LLFloaterFriends();
++	virtual ~LLFloaterFriends();
+ 
+ 	/** 
+ 	 * @brief This method either creates or brings to the front the
+ 	 * current instantiation of this floater. There is only once since
+ 	 * you can currently only look at your local friends.
+ 	 */
++	static void show(void* ignored = NULL);
++
++	// Toggles visibility of floater
++	static void toggle(void* unused = NULL);
++
++	// Tells if the floater is visible
++	static BOOL visible(void* unused = NULL);
++
+ 	virtual BOOL tick();
+ 
+ 	/** 
+@@ -137,7 +145,12 @@
+ 	static void handleRemove(S32 option, void* user_data);
+ 	static void modifyRightsConfirmation(S32 option, void* user_data);
+ 
++	static void onClickClose(void* user_data);
++
+ private:
++	// static data
++	static LLFloaterFriends* sInstance;
++
+ 	// member data
+ 	LLFriendObserver* mObserver;
+ 	LLUUID mAddFriendID;
+diff -urN linden/indra/newview/llfloatergroupinfo.cpp linden-patched/indra/newview/llfloatergroupinfo.cpp
+--- linden/indra/newview/llfloatergroupinfo.cpp	2009-02-05 18:15:16.000000000 +0100
++++ linden-patched/indra/newview/llfloatergroupinfo.cpp	2009-02-05 23:55:11.000000000 +0100
+@@ -39,6 +39,7 @@
+ #include "llcommandhandler.h"
+ #include "llfloaterchatterbox.h"
+ #include "llpanelgroup.h"
++#include "llfloatergroups.h"
+ #include "llviewermessage.h" // for inventory_offer_callback
+ //#include "llviewerwindow.h"
+ 
+@@ -79,9 +80,7 @@
+ 		{
+ 			if (tokens[1].asString() == "show")
+ 			{
+-				// CP_TODO: get the value we pass in via the XUI name 
+-				// of the tab instead of using a literal like this
+-				LLFloaterMyFriends::showInstance( 1 );
++				LLFloaterGroups::show();
+ 
+ 				return true;
+ 			}
+diff -urN linden/indra/newview/llfloatergroups.cpp linden-patched/indra/newview/llfloatergroups.cpp
+--- linden/indra/newview/llfloatergroups.cpp	2009-02-05 18:15:16.000000000 +0100
++++ linden-patched/indra/newview/llfloatergroups.cpp	2009-02-05 23:55:11.000000000 +0100
+@@ -1,6 +1,6 @@
+ /** 
+  * @file llfloatergroups.cpp
+- * @brief LLPanelGroups class implementation
++ * @brief LLFloaterGroups class implementation
+  *
+  * $LicenseInfo:firstyear=2002&license=viewergpl$
+  * 
+@@ -53,6 +53,7 @@
+ #include "llscrolllistctrl.h"
+ #include "lltextbox.h"
+ #include "lluictrlfactory.h"
++#include "llviewercontrol.h"
+ #include "llviewerwindow.h"
+ #include "llimview.h"
+ 
+@@ -161,12 +162,14 @@
+ }
+ 
+ ///----------------------------------------------------------------------------
+-/// Class LLPanelGroups
++/// Class LLFloaterGroups
+ ///----------------------------------------------------------------------------
+ 
++LLFloaterGroups* LLFloaterGroups::sInstance = NULL;
++
+ //LLEventListener
+ //virtual
+-bool LLPanelGroups::handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
++bool LLFloaterGroups::handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
+ {
+ 	if (event->desc() == "new group")
+ 	{
+@@ -177,20 +180,55 @@
+ }
+ 
+ // Default constructor
+-LLPanelGroups::LLPanelGroups() :
+-	LLPanel()
++LLFloaterGroups::LLFloaterGroups() :
++	LLFloater()
+ {
++	sInstance = this;
++	LLUICtrlFactory::getInstance()->buildFloater(this, "floater_groups.xml");
+ 	gAgent.addListener(this, "new group");
++	gSavedSettings.setBOOL("ShowGroups", TRUE);
+ }
+ 
+-LLPanelGroups::~LLPanelGroups()
++LLFloaterGroups::~LLFloaterGroups()
+ {
+ 	gAgent.removeListener(this);
++	gFocusMgr.releaseFocusIfNeeded(this);
++	sInstance = NULL;
++	gSavedSettings.setBOOL("ShowGroups", FALSE);
++}
++
++LLFloaterGroups* LLFloaterGroups::show(void*)
++{
++	if(sInstance)
++	{
++		sInstance->open();	/*Flawfinder: ignore*/
++	}
++	else
++	{
++		LLFloaterGroups* self = new LLFloaterGroups;
++		self->open(); /*Flawfinder: ignore*/
++	}
++
++	return sInstance;
++}
++
++// static
++void LLFloaterGroups::toggle(void*)
++{
++	if (sInstance)
++	{
++		sInstance->close();
++	}
++	else
++	{
++		show();
++	}
+ }
+ 
+ // clear the group list, and get a fresh set of info.
+-void LLPanelGroups::reset()
++void LLFloaterGroups::reset()
+ {
++	if (!sInstance) return;
+ 	LLCtrlListInterface *group_list = childGetListInterface("group list");
+ 	if (group_list)
+ 	{
+@@ -203,7 +241,7 @@
+ 	enableButtons();
+ }
+ 
+-BOOL LLPanelGroups::postBuild()
++BOOL LLFloaterGroups::postBuild()
+ {
+ 	childSetCommitCallback("group list", onGroupList, this);
+ 
+@@ -234,7 +272,7 @@
+ 	return TRUE;
+ }
+ 
+-void LLPanelGroups::enableButtons()
++void LLFloaterGroups::enableButtons()
+ {
+ 	LLCtrlListInterface *group_list = childGetListInterface("group list");
+ 	LLUUID group_id;
+@@ -273,52 +311,51 @@
+ 	}
+ }
+ 
+-
+-void LLPanelGroups::onBtnCreate(void* userdata)
++void LLFloaterGroups::onBtnCreate(void* userdata)
+ {
+-	LLPanelGroups* self = (LLPanelGroups*)userdata;
++	LLFloaterGroups* self = (LLFloaterGroups*)userdata;
+ 	if(self) self->create();
+ }
+ 
+-void LLPanelGroups::onBtnActivate(void* userdata)
++void LLFloaterGroups::onBtnActivate(void* userdata)
+ {
+-	LLPanelGroups* self = (LLPanelGroups*)userdata;
++	LLFloaterGroups* self = (LLFloaterGroups*)userdata;
+ 	if(self) self->activate();
+ }
+ 
+-void LLPanelGroups::onBtnInfo(void* userdata)
++void LLFloaterGroups::onBtnInfo(void* userdata)
+ {
+-	LLPanelGroups* self = (LLPanelGroups*)userdata;
++	LLFloaterGroups* self = (LLFloaterGroups*)userdata;
+ 	if(self) self->info();
+ }
+ 
+-void LLPanelGroups::onBtnIM(void* userdata)
++void LLFloaterGroups::onBtnIM(void* userdata)
+ {
+-	LLPanelGroups* self = (LLPanelGroups*)userdata;
++	LLFloaterGroups* self = (LLFloaterGroups*)userdata;
+ 	if(self) self->startIM();
+ }
+ 
+-void LLPanelGroups::onBtnLeave(void* userdata)
++void LLFloaterGroups::onBtnLeave(void* userdata)
+ {
+-	LLPanelGroups* self = (LLPanelGroups*)userdata;
++	LLFloaterGroups* self = (LLFloaterGroups*)userdata;
+ 	if(self) self->leave();
+ }
+ 
+-void LLPanelGroups::onBtnSearch(void* userdata)
++void LLFloaterGroups::onBtnSearch(void* userdata)
+ {
+-	LLPanelGroups* self = (LLPanelGroups*)userdata;
++	LLFloaterGroups* self = (LLFloaterGroups*)userdata;
+ 	if(self) self->search();
+ }
+ 
+-void LLPanelGroups::create()
++void LLFloaterGroups::create()
+ {
+-	llinfos << "LLPanelGroups::create" << llendl;
++	llinfos << "LLFloaterGroups::create" << llendl;
+ 	LLFloaterGroupInfo::showCreateGroup(NULL);
+ }
+ 
+-void LLPanelGroups::activate()
++void LLFloaterGroups::activate()
+ {
+-	llinfos << "LLPanelGroups::activate" << llendl;
++	llinfos << "LLFloaterGroups::activate" << llendl;
+ 	LLCtrlListInterface *group_list = childGetListInterface("group list");
+ 	LLUUID group_id;
+ 	if (group_list)
+@@ -334,9 +371,9 @@
+ 	gAgent.sendReliableMessage();
+ }
+ 
+-void LLPanelGroups::info()
++void LLFloaterGroups::info()
+ {
+-	llinfos << "LLPanelGroups::info" << llendl;
++	llinfos << "LLFloaterGroups::info" << llendl;
+ 	LLCtrlListInterface *group_list = childGetListInterface("group list");
+ 	LLUUID group_id;
+ 	if (group_list && (group_id = group_list->getCurrentID()).notNull())
+@@ -345,9 +382,8 @@
+ 	}
+ }
+ 
+-void LLPanelGroups::startIM()
++void LLFloaterGroups::startIM()
+ {
+-	//llinfos << "LLPanelFriends::onClickIM()" << llendl;
+ 	LLCtrlListInterface *group_list = childGetListInterface("group list");
+ 	LLUUID group_id;
+ 
+@@ -372,9 +408,9 @@
+ 	}
+ }
+ 
+-void LLPanelGroups::leave()
++void LLFloaterGroups::leave()
+ {
+-	llinfos << "LLPanelGroups::leave" << llendl;
++	llinfos << "LLFloaterGroups::leave" << llendl;
+ 	LLCtrlListInterface *group_list = childGetListInterface("group list");
+ 	LLUUID group_id;
+ 	if (group_list && (group_id = group_list->getCurrentID()).notNull())
+@@ -396,13 +432,13 @@
+ 	}
+ }
+ 
+-void LLPanelGroups::search()
++void LLFloaterGroups::search()
+ {
+ 	LLFloaterDirectory::showGroups();
+ }
+ 
+ // static
+-void LLPanelGroups::callbackLeaveGroup(S32 option, void* userdata)
++void LLFloaterGroups::callbackLeaveGroup(S32 option, void* userdata)
+ {
+ 	LLUUID* group_id = (LLUUID*)userdata;
+ 	if(option == 0 && group_id)
+@@ -419,9 +455,9 @@
+ 	delete group_id;
+ }
+ 
+-void LLPanelGroups::onGroupList(LLUICtrl* ctrl, void* userdata)
++void LLFloaterGroups::onGroupList(LLUICtrl* ctrl, void* userdata)
+ {
+-	LLPanelGroups* self = (LLPanelGroups*)userdata;
++	LLFloaterGroups* self = (LLFloaterGroups*)userdata;
+ 	if(self) self->enableButtons();
+ }
+ 
+@@ -476,4 +512,3 @@
+ 
+ 	group_list->selectByValue(highlight_id);
+ }
+-
+diff -urN linden/indra/newview/llfloatergroups.h linden-patched/indra/newview/llfloatergroups.h
+--- linden/indra/newview/llfloatergroups.h	2009-02-05 18:15:16.000000000 +0100
++++ linden-patched/indra/newview/llfloatergroups.h	2009-02-05 23:55:11.000000000 +0100
+@@ -83,15 +83,22 @@
+ 	static instance_map_t sInstances;
+ };
+ 
+-class LLPanelGroups : public LLPanel, public LLSimpleListener
++class LLFloaterGroups : public LLFloater, public LLSimpleListener
+ {
+ public:
+-	LLPanelGroups();
+-	virtual ~LLPanelGroups();
++	// Do not call these directly
++	LLFloaterGroups();
++	virtual ~LLFloaterGroups();
+ 
+ 	//LLEventListener
+ 	/*virtual*/ bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata);
+-	
++
++	// Shows the floater
++	static LLFloaterGroups* show(void* unused = NULL);
++
++	// Toggles visibility of floater
++	static void toggle(void* unused = NULL);
++
+ 	// clear the group list, and get a fresh set of info.
+ 	void reset();
+ 
+@@ -99,7 +106,6 @@
+ 	// initialize based on the type
+ 	BOOL postBuild();
+ 
+-	// highlight_id is a group id to highlight
+ 	void enableButtons();
+ 
+ 	static void onGroupList(LLUICtrl* ctrl, void* userdata);
+@@ -122,6 +128,9 @@
+ 
+ 	static void callbackLeaveGroup(S32 option, void* userdata);
+ 
++private:
++	// static data
++	static LLFloaterGroups* sInstance;
+ };
+ 
+ 
+diff -urN linden/indra/newview/llhudview.cpp linden-patched/indra/newview/llhudview.cpp
+--- linden/indra/newview/llhudview.cpp	2009-02-05 18:15:17.000000000 +0100
++++ linden-patched/indra/newview/llhudview.cpp	2009-02-05 23:55:11.000000000 +0100
+@@ -52,8 +52,8 @@
+ 
+ const S32 HUD_ARROW_SIZE = 32;
+ 
+-LLHUDView::LLHUDView()
+-:	LLPanel()
++LLHUDView::LLHUDView(const std::string& name, const LLRect& rect)
++:	LLView(name, rect, FALSE)
+ { }
+ 
+ LLHUDView::~LLHUDView()
+diff -urN linden/indra/newview/llhudview.h linden-patched/indra/newview/llhudview.h
+--- linden/indra/newview/llhudview.h	2009-02-05 18:15:15.000000000 +0100
++++ linden-patched/indra/newview/llhudview.h	2009-02-05 23:55:11.000000000 +0100
+@@ -32,16 +32,16 @@
+ #ifndef LL_LLHUDVIEW_H
+ #define LL_LLHUDVIEW_H
+ 
+-#include "llpanel.h"
++#include "llview.h"
+ #include "v4color.h"
+ 
+ class LLVector3d;
+ 
+ class LLHUDView
+-: public LLPanel
++: public LLView
+ {
+ public:
+-	LLHUDView();
++	LLHUDView(const std::string& name, const LLRect& rect);
+ 	virtual ~LLHUDView();
+ 
+ 	virtual void draw();
+diff -urN linden/indra/newview/llimview.cpp linden-patched/indra/newview/llimview.cpp
+--- linden/indra/newview/llimview.cpp	2009-02-05 18:15:16.000000000 +0100
++++ linden-patched/indra/newview/llimview.cpp	2009-02-05 23:55:11.000000000 +0100
+@@ -49,6 +49,7 @@
+ #include "llfloaterchat.h"
+ #include "llfloaterchatterbox.h"
+ #include "llfloaternewim.h"
++#include "llfocusmgr.h"
+ #include "llhttpnode.h"
+ #include "llimpanel.h"
+ #include "llresizebar.h"
+@@ -87,6 +88,9 @@
+ std::map<std::string,std::string> LLFloaterIM::sErrorStringsMap;
+ std::map<std::string,std::string> LLFloaterIM::sForceCloseSessionMap;
+ 
++const EInstantMessage GROUP_DIALOG = IM_SESSION_GROUP_START;
++const EInstantMessage DEFAULT_DIALOG = IM_NOTHING_SPECIAL;
++
+ //
+ // Helper Functions
+ //
+@@ -338,6 +342,34 @@
+ 
+ 	BOOL new_state = !old_state;
+ 
++	LLFloaterChatterBox* floater_chatterbox = gIMMgr->getFloater();
++	LLFloater* floater_current = floater_chatterbox->getActiveFloater();
++	LLFloater* floater_new_im = floater_chatterbox->getFloaterNewIM();
++	BOOL active_is_im = (floater_current && floater_current->getName() == "im_floater" || floater_current==floater_new_im);
++
++	if (floater_chatterbox) {	// "2" for toggle
++
++		if (LLFloaterChatterBox::instanceVisible(LLSD())) 
++		{
++			BOOL has_focus = gFocusMgr.childHasKeyboardFocus(floater_chatterbox);
++
++			if (active_is_im && has_focus)
++			{
++				// toggling away from an im-panel (or with no available im panel) => close
++				new_state = FALSE;
++			}
++			else
++			{
++				// stay open, but switch to an IM panel or just activate
++				new_state = TRUE;
++			}
++		}
++		else 
++		{
++			new_state = TRUE;
++		}
++	}	
++
+ 	if (new_state)
+ 	{
+ 		// ...making visible
+@@ -1004,8 +1036,61 @@
+ 	delete invitep;
+ }
+ 
++//returns true if a should appear before b
++static BOOL group_dictionary_sort( LLGroupData* a, LLGroupData* b )
++{
++	return (LLStringUtil::compareDict( a->mName, b->mName ) < 0);
++}
++
+ void LLIMMgr::refresh()
+ {
++	LLFloaterNewIM* floaterimp = LLFloaterChatterBox::getInstance(LLSD())->getFloaterNewIM();
++
++	if (!floaterimp) return;
++
++	S32 old_scroll_pos = floaterimp->getScrollPos();
++	floaterimp->clearAllTargets();
++
++	// build a list of groups.
++	LLLinkedList<LLGroupData> group_list( group_dictionary_sort );
++
++	LLGroupData* group;
++	S32 count = gAgent.mGroups.count();
++	S32 i;
++	// read/sort groups on the first pass.
++	for(i = 0; i < count; ++i)
++	{
++		group = &(gAgent.mGroups.get(i));
++		group_list.addDataSorted( group );
++	}
++
++	// add groups to the floater on the second pass.
++	for(group = group_list.getFirstData();
++		group;
++		group = group_list.getNextData())
++	{
++		floaterimp->addGroup(group->mID, (void*)(&GROUP_DIALOG), TRUE, FALSE);
++	}
++
++	// build a set of buddies in the current buddy list.
++	LLCollectAllBuddies collector;
++	LLAvatarTracker::instance().applyFunctor(collector);
++	LLCollectAllBuddies::buddy_map_t::iterator it;
++	LLCollectAllBuddies::buddy_map_t::iterator end;
++	it = collector.mOnline.begin();
++	end = collector.mOnline.end();
++	for( ; it != end; ++it)
++	{
++		floaterimp->addAgent((*it).second, (void*)(&DEFAULT_DIALOG), TRUE);
++	}
++	it = collector.mOffline.begin();
++	end = collector.mOffline.end();
++	for( ; it != end; ++it)
++	{
++		floaterimp->addAgent((*it).second, (void*)(&DEFAULT_DIALOG), FALSE);
++	}
++
++	floaterimp->setScrollPos( old_scroll_pos );
+ }
+ 
+ void LLIMMgr::setFloaterOpen(BOOL set_open)
+@@ -1013,6 +1098,40 @@
+ 	if (set_open)
+ 	{
+ 		LLFloaterChatterBox::showInstance();
++
++		LLFloaterChatterBox* floater_chatterbox = getFloater();
++		LLFloater* floater_current = floater_chatterbox->getActiveFloater();
++		LLFloater* floater_new_im = floater_chatterbox->getFloaterNewIM();
++		BOOL active_is_im = (floater_current && floater_current->getName() == "im_floater" || floater_current==floater_new_im);
++		LLFloater* floater_to_show = active_is_im ? floater_current : NULL;
++		LLTabContainer*  tabs = floater_chatterbox->getChild<LLTabContainer>("chatterbox_tabs");
++
++		for (S32 i = 0; i < floater_chatterbox->getFloaterCount(); i++)
++		{
++			LLPanel* panelp = tabs->getPanelByIndex(i);
++			if (panelp->getName() == "im_floater")
++			{
++				// only LLFloaterIMPanels are called "im_floater"
++				LLFloaterIMPanel* im_floaterp = (LLFloaterIMPanel*)panelp;
++				if(im_floaterp)
++				{
++					if (!floater_to_show || floater_chatterbox->isFloaterFlashing(im_floaterp))
++					{
++						floater_to_show = im_floaterp; // the first im_floater or the flashing im_floater
++					}
++				}
++			}
++		}
++
++		if (floater_to_show) 
++		{
++			floater_to_show->open();
++		}
++		else 
++		if (floater_chatterbox && floater_chatterbox->getFloaterNewIM())
++		{
++			floater_chatterbox->getFloaterNewIM()->open();
++		}
+ 	}
+ 	else
+ 	{
+diff -urN linden/indra/newview/llmediaremotectrl.cpp linden-patched/indra/newview/llmediaremotectrl.cpp
+--- linden/indra/newview/llmediaremotectrl.cpp	2009-02-05 18:15:16.000000000 +0100
++++ linden-patched/indra/newview/llmediaremotectrl.cpp	2009-02-05 23:55:11.000000000 +0100
+@@ -52,98 +52,46 @@
+ 
+ static LLRegisterWidget<LLMediaRemoteCtrl> r("media_remote");
+ 
+-LLMediaRemoteCtrl::LLMediaRemoteCtrl()
++LLMediaRemoteCtrl::LLMediaRemoteCtrl(const std::string& name,
++									 const std::string& label,
++									 const LLRect& rect,
++									 const std::string& xml_file) :
++	LLPanel(name, rect, FALSE)
+ {
+ 	setIsChrome(TRUE);
+ 	setFocusRoot(TRUE);
+ 
+-	mFactoryMap["Volume Panel"]	= LLCallbackMap(createVolumePanel, NULL);
+-	build();
+-}
+-
+-void LLMediaRemoteCtrl::build()
+-{
+-	//HACK: only works because we don't have any implicit children (i.e. titlebars, close button, etc)
+-	deleteAllChildren();
+-	if (gSavedSettings.getBOOL("ShowVolumeSettingsPopup"))
+-	{
+-		LLUICtrlFactory::getInstance()->buildPanel(this, "panel_media_remote_expanded.xml", &getFactoryMap());
+-	}
+-	else
+-	{
+-		LLUICtrlFactory::getInstance()->buildPanel(this, "panel_media_remote.xml", &getFactoryMap());
+-	}
++	LLUICtrlFactory::getInstance()->buildPanel(this, xml_file);
+ }
+ 
+ BOOL LLMediaRemoteCtrl::postBuild()
+ {
+-	mControls = getChild<LLPanel>("media_controls");
+-	llassert_always(mControls);
+-	
+-	childSetAction("media_play",LLOverlayBar::toggleMediaPlay,this);
+-	childSetAction("music_play",LLOverlayBar::toggleMusicPlay,this);
+-	childSetAction("media_stop",LLOverlayBar::mediaStop,this);
+-	childSetAction("music_stop",LLOverlayBar::toggleMusicPlay,this);
+-	childSetAction("media_pause",LLOverlayBar::toggleMediaPlay,this);
+-	childSetAction("music_pause",LLOverlayBar::toggleMusicPlay,this);
++	childSetAction("media_play", LLOverlayBar::mediaPlay, this);
++	childSetAction("media_stop", LLOverlayBar::mediaStop, this);
++	childSetAction("media_pause", LLOverlayBar::mediaPause, this);
++
++	childSetAction("music_play", LLOverlayBar::musicPlay, this);
++	childSetAction("music_stop", LLOverlayBar::musicStop, this);
++	childSetAction("music_pause", LLOverlayBar::musicPause, this);
++
++	childSetAction("volume", LLOverlayBar::toggleAudioVolumeFloater, this);
++	childSetControlName("volume", "ShowAudioVolume");
+ 
+-	childSetAction("expand", onClickExpandBtn, this);	
+ 	return TRUE;
+ }
+ 
+ void LLMediaRemoteCtrl::draw()
+ {
+-	enableMediaButtons();
+-	
+-	LLButton* expand_button = getChild<LLButton>("expand");
+-	if (expand_button)
+-	{
+-		if (expand_button->getToggleState())
+-		{
+-			expand_button->setImageOverlay("arrow_down.tga");
+-		}
+-		else
+-		{
+-			expand_button->setImageOverlay("arrow_up.tga");
+-		}
+-	}
+-
++	enableMediaButtons(this);
+ 	LLPanel::draw();
+ }
+ 
+-LLMediaRemoteCtrl::~LLMediaRemoteCtrl ()
++LLMediaRemoteCtrl::~LLMediaRemoteCtrl()
+ {
+ }
+ 
+-//static 
+-void LLMediaRemoteCtrl::onClickExpandBtn(void* user_data)
+-{
+-	LLMediaRemoteCtrl* remotep = (LLMediaRemoteCtrl*)user_data;
+-
+-	remotep->build();
+-	gOverlayBar->layoutButtons();
+-
+-}
+-
+-//static
+-void* LLMediaRemoteCtrl::createVolumePanel(void* data)
+-{
+-	LLPanelAudioVolume* panel = new LLPanelAudioVolume();
+-	return panel;
+-}
+-
+-// Virtual
+-void LLMediaRemoteCtrl::setToolTip(const std::string& msg)
+-{
+-	std::string mime_type = LLMIMETypes::translate(LLViewerMedia::getMimeType());
+-	std::string tool_tip = LLMIMETypes::findToolTip(LLViewerMedia::getMimeType());
+-	std::string play_tip = LLMIMETypes::findPlayTip(LLViewerMedia::getMimeType());
+-	// childSetToolTip("media_stop", mControls->getString("stop_label") + "\n" + tool_tip);
+-	childSetToolTip("media_icon", tool_tip);
+-	childSetToolTip("media_play", play_tip);
+-}
+-
+-void LLMediaRemoteCtrl::enableMediaButtons()
++// Static
++void LLMediaRemoteCtrl::enableMediaButtons(LLPanel* panel)
+ {
+ 	// Media
+ 	bool play_media_enabled = false;
+@@ -155,25 +103,19 @@
+ 	LLColor4 music_icon_color = LLUI::sColorsGroup->getColor( "IconDisabledColor" );
+ 	LLColor4 media_icon_color = LLUI::sColorsGroup->getColor( "IconDisabledColor" );
+ 	std::string media_type = "none/none";
+-
+-	// Put this in xui file
+-	std::string media_url = mControls->getString("default_tooltip_label");
+ 	LLParcel* parcel = LLViewerParcelMgr::getInstance()->getAgentParcel();
+ 
+-	if (gSavedSettings.getBOOL("AudioStreamingVideo"))
++	if (gSavedSettings.getBOOL("AudioStreamingVideo") && gOverlayBar)
+ 	{
+-		if ( parcel && parcel->getMediaURL()[0])
++		if (parcel && parcel->getMediaURL()[0])
+ 		{
+-			// Set the tooltip
+-			// Put this text into xui file
+-			media_url = parcel->getObscureMedia() ? mControls->getString("media_hidden_label") : parcel->getMediaURL();
+ 			media_type = parcel->getMediaType();
+ 
+ 			play_media_enabled = true;
+ 			media_icon_color = LLUI::sColorsGroup->getColor( "IconEnabledColor" );
+ 
+ 			LLMediaBase::EStatus status = LLViewerParcelMedia::getStatus();
+-			switch(status)
++			switch (status)
+ 			{
+ 			case LLMediaBase::STATUS_STOPPED:
+ 			case LLMediaBase::STATUS_UNKNOWN:
+@@ -198,13 +140,12 @@
+ 			}
+ 		}
+ 	}
+-	if (gSavedSettings.getBOOL("AudioStreamingMusic") && gAudiop)
++	if (gSavedSettings.getBOOL("AudioStreamingMusic") && gAudiop && gOverlayBar)
+ 	{
+-	
+-		if ( parcel && parcel->getMusicURL()[0])
++		if (parcel && parcel->getMusicURL()[0])
+ 		{
+ 			play_music_enabled = true;
+-			music_icon_color = LLUI::sColorsGroup->getColor( "IconEnabledColor" );
++			music_icon_color = LLUI::sColorsGroup->getColor("IconEnabledColor");
+ 
+ 			if (gOverlayBar->musicPlaying())
+ 			{
+@@ -218,41 +159,35 @@
+ 			}
+ 		}
+ 		// if no mime type has been set disable play
+-		if( LLViewerMedia::getMimeType().empty() 
+-			|| LLViewerMedia::getMimeType() == "none/none")
++		if (LLViewerMedia::getMimeType().empty() ||
++			LLViewerMedia::getMimeType() == "none/none")
+ 		{
+ 			play_media_enabled = false;
+ 			stop_media_enabled = false;
+ 		}
+ 	}
++
+ 	const std::string media_icon_name = LLMIMETypes::findIcon(media_type);
+-	LLButton* music_play_btn = getChild<LLButton>("music_play");
+-	LLButton* music_stop_btn = getChild<LLButton>("music_stop");
+-	LLButton* music_pause_btn = getChild<LLButton>("music_pause");
+-	LLButton* media_play_btn = getChild<LLButton>("media_play");
+-	LLButton* media_stop_btn = getChild<LLButton>("media_stop");
+-	LLButton* media_pause_btn = getChild<LLButton>("media_pause");
+-	LLIconCtrl* media_icon = getChild<LLIconCtrl>("media_icon");
+-
+-	music_play_btn->setEnabled(play_music_enabled);
+-	music_stop_btn->setEnabled(stop_music_enabled);
+-	music_pause_btn->setEnabled(music_show_pause);
+-	music_pause_btn->setVisible(music_show_pause);
+-	music_play_btn->setVisible(! music_show_pause);
+-	childSetColor("music_icon", music_icon_color);
+-	if(!media_icon_name.empty())
++	LLIconCtrl* media_icon = panel->getChild<LLIconCtrl>("media_icon");
++
++	panel->childSetEnabled("music_play", play_music_enabled);
++	panel->childSetEnabled("music_stop", stop_music_enabled);
++	panel->childSetEnabled("music_pause", music_show_pause);
++	panel->childSetVisible("music_pause", music_show_pause);
++	panel->childSetVisible("music_play", !music_show_pause);
++
++	panel->childSetColor("music_icon", music_icon_color);
++
++	if (!media_icon_name.empty() && media_icon)
+ 	{
+ 		media_icon->setImage(media_icon_name);
+ 	}
+ 
+-	media_play_btn->setEnabled(play_media_enabled);
+-	media_stop_btn->setEnabled(stop_media_enabled);
+-	media_pause_btn->setEnabled(media_show_pause);
+-	media_pause_btn->setVisible(media_show_pause);
+-	media_play_btn->setVisible(! media_show_pause);
+-	childSetColor("media_icon", media_icon_color);
++	panel->childSetEnabled("media_play", play_media_enabled);
++	panel->childSetEnabled("media_stop", stop_media_enabled);
++	panel->childSetEnabled("media_pause", media_show_pause);
++	panel->childSetVisible("media_pause", media_show_pause);
++	panel->childSetVisible("media_play", !media_show_pause);
+ 
+-	setToolTip(media_url);
++	panel->childSetColor("media_icon", media_icon_color);
+ }
+-
+-
+diff -urN linden/indra/newview/llmediaremotectrl.h linden-patched/indra/newview/llmediaremotectrl.h
+--- linden/indra/newview/llmediaremotectrl.h	2009-02-05 18:15:16.000000000 +0100
++++ linden-patched/indra/newview/llmediaremotectrl.h	2009-02-05 23:55:11.000000000 +0100
+@@ -39,23 +39,16 @@
+ class LLMediaRemoteCtrl : public LLPanel
+ {
+ public:
+-	LLMediaRemoteCtrl ();
++	LLMediaRemoteCtrl(const std::string& name,
++					  const std::string& label,
++					  const LLRect& rect,
++					  const std::string& xml_file);
+ 	
+-	/*virtual*/ ~LLMediaRemoteCtrl ();
++	/*virtual*/ ~LLMediaRemoteCtrl();
+ 	/*virtual*/ BOOL postBuild();
+ 	/*virtual*/ void draw();
+ 
+-	void enableMediaButtons();
+-
+-	LLPanel* mControls;
+-	
+-	static void onClickExpandBtn(void* user_data);
+-	static void* createVolumePanel(void* data);
+-	
+-	virtual void setToolTip(const std::string& msg);
+-
+-protected:
+-	void build();
++	static void enableMediaButtons(LLPanel* panel);
+ };
+ 
+ #endif
+diff -urN linden/indra/newview/llmoveview.cpp linden-patched/indra/newview/llmoveview.cpp
+--- linden/indra/newview/llmoveview.cpp	2009-02-05 18:15:17.000000000 +0100
++++ linden-patched/indra/newview/llmoveview.cpp	2009-02-05 23:55:11.000000000 +0100
+@@ -94,6 +94,9 @@
+ 	childSetAction("move down btn",moveDown,NULL);	
+ 	mMoveDownButton->setHeldDownDelay(MOVE_BUTTON_DELAY);
+ 	mMoveDownButton->setHeldDownCallback( moveDown );
++
++	mFlyButton = getChild<LLButton>("fly btn"); 
++	childSetAction("fly btn",onFlyButtonClicked,NULL);
+ }
+ 
+ // virtual
+@@ -118,6 +121,12 @@
+ }
+ 
+ // protected static 
++void LLFloaterMove::onFlyButtonClicked(void *)
++{
++	gAgent.toggleFlying();
++}
++
++// protected static 
+ F32 LLFloaterMove::getYawRate( F32 time )
+ {
+ 	if( time < NUDGE_TIME )
+diff -urN linden/indra/newview/llmoveview.h linden-patched/indra/newview/llmoveview.h
+--- linden/indra/newview/llmoveview.h	2009-02-05 18:15:15.000000000 +0100
++++ linden-patched/indra/newview/llmoveview.h	2009-02-05 23:55:11.000000000 +0100
+@@ -55,6 +55,7 @@
+ public:
+ 	/*virtual*/ void onOpen();
+ 	/*virtual*/ void onClose(bool app_quitting);
++	static void onFlyButtonClicked(void* userdata);
+ 
+ 	static F32	getYawRate(F32 time);
+ 
+@@ -77,6 +78,7 @@
+ 	LLButton*				mTurnRightButton;
+ 	LLButton*				mMoveUpButton;
+ 	LLButton*				mMoveDownButton;
++	LLButton*				mFlyButton;
+ };
+ 
+ 
+diff -urN linden/indra/newview/llnotify.cpp linden-patched/indra/newview/llnotify.cpp
+--- linden/indra/newview/llnotify.cpp	2009-02-05 18:15:18.000000000 +0100
++++ linden-patched/indra/newview/llnotify.cpp	2009-02-05 23:55:11.000000000 +0100
+@@ -734,7 +734,7 @@
+ 	S32 notify_height = llceil((F32) (line_count+1) * sFont->getLineHeight());
+ 	if(gOverlayBar)
+ 	{
+-		notify_height += gOverlayBar->getBoundingRect().mTop;
++		notify_height += gOverlayBar->getRect().getHeight();
+ 	}
+ 	else
+ 	{
+diff -urN linden/indra/newview/lloverlaybar.cpp linden-patched/indra/newview/lloverlaybar.cpp
+--- linden/indra/newview/lloverlaybar.cpp	2009-02-05 18:15:16.000000000 +0100
++++ linden-patched/indra/newview/lloverlaybar.cpp	2009-02-05 23:55:11.000000000 +0100
+@@ -40,7 +40,6 @@
+ #include "llrender.h"
+ #include "llagent.h"
+ #include "llbutton.h"
+-#include "llchatbar.h"
+ #include "llfocusmgr.h"
+ #include "llimview.h"
+ #include "llmediaremotectrl.h"
+@@ -52,7 +51,6 @@
+ #include "llviewerimagelist.h"
+ #include "llviewermedia.h"
+ #include "llviewermenu.h"	// handle_reset_view()
+-#include "llviewermedia.h"
+ #include "llviewerparcelmedia.h"
+ #include "llviewerparcelmgr.h"
+ #include "lluictrlfactory.h"
+@@ -76,14 +74,37 @@
+ //
+ 
+ 
++//static
++void* LLOverlayBar::createMasterRemote(void* userdata)
++{
++	LLOverlayBar *self = (LLOverlayBar*)userdata;	
++	self->mMasterRemote =  new LLMediaRemoteCtrl ( "master_volume",
++												   "volume",
++												   LLRect(),
++												   "panel_master_volume.xml");
++	return self->mMasterRemote;
++}
+ 
+ void* LLOverlayBar::createMediaRemote(void* userdata)
+ {
+ 	LLOverlayBar *self = (LLOverlayBar*)userdata;	
+-	self->mMediaRemote =  new LLMediaRemoteCtrl ();
++	self->mMediaRemote =  new LLMediaRemoteCtrl ( "media_remote",
++												  "media",
++												  LLRect(),
++												  "panel_media_remote.xml");
+ 	return self->mMediaRemote;
+ }
+ 
++void* LLOverlayBar::createMusicRemote(void* userdata)
++{
++	LLOverlayBar *self = (LLOverlayBar*)userdata;
++	self->mMusicRemote =  new LLMediaRemoteCtrl ( "music_remote",
++												  "music",
++												  LLRect(),
++												  "panel_music_remote.xml" );		
++	return self->mMusicRemote;
++}
++
+ void* LLOverlayBar::createVoiceRemote(void* userdata)
+ {
+ 	LLOverlayBar *self = (LLOverlayBar*)userdata;	
+@@ -91,16 +112,16 @@
+ 	return self->mVoiceRemote;
+ }
+ 
+-void* LLOverlayBar::createChatBar(void* userdata)
+-{
+-	gChatBar = new LLChatBar();
+-	return gChatBar;
+-}
+ 
+-LLOverlayBar::LLOverlayBar()
+-	:	LLPanel(),
++
++
++LLOverlayBar::LLOverlayBar(const std::string& name, const LLRect& rect)
++	:	LLPanel(name, rect, FALSE),		// not bordered
++		mMasterRemote(NULL),
++		mMusicRemote(NULL),
+ 		mMediaRemote(NULL),
+ 		mVoiceRemote(NULL),
++		mMediaState(STOPPED),
+ 		mMusicState(STOPPED)
+ {
+ 	setMouseOpaque(FALSE);
+@@ -109,26 +130,24 @@
+ 	mBuilt = false;
+ 
+ 	LLCallbackMap::map_t factory_map;
++	factory_map["master_volume"] = LLCallbackMap(LLOverlayBar::createMasterRemote, this);
+ 	factory_map["media_remote"] = LLCallbackMap(LLOverlayBar::createMediaRemote, this);
++	factory_map["music_remote"] = LLCallbackMap(LLOverlayBar::createMusicRemote, this);
+ 	factory_map["voice_remote"] = LLCallbackMap(LLOverlayBar::createVoiceRemote, this);
+-	factory_map["chat_bar"] = LLCallbackMap(LLOverlayBar::createChatBar, this);
+ 	
+ 	LLUICtrlFactory::getInstance()->buildPanel(this, "panel_overlaybar.xml", &factory_map);
+-}
+-
+-BOOL LLOverlayBar::postBuild()
+-{
++	
+ 	childSetAction("IM Received",onClickIMReceived,this);
+ 	childSetAction("Set Not Busy",onClickSetNotBusy,this);
+ 	childSetAction("Mouselook",onClickMouselook,this);
+ 	childSetAction("Stand Up",onClickStandUp,this);
+-	childSetVisible("chat_bar", gSavedSettings.getBOOL("ChatVisible"));
+ 
+ 	setFocusRoot(TRUE);
+ 	mBuilt = true;
+ 
++	// make overlay bar conform to window size
++	setRect(rect);
+ 	layoutButtons();
+-	return TRUE;
+ }
+ 
+ LLOverlayBar::~LLOverlayBar()
+@@ -149,120 +168,259 @@
+ 
+ void LLOverlayBar::layoutButtons()
+ {
+-	LLView* state_buttons_panel = getChildView("state_buttons");
++	S32 width = getRect().getWidth();
++	if (width > 1024) width = 1024;
++
++	S32 count = getChildCount();
++	const S32 PAD = gSavedSettings.getS32("StatusBarPad");
++
++	const S32 num_media_controls = 3;
++	media_remote_width = mMediaRemote ? mMediaRemote->getRect().getWidth() : 0;
++	music_remote_width = mMusicRemote ? mMusicRemote->getRect().getWidth() : 0;
++	voice_remote_width = mVoiceRemote ? mVoiceRemote->getRect().getWidth() : 0;
++	master_remote_width = mMasterRemote ? mMasterRemote->getRect().getWidth() : 0;
++
++	// total reserved width for all media remotes
++	const S32 ENDPAD = 8;
++	S32 remote_total_width = media_remote_width + PAD + music_remote_width + PAD + voice_remote_width + PAD + master_remote_width + ENDPAD;
+ 
+-	if (state_buttons_panel->getVisible())
++	// calculate button widths
++	F32 segment_width = (F32)(width - remote_total_width) / (F32)(count - num_media_controls);
++
++	S32 btn_width = lltrunc(segment_width - PAD);
++
++	// Evenly space all views
++	LLRect r;
++	S32 i = 0;
++	for (child_list_const_iter_t child_iter = getChildList()->begin();
++		 child_iter != getChildList()->end(); ++child_iter)
++	{
++		LLView *view = *child_iter;
++		r = view->getRect();
++		r.mLeft = (width) - llround(remote_total_width + (i-num_media_controls+1)*segment_width);
++		r.mRight = r.mLeft + btn_width;
++		view->setRect(r);
++		i++;
++	}
++
++	// Fix up remotes to have constant width because they can't shrink
++	S32 right = getRect().getWidth() - ENDPAD;
++	if (mMasterRemote)
++	{
++		r = mMasterRemote->getRect();
++		r.mRight = right;
++		r.mLeft = right - master_remote_width;
++		right = r.mLeft - PAD;
++		mMasterRemote->setRect(r);
++	}
++	if (mMusicRemote)
++	{
++		r = mMusicRemote->getRect();
++		r.mRight = right;
++		r.mLeft = right - music_remote_width;
++		right = r.mLeft - PAD;
++		mMusicRemote->setRect(r);
++	}
++	if (mMediaRemote)
++	{
++		r = mMediaRemote->getRect();
++		r.mRight = right;
++		r.mLeft = right - media_remote_width;
++		right = r.mLeft - PAD;
++		mMediaRemote->setRect(r);
++	}
++	if (mVoiceRemote)
+ 	{
+-		LLViewQuery query;
+-		LLWidgetTypeFilter<LLButton> widget_filter;
+-		query.addPreFilter(LLEnabledFilter::getInstance());
+-		query.addPreFilter(&widget_filter);
++		r = mVoiceRemote->getRect();
++		r.mRight = right;
++		r.mLeft = right - voice_remote_width;
++		mVoiceRemote->setRect(r);
++	}
+ 
+-		child_list_t button_list = query(state_buttons_panel);
++	updateBoundingRect();
++}
+ 
+-		const S32 MAX_BAR_WIDTH = 600;
+-		S32 bar_width = llclamp(state_buttons_panel->getRect().getWidth(), 0, MAX_BAR_WIDTH);
++void LLOverlayBar::draw()
++{
++	// retrieve rounded rect image
++	LLUIImagePtr imagep = LLUI::getUIImage("rounded_square.tga");
+ 
+-		// calculate button widths
+-		const S32 MAX_BUTTON_WIDTH = 150;
+-		S32 segment_width = llclamp(lltrunc((F32)(bar_width) / (F32)button_list.size()), 0, MAX_BUTTON_WIDTH);
+-		S32 btn_width = segment_width - gSavedSettings.getS32("StatusBarPad");
++	if (imagep)
++	{
++		const S32 PAD = gSavedSettings.getS32("StatusBarPad");
+ 
+-		// Evenly space all buttons, starting from left
+-		S32 left = 0;
+-		S32 bottom = 1;
++		gGL.getTexUnit(0)->bind(imagep->getImage());
+ 
+-		for (child_list_reverse_iter_t child_iter = button_list.rbegin();
+-			child_iter != button_list.rend(); ++child_iter)
++		// draw rounded rect tabs behind all children
++		LLRect r;
++		// focus highlights
++		LLColor4 color = gColors.getColor("FloaterFocusBorderColor");
++		gGL.color4fv(color.mV);
++		if(gFocusMgr.childHasKeyboardFocus(gBottomPanel))
++		{
++			for (child_list_const_iter_t child_iter = getChildList()->begin();
++				child_iter != getChildList()->end(); ++child_iter)
++			{
++				LLView *view = *child_iter;
++				if(view->getEnabled() && view->getVisible())
++				{
++					r = view->getRect();
++					gl_segmented_rect_2d_tex(r.mLeft - PAD/3 - 1, 
++											r.mTop + 3, 
++											r.mRight + PAD/3 + 1,
++											r.mBottom, 
++											imagep->getTextureWidth(), 
++											imagep->getTextureHeight(), 
++											16, 
++											ROUNDED_RECT_TOP);
++				}
++			}
++		}
++
++		// main tabs
++		for (child_list_const_iter_t child_iter = getChildList()->begin();
++			child_iter != getChildList()->end(); ++child_iter)
+ 		{
+ 			LLView *view = *child_iter;
+-			LLRect r = view->getRect();
+-			r.setOriginAndSize(left, bottom, btn_width, r.getHeight());
+-			view->setRect(r);
+-			left += segment_width;
++			if(view->getEnabled() && view->getVisible())
++			{
++				r = view->getRect();
++				// draw a nice little pseudo-3D outline
++				color = gColors.getColor("DefaultShadowDark");
++				gGL.color4fv(color.mV);
++				gl_segmented_rect_2d_tex(r.mLeft - PAD/3 + 1, r.mTop + 2, r.mRight + PAD/3, r.mBottom, 
++										 imagep->getTextureWidth(), imagep->getTextureHeight(), 16, ROUNDED_RECT_TOP);
++				color = gColors.getColor("DefaultHighlightLight");
++				gGL.color4fv(color.mV);
++				gl_segmented_rect_2d_tex(r.mLeft - PAD/3, r.mTop + 2, r.mRight + PAD/3 - 3, r.mBottom, 
++										 imagep->getTextureWidth(), imagep->getTextureHeight(), 16, ROUNDED_RECT_TOP);
++				// here's the main background.  Note that it overhangs on the bottom so as to hide the
++				// focus highlight on the bottom panel, thus producing the illusion that the focus highlight
++				// continues around the tabs
++				color = gColors.getColor("FocusBackgroundColor");
++				gGL.color4fv(color.mV);
++				gl_segmented_rect_2d_tex(r.mLeft - PAD/3 + 1, r.mTop + 1, r.mRight + PAD/3 - 1, r.mBottom - 1, 
++										 imagep->getTextureWidth(), imagep->getTextureHeight(), 16, ROUNDED_RECT_TOP);
++			}
+ 		}
+ 	}
++
++	// draw children on top
++	LLPanel::draw();
+ }
+ 
+ // Per-frame updates of visibility
+ void LLOverlayBar::refresh()
+ {
+-	BOOL buttons_changed = FALSE;
+-
+ 	BOOL im_received = gIMMgr->getIMReceived();
+-	LLButton* button = getChild<LLButton>("IM Received");
+-	if (button && button->getVisible() != im_received)
+-	{
+-		button->setVisible(im_received);
+-		sendChildToFront(button);
+-		moveChildToBackOfTabGroup(button);
+-		buttons_changed = TRUE;
+-	}
++	childSetVisible("IM Received", im_received);
++	childSetEnabled("IM Received", im_received);
+ 
+ 	BOOL busy = gAgent.getBusy();
+-	button = getChild<LLButton>("Set Not Busy");
+-	if (button && button->getVisible() != busy)
+-	{
+-		button->setVisible(busy);
+-		sendChildToFront(button);
+-		moveChildToBackOfTabGroup(button);
+-		buttons_changed = TRUE;
+-	}
++	childSetVisible("Set Not Busy", busy);
++	childSetEnabled("Set Not Busy", busy);
++
+ 
+ 	BOOL mouselook_grabbed;
+ 	mouselook_grabbed = gAgent.isControlGrabbed(CONTROL_ML_LBUTTON_DOWN_INDEX)
+-		|| gAgent.isControlGrabbed(CONTROL_ML_LBUTTON_UP_INDEX);
+-	button = getChild<LLButton>("Mouselook");
++						|| gAgent.isControlGrabbed(CONTROL_ML_LBUTTON_UP_INDEX);
+ 
+-	if (button && button->getVisible() != mouselook_grabbed)
+-	{
+-		button->setVisible(mouselook_grabbed);
+-		sendChildToFront(button);
+-		moveChildToBackOfTabGroup(button);
+-		buttons_changed = TRUE;
+-	}
++	
++	childSetVisible("Mouselook", mouselook_grabbed);
++	childSetEnabled("Mouselook", mouselook_grabbed);
+ 
+ 	BOOL sitting = FALSE;
+ 	if (gAgent.getAvatarObject())
+ 	{
+ 		sitting = gAgent.getAvatarObject()->mIsSitting;
++		childSetVisible("Stand Up", sitting);
++		childSetEnabled("Stand Up", sitting);
++		
+ 	}
+-	button = getChild<LLButton>("Stand Up");
+ 
+-	if (button && button->getVisible() != sitting)
++	const S32 PAD = gSavedSettings.getS32("StatusBarPad");
++	const S32 ENDPAD = 8;
++	S32 right = getRect().getWidth() - master_remote_width - PAD - ENDPAD;
++	LLRect r;
++
++	BOOL master_remote = !gSavedSettings.getBOOL("HideMasterRemote");
++
++	LLParcel* parcel = LLViewerParcelMgr::getInstance()->getAgentParcel();
++
++	if (mMusicRemote && gAudiop)
+ 	{
+-		button->setVisible(sitting);
+-		sendChildToFront(button);
+-		moveChildToBackOfTabGroup(button);
+-		buttons_changed = TRUE;
++		if (!parcel 
++			|| parcel->getMusicURL().empty()
++			|| !gSavedSettings.getBOOL("AudioStreamingMusic"))
++		{
++			mMusicRemote->setVisible(FALSE);
++			mMusicRemote->setEnabled(FALSE);
++		}
++		else
++		{
++			mMusicRemote->setEnabled(TRUE);
++			r = mMusicRemote->getRect();
++			r.mRight = right;
++			r.mLeft = right - music_remote_width;
++			right = r.mLeft - PAD;
++			mMusicRemote->setRect(r);
++			mMusicRemote->setVisible(TRUE);
++			master_remote = TRUE;
++		}
+ 	}
+ 
++	if (mMediaRemote)
++	{
++		if (parcel && parcel->getMediaURL()[0] &&
++			gSavedSettings.getBOOL("AudioStreamingVideo"))
++		{
++			// display remote control 
++			mMediaRemote->setEnabled(TRUE);
++			r = mMediaRemote->getRect();
++			r.mRight = right;
++			r.mLeft = right - media_remote_width;
++			right = r.mLeft - PAD;
++			mMediaRemote->setRect(r);
++			mMediaRemote->setVisible(TRUE);
++			master_remote = TRUE;
++		}
++		else
++		{
++			mMediaRemote->setVisible(FALSE);
++			mMediaRemote->setEnabled(FALSE);
++		}
++	}
++	if (mVoiceRemote)
++	{
++		if (LLVoiceClient::voiceEnabled())
++		{
++			r = mVoiceRemote->getRect();
++			r.mRight = right;
++			r.mLeft = right - voice_remote_width;
++			mVoiceRemote->setRect(r);
++			mVoiceRemote->setVisible(TRUE);
++			master_remote = TRUE;
++		}
++		else
++		{
++			mVoiceRemote->setVisible(FALSE);
++		}
++	}
+ 
+-	moveChildToBackOfTabGroup(mMediaRemote);
+-	moveChildToBackOfTabGroup(mVoiceRemote);
++	mMasterRemote->setVisible(master_remote);
++	mMasterRemote->setEnabled(master_remote);
+ 
+ 	// turn off the whole bar in mouselook
+ 	if (gAgent.cameraMouselook())
+ 	{
+-		childSetVisible("media_remote_container", FALSE);
+-		childSetVisible("voice_remote_container", FALSE);
+-		childSetVisible("state_buttons", FALSE);
++		setVisible(FALSE);
+ 	}
+ 	else
+ 	{
+-		// update "remotes"
+-		childSetVisible("media_remote_container", TRUE);
+-		childSetVisible("voice_remote_container", LLVoiceClient::voiceEnabled());
+-		childSetVisible("state_buttons", TRUE);
++		setVisible(TRUE);
+ 	}
+ 
+-	// always let user toggle into and out of chatbar
+-	childSetVisible("chat_bar", gSavedSettings.getBOOL("ChatVisible"));
+-
+-	if (buttons_changed)
+-	{
+-		layoutButtons();
+-	}
++	updateBoundingRect();
+ }
+ 
+ //-----------------------------------------------------------------------
+@@ -298,82 +456,93 @@
+ ////////////////////////////////////////////////////////////////////////////////
+ // static media helpers
+ // *TODO: Move this into an audio manager abstraction
++
+ //static
+-void LLOverlayBar::mediaStop(void*)
++void LLOverlayBar::mediaPlay(void*)
+ {
+ 	if (!gOverlayBar)
+ 	{
+ 		return;
+ 	}
+-	LLViewerParcelMedia::stop();
++	gOverlayBar->mMediaState = PLAYING; // desired state
++	LLParcel* parcel = LLViewerParcelMgr::getInstance()->getAgentParcel();
++	if (parcel)
++	{
++		std::string path("");
++		LLViewerParcelMedia::play(parcel);
++	}
+ }
+ //static
+-void LLOverlayBar::toggleMediaPlay(void*)
++void LLOverlayBar::mediaPause(void*)
+ {
+ 	if (!gOverlayBar)
+ 	{
+ 		return;
+ 	}
+-
+-	
+-	if (LLViewerMedia::isMediaPaused())
++	gOverlayBar->mMediaState = PAUSED; // desired state
++	LLViewerParcelMedia::pause();
++}
++//static
++void LLOverlayBar::mediaStop(void*)
++{
++	if (!gOverlayBar)
+ 	{
+-		LLViewerParcelMedia::start();
++		return;
+ 	}
+-	else if(LLViewerMedia::isMediaPlaying())
++	gOverlayBar->mMediaState = STOPPED; // desired state
++	LLViewerParcelMedia::stop();
++}
++
++//static
++void LLOverlayBar::musicPlay(void*)
++{
++	if (!gOverlayBar)
+ 	{
+-		LLViewerParcelMedia::pause();
++		return;
+ 	}
+-	else
++	gOverlayBar->mMusicState = PLAYING; // desired state
++	if (gAudiop)
+ 	{
+ 		LLParcel* parcel = LLViewerParcelMgr::getInstance()->getAgentParcel();
+-		if (parcel)
++		if ( parcel )
+ 		{
+-			LLViewerParcelMedia::play(parcel);
++			// this doesn't work properly when crossing parcel boundaries - even when the 
++			// stream is stopped, it doesn't return the right thing - commenting out for now.
++// 			if ( gAudiop->isInternetStreamPlaying() == 0 )
++			{
++				gAudiop->startInternetStream(parcel->getMusicURL().c_str());
++			}
+ 		}
+ 	}
+ }
+-
+ //static
+-void LLOverlayBar::toggleMusicPlay(void*)
++void LLOverlayBar::musicPause(void*)
+ {
+ 	if (!gOverlayBar)
+ 	{
+ 		return;
+ 	}
+-	
+-	if (gOverlayBar->mMusicState != PLAYING)
++	gOverlayBar->mMusicState = PAUSED; // desired state
++	if (gAudiop)
+ 	{
+-		gOverlayBar->mMusicState = PLAYING; // desired state
+-		if (gAudiop)
+-		{
+-			LLParcel* parcel = LLViewerParcelMgr::getInstance()->getAgentParcel();
+-			if ( parcel )
+-			{
+-				// this doesn't work properly when crossing parcel boundaries - even when the 
+-				// stream is stopped, it doesn't return the right thing - commenting out for now.
+-	// 			if ( gAudiop->isInternetStreamPlaying() == 0 )
+-				{
+-					gAudiop->startInternetStream(parcel->getMusicURL());
+-				}
+-			}
+-		}
++		gAudiop->pauseInternetStream(1);
+ 	}
+-	//else
+-	//{
+-	//	gOverlayBar->mMusicState = PAUSED; // desired state
+-	//	if (gAudiop)
+-	//	{
+-	//		gAudiop->pauseInternetStream(1);
+-	//	}
+-	//}
+-	else
++}
++//static
++void LLOverlayBar::musicStop(void*)
++{
++	if (!gOverlayBar)
+ 	{
+-		gOverlayBar->mMusicState = STOPPED; // desired state
+-		if (gAudiop)
+-		{
+-			gAudiop->stopInternetStream();
+-		}
++		return;
++	}
++	gOverlayBar->mMusicState = STOPPED; // desired state
++	if (gAudiop)
++	{
++		gAudiop->stopInternetStream();
+ 	}
+ }
+ 
++void LLOverlayBar::toggleAudioVolumeFloater(void* user_data)
++{
++	LLFloaterAudioVolume::toggleInstance(LLSD());
++}
+diff -urN linden/indra/newview/lloverlaybar.h linden-patched/indra/newview/lloverlaybar.h
+--- linden/indra/newview/lloverlaybar.h	2009-02-05 18:15:15.000000000 +0100
++++ linden-patched/indra/newview/lloverlaybar.h	2009-02-05 23:55:11.000000000 +0100
+@@ -54,16 +54,17 @@
+ :	public LLPanel
+ {
+ public:
+-	LLOverlayBar();
++	LLOverlayBar(const std::string& name, const LLRect& rect );
+ 	~LLOverlayBar();
+ 
+ 	/*virtual*/ void refresh();
++	/*virtual*/ void draw();
+ 	/*virtual*/ void reshape(S32 width, S32 height, BOOL called_from_parent = TRUE);
+-	/*virtual*/ BOOL postBuild();
+ 
+ 	void layoutButtons();
+ 
+ 	// helpers for returning desired state
++	BOOL mediaPlaying() { return mMediaState == PLAYING; }
+ 	BOOL musicPlaying() { return mMusicState == PLAYING; }
+ 	
+ 	static void onClickIMReceived(void* data);
+@@ -73,27 +74,37 @@
+ 	static void onClickResetView(void* data);
+ 
+ 	//static media helper functions
+-	static void toggleMediaPlay(void*);
+-	static void toggleMusicPlay(void*);
++	static void mediaPlay(void*);
++	static void mediaPause(void*);
++	static void mediaStop(void*);
++	
++	static void musicPlay(void*);
+ 	static void musicPause(void*);
+ 	static void musicStop(void*);
+-	static void mediaStop(void*);
+ 
+ 	static void toggleAudioVolumeFloater(void*);
+-
++	
+ protected:	
++	static void* createMasterRemote(void* userdata);
++	static void* createMusicRemote(void* userdata);
+ 	static void* createMediaRemote(void* userdata);
+ 	static void* createVoiceRemote(void* userdata);
+-	static void* createChatBar(void* userdata);
+-
+-	void enableMediaButtons();
+ 
+ protected:
++	LLMediaRemoteCtrl*	mMasterRemote;
++	LLMediaRemoteCtrl*	mMusicRemote;
+ 	LLMediaRemoteCtrl*	mMediaRemote;
+ 	LLVoiceRemoteCtrl*	mVoiceRemote;
+ 	bool mBuilt;	// dialog constructed yet?
+ 	enum { STOPPED=0, PLAYING=1, PAUSED=2 };
+-	S32 mMusicState;
++	BOOL mMediaState;
++	BOOL mMusicState;
++
++private:
++	S32 media_remote_width;
++	S32 music_remote_width;
++	S32 voice_remote_width;
++	S32 master_remote_width;
+ };
+ 
+ extern LLOverlayBar* gOverlayBar;
+diff -urN linden/indra/newview/llpanelaudiovolume.cpp linden-patched/indra/newview/llpanelaudiovolume.cpp
+--- linden/indra/newview/llpanelaudiovolume.cpp	2009-02-05 18:15:17.000000000 +0100
++++ linden-patched/indra/newview/llpanelaudiovolume.cpp	2009-02-05 23:55:11.000000000 +0100
+@@ -38,6 +38,55 @@
+ #include "lluictrlfactory.h"
+ 
+ ////////////////////////////////////////////////////////////////////////////////
++// Floater version of audio panel
++//
++
++//static
++void* LLFloaterAudioVolume::createVolumePanel(void* data)
++{
++	LLPanelAudioVolume* panel = new LLPanelAudioVolume();
++	return panel;
++}
++
++LLFloaterAudioVolume::LLFloaterAudioVolume(const LLSD& seed)
++{
++	mFactoryMap["Volume Panel"]	= LLCallbackMap(createVolumePanel, NULL);
++	LLUICtrlFactory::getInstance()->buildFloater(this, "floater_audio_volume.xml", &getFactoryMap());
++
++	S32 pos_x = getRect().mLeft;
++	S32 pos_y = getRect().mBottom;
++	LLView* volume_panel_view = gOverlayBar->getChild<LLView>("master_volume");
++	if (volume_panel_view)
++	{
++		pos_x = volume_panel_view->getRect().mLeft;
++		pos_y = volume_panel_view->getRect().mTop;
++	}
++
++	setOrigin(pos_x, pos_y);
++	gFloaterView->adjustToFitScreen(this, FALSE);
++}
++
++//static 
++bool LLFloaterAudioVolume::visible(LLFloater* instance, const LLSD& key)
++{
++	return VisibilityPolicy<LLFloater>::visible(instance, key);
++}
++
++//static 
++void LLFloaterAudioVolume::show(LLFloater* instance, const LLSD& key)
++{
++	VisibilityPolicy<LLFloater>::show(instance, key);
++	gSavedSettings.setBOOL("ShowAudioVolume", TRUE);
++}
++
++//static 
++void LLFloaterAudioVolume::hide(LLFloater* instance, const LLSD& key)
++{
++	VisibilityPolicy<LLFloater>::hide(instance, key);
++	gSavedSettings.setBOOL("ShowAudioVolume", FALSE);
++}
++
++////////////////////////////////////////////////////////////////////////////////
+ //
+ //
+ LLPanelAudioVolume::LLPanelAudioVolume()
+@@ -46,18 +95,12 @@
+ 
+ BOOL LLPanelAudioVolume::postBuild()
+ {
+-	childSetCommitCallback("System Volume", onCommitVolumeChange);
+-	childSetCommitCallback("Music Volume", onCommitVolumeChange);
+-	childSetCommitCallback("Media Volume", onCommitVolumeChange);
+-	childSetCommitCallback("Voice Volume", onCommitVolumeChange);
+-	childSetCommitCallback("SFX Volume", onCommitVolumeChange);
+-	childSetCommitCallback("UI Volume", onCommitVolumeChange);
+-	childSetCommitCallback("Wind Volume", onCommitVolumeChange);
+ 	return TRUE;
+ }
+ 
+ LLPanelAudioVolume::~LLPanelAudioVolume ()
+ {
++	gSavedSettings.setBOOL("ShowAudioVolume", FALSE);
+ }
+ 
+ ////////////////////////////////////////////////////////////////////////////////
+@@ -65,58 +108,16 @@
+ //
+ void LLPanelAudioVolume::draw()
+ {
++// 	LLOverlayBar::enableMusicButtons(this);
++// 	LLOverlayBar::enableMediaButtons(this);
+ 	BOOL mute = gSavedSettings.getBOOL("MuteAudio");
+ 	bool enable = mute ? false : true;
++	childSetEnabled("System Volume", enable);
+ 	childSetEnabled("Music Volume", enable);
+ 	childSetEnabled("Media Volume", enable);
+ 	childSetEnabled("Voice Volume", enable);
+ 	childSetEnabled("SFX Volume", enable);
+ 	childSetEnabled("UI Volume", enable);
+ 	childSetEnabled("Wind Volume", enable);
+-
+-	childSetEnabled("mute_music", enable);
+-	childSetEnabled("mute_media", enable);
+-	childSetEnabled("mute_voice", enable);
+-	childSetEnabled("mute_sfx", enable);
+-	childSetEnabled("mute_wind", enable);
+-	childSetEnabled("mute_ui", enable);
+-
+ 	LLPanel::draw();
+ }
+-
+-//static
+-void LLPanelAudioVolume::onCommitVolumeChange(LLUICtrl* ctrl, void* user_data)
+-{
+-	// unmute various audio sources when user changes volume
+-	std::string control_name = ctrl->getControlName();
+-	if (control_name == "AudioLevelMaster")
+-	{
+-		gSavedSettings.setBOOL("MuteAudio", FALSE);
+-	}
+-	else if (control_name == "AudioLevelSFX")
+-	{
+-		gSavedSettings.setBOOL("MuteSounds", FALSE);
+-	}
+-	else if (control_name == "AudioLevelUI")
+-	{
+-		gSavedSettings.setBOOL("MuteUI", FALSE);
+-	}
+-	else if (control_name == "AudioLevelAmbient")
+-	{
+-		gSavedSettings.setBOOL("MuteAmbient", FALSE);
+-	}
+-	else if (control_name == "AudioLevelMusic")
+-	{
+-		gSavedSettings.setBOOL("MuteMusic", FALSE);
+-	}
+-	else if (control_name == "AudioLevelMedia")
+-	{
+-		gSavedSettings.setBOOL("MuteMedia", FALSE);
+-	}
+-	else if (control_name == "AudioLevelVoice")
+-	{
+-		gSavedSettings.setBOOL("MuteVoice", FALSE);
+-	}
+-}
+-
+-
+diff -urN linden/indra/newview/llpanelaudiovolume.h linden-patched/indra/newview/llpanelaudiovolume.h
+--- linden/indra/newview/llpanelaudiovolume.h	2009-02-05 18:15:16.000000000 +0100
++++ linden-patched/indra/newview/llpanelaudiovolume.h	2009-02-05 23:55:11.000000000 +0100
+@@ -35,17 +35,29 @@
+ #include "llpanel.h"
+ #include "llfloater.h"
+ 
++class LLFloaterAudioVolume :
++	public LLUISingleton<LLFloaterAudioVolume, LLFloaterAudioVolume>,
++	public LLFloater
++{
++	friend class LLUISingleton<LLFloaterAudioVolume, VisibilityPolicy<LLFloater> >;
++public:
++	LLFloaterAudioVolume(const LLSD& seed);
++	static void* createVolumePanel(void* data);
++
++	// visibility policy for LLUISingleton
++	static bool visible(LLFloater* instance, const LLSD& key);
++	static void show(LLFloater* instance, const LLSD& key);
++	static void hide(LLFloater* instance, const LLSD& key);
++};
++
+ class LLPanelAudioVolume : public LLPanel
+ {
+ public:
+-	LLPanelAudioVolume();					
++	LLPanelAudioVolume();
+ 	virtual ~LLPanelAudioVolume();
+ 
+ 	virtual BOOL postBuild();
+ 	virtual void draw();
+-
+-private:
+-	static void onCommitVolumeChange(LLUICtrl* ctrl, void* user_data);
+ };
+ 
+ #endif
+diff -urN linden/indra/newview/llpanelavatar.cpp linden-patched/indra/newview/llpanelavatar.cpp
+--- linden/indra/newview/llpanelavatar.cpp	2009-02-05 18:15:17.000000000 +0100
++++ linden-patched/indra/newview/llpanelavatar.cpp	2009-02-05 23:55:11.000000000 +0100
+@@ -1572,7 +1572,7 @@
+ 	LLNameEditor* name_edit = self->mPanelSecondLife->getChild<LLNameEditor>("name");	
+ 	if (name_edit)
+ 	{
+-		LLPanelFriends::requestFriendshipDialog(self->getAvatarID(),
++		LLFloaterFriends::requestFriendshipDialog(self->getAvatarID(),
+ 												  name_edit->getText());
+ 	}
+ }
+diff -urN linden/indra/newview/llstatusbar.cpp linden-patched/indra/newview/llstatusbar.cpp
+--- linden/indra/newview/llstatusbar.cpp	2009-02-05 18:15:17.000000000 +0100
++++ linden-patched/indra/newview/llstatusbar.cpp	2009-02-05 23:55:11.000000000 +0100
+@@ -137,7 +137,14 @@
+ 	mBalanceTimer = new LLFrameTimer();
+ 	mHealthTimer = new LLFrameTimer();
+ 
+-	LLUICtrlFactory::getInstance()->buildPanel(this,"panel_status_bar.xml");
++	if (gSavedSettings.getBOOL("UseOldStatusBarIcons"))
++	{
++		LLUICtrlFactory::getInstance()->buildPanel(this,"panel_status_bar2.xml");
++	}
++	else
++	{
++		LLUICtrlFactory::getInstance()->buildPanel(this,"panel_status_bar.xml");
++	}
+ 
+ 	// status bar can never get a tab
+ 	setFocusRoot(FALSE);
+@@ -184,7 +191,7 @@
+ 	mSGBandwidth->setLabel(bandwidth_tooltip.getString());
+ 	mSGBandwidth->setUnits("Kbps");
+ 	mSGBandwidth->setPrecision(0);
+-	mSGBandwidth->setMouseOpaque(FALSE);
++//	mSGBandwidth->setMouseOpaque(FALSE);
+ 	addChild(mSGBandwidth);
+ 	x -= SIM_STAT_WIDTH + 2;
+ 
+@@ -202,7 +209,7 @@
+ 	mSGPacketLoss->setThreshold(1, 1.f);
+ 	mSGPacketLoss->setThreshold(2, 3.f);
+ 	mSGPacketLoss->setPrecision(1);
+-	mSGPacketLoss->setMouseOpaque(FALSE);
++//	mSGPacketLoss->setMouseOpaque(FALSE);
+ 	mSGPacketLoss->mPerSec = FALSE;
+ 	addChild(mSGPacketLoss);
+ 
+@@ -578,23 +585,26 @@
+ 	// finally adjust parcel name rect
+ 
+ 	S32 new_right = getRect().getWidth();
++
++	childGetRect("stat_btn", r);
++	r.translate( new_right - r.mRight, 0);
++	childSetRect("stat_btn", r);
++	new_right -= r.getWidth() + 12;
++
+ 	if (search_visible)
+ 	{
++		childGetRect("menubar_search_bevel_bg", r);
++		r.translate( new_right - r.mRight, 0);
++		childSetRect("menubar_search_bevel_bg", r);
++
+ 		childGetRect("search_btn", r);
+-		//r.translate( new_right - r.mRight, 0);
+-		//childSetRect("search_btn", r);
++		r.translate( new_right - r.mRight, 0);
++		childSetRect("search_btn", r);
+ 		new_right -= r.getWidth();
+ 
+ 		childGetRect("search_editor", r);
+-		//r.translate( new_right - r.mRight, 0);
+-		//childSetRect("search_editor", r);
+-		new_right -= r.getWidth() + 6;
+-	}
+-	else
+-	{
+-		childGetRect("stat_btn", r);
+ 		r.translate( new_right - r.mRight, 0);
+-		childSetRect("stat_btn", r);
++		childSetRect("search_editor", r);
+ 		new_right -= r.getWidth() + 6;
+ 	}
+ 
+@@ -627,9 +637,9 @@
+ 	childSetVisible("search_editor", search_visible);
+ 	childSetVisible("search_btn", search_visible);
+ 	childSetVisible("menubar_search_bevel_bg", search_visible);
+-	mSGBandwidth->setVisible(! search_visible);
+-	mSGPacketLoss->setVisible(! search_visible);
+-	childSetEnabled("stat_btn", ! search_visible);
++	mSGBandwidth->setVisible(TRUE);
++	mSGPacketLoss->setVisible(TRUE);
++	childSetEnabled("stat_btn", TRUE);
+ }
+ 
+ void LLStatusBar::setVisibleForMouselook(bool visible)
+diff -urN linden/indra/newview/lltoolbar.cpp linden-patched/indra/newview/lltoolbar.cpp
+--- linden/indra/newview/lltoolbar.cpp	2009-02-05 18:15:17.000000000 +0100
++++ linden-patched/indra/newview/lltoolbar.cpp	2009-02-05 23:55:11.000000000 +0100
+@@ -51,6 +51,7 @@
+ #include "llinventoryview.h"
+ #include "llfloaterchatterbox.h"
+ #include "llfloaterfriends.h"
++#include "llfloatergroups.h"
+ #include "llfloatersnapshot.h"
+ #include "lltoolmgr.h"
+ #include "llui.h"
+@@ -60,11 +61,6 @@
+ #include "lluictrlfactory.h"
+ #include "llviewerwindow.h"
+ #include "lltoolgrab.h"
+-#include "llcombobox.h"
+-#include "llfloaterchat.h"
+-#include "llfloatermute.h"
+-#include "llimpanel.h"
+-#include "llscrolllistctrl.h"
+ 
+ #if LL_DARWIN
+ 
+@@ -105,25 +101,44 @@
+ // Functions
+ //
+ 
+-LLToolBar::LLToolBar()
+-:	LLPanel()
++LLToolBar::LLToolBar(const std::string& name, const LLRect& r)
++:	LLPanel(name, r, BORDER_NO)
+ #if LL_DARWIN
+ 	, mResizeHandle(NULL)
+ #endif // LL_DARWIN
+ {
+ 	setIsChrome(TRUE);
++	setFollows(	FOLLOWS_LEFT | FOLLOWS_RIGHT | FOLLOWS_BOTTOM );
++
++	if (gSavedSettings.getBOOL("ShowGroupsButton"))
++	{
++		LLUICtrlFactory::getInstance()->buildPanel(this, "panel_toolbar2.xml");
++	}
++	else
++	{
++		LLUICtrlFactory::getInstance()->buildPanel(this, "panel_toolbar1.xml");
++	}
+ 	setFocusRoot(TRUE);
+ }
+ 
+ 
+ BOOL LLToolBar::postBuild()
+ {
+-	childSetCommitCallback("communicate_btn", onClickCommunicate, this);
++	childSetAction("communicate_btn", onClickCommunicate, this);
+ 	childSetControlName("communicate_btn", "ShowCommunicate");
+ 
+ 	childSetAction("chat_btn", onClickChat, this);
+ 	childSetControlName("chat_btn", "ChatVisible");
+ 
++	childSetAction("friends_btn", onClickFriends, this);
++	childSetControlName("friends_btn", "ShowFriends");
++
++	if (gSavedSettings.getBOOL("ShowGroupsButton"))
++	{
++		childSetAction("groups_btn", onClickGroups, this);
++		childSetControlName("groups_btn", "ShowGroups");
++	}
++
+ 	childSetAction("appearance_btn", onClickAppearance, this);
+ 	childSetControlName("appearance_btn", "");
+ 
+@@ -171,8 +186,6 @@
+ 		LLRect rect(0, 0, RESIZE_HANDLE_WIDTH, RESIZE_HANDLE_HEIGHT);
+ 		mResizeHandle = new LLFakeResizeHandle(std::string(""), rect, RESIZE_HANDLE_WIDTH, RESIZE_HANDLE_HEIGHT);
+ 		this->addChildAtEnd(mResizeHandle);
+-		LLLayoutStack* toolbar_stack = getChild<LLLayoutStack>("toolbar_stack");
+-		toolbar_stack->reshape(toolbar_stack->getRect().getWidth() - RESIZE_HANDLE_WIDTH, toolbar_stack->getRect().getHeight());
+ 	}
+ #endif // LL_DARWIN
+ 
+@@ -240,14 +253,19 @@
+ 
+ void LLToolBar::layoutButtons()
+ {
+-#if LL_DARWIN
++	// Always spans whole window. JC                                        
+ 	const S32 FUDGE_WIDTH_OF_SCREEN = 4;                                    
+-	S32 width = gViewerWindow->getWindowWidth() + FUDGE_WIDTH_OF_SCREEN;   
++	S32 width = gViewerWindow->getWindowWidth() + FUDGE_WIDTH_OF_SCREEN;    
++	S32 count = getChildCount();
+ 	S32 pad = 2;
+ 
++#if LL_DARWIN
+ 	// this function may be called before postBuild(), in which case mResizeHandle won't have been set up yet.
+ 	if(mResizeHandle != NULL)
+ 	{
++		// a resize handle has been added as a child, increasing the count by one.
++		count--;
++		
+ 		if(!gViewerWindow->getWindow()->getFullscreen())
+ 		{
+ 			// Only when running in windowed mode on the Mac, leave room for a resize widget on the right edge of the bar.
+@@ -267,6 +285,34 @@
+ 		}
+ 	}
+ #endif // LL_DARWIN
++
++	// We actually want to extend "pad" pixels off the right edge of the    
++	// screen, such that the rightmost button is aligned.                   
++	F32 segment_width = (F32)(width + pad) / (F32)count;                    
++	S32 btn_width = lltrunc(segment_width - pad);                           
++	
++	// Evenly space all views
++	S32 height = -1;
++	S32 i = count - 1;
++	for (child_list_const_iter_t child_iter = getChildList()->begin();
++		 child_iter != getChildList()->end(); ++child_iter)
++	{
++		LLView *btn_view = *child_iter;
++		LLButton* buttonp = dynamic_cast<LLButton*>(btn_view);
++		if(buttonp)
++		{
++			if (height < 0)
++			{
++				height = btn_view->getRect().getHeight();
++			}
++			S32 x = llround(i*segment_width);                               
++			S32 y = 0;                                                      
++			LLRect r;                                                               
++			r.setOriginAndSize(x, y, btn_width, height);                    
++			btn_view->setRect(r);                                           
++			i--;                                                            
++		}
++	}                                                                       
+ }
+ 
+ 
+@@ -293,9 +339,8 @@
+ 	{
+ 		sitting = gAgent.getAvatarObject()->mIsSitting;
+ 	}
+-
+ 	childSetEnabled("fly_btn", (gAgent.canFly() || gAgent.getFlying()) && !sitting );
+-
++ 
+ 	childSetEnabled("build_btn", LLViewerParcelMgr::getInstance()->agentCanBuild() );
+ 
+ 	// Check to see if we're in build mode
+@@ -306,132 +351,13 @@
+ 		build_mode = FALSE;
+ 	}
+ 	gSavedSettings.setBOOL("BuildBtnState", build_mode);
+-
+-	updateCommunicateList();
+-}
+-
+-void LLToolBar::updateCommunicateList()
+-{
+-	LLFlyoutButton* communicate_button = getChild<LLFlyoutButton>("communicate_btn");
+-	LLSD selected = communicate_button->getValue();
+-
+-	communicate_button->removeall();
+-
+-	LLFloater* frontmost_floater = LLFloaterChatterBox::getInstance()->getActiveFloater();
+-	LLScrollListItem* itemp = NULL;
+-
+-	itemp = communicate_button->add(LLFloaterMyFriends::getInstance()->getShortTitle(), LLSD("contacts"), ADD_TOP);
+-	if (LLFloaterMyFriends::getInstance() == frontmost_floater)
+-	{
+-		((LLScrollListText*)itemp->getColumn(0))->setFontStyle(LLFontGL::BOLD);
+-		// make sure current tab is selected in list
+-		if (selected.isUndefined())
+-		{
+-			selected = itemp->getValue();
+-		}
+-	}
+-	itemp = communicate_button->add(LLFloaterChat::getInstance()->getShortTitle(), LLSD("local chat"), ADD_TOP);
+-	if (LLFloaterChat::getInstance() == frontmost_floater)
+-	{
+-		((LLScrollListText*)itemp->getColumn(0))->setFontStyle(LLFontGL::BOLD);
+-		if (selected.isUndefined())
+-		{
+-			selected = itemp->getValue();
+-		}
+-	}
+-	communicate_button->addSeparator(ADD_TOP);
+-	communicate_button->add(getString("Redock Windows"), LLSD("redock"), ADD_TOP);
+-	communicate_button->addSeparator(ADD_TOP);
+-	communicate_button->add(LLFloaterMute::getInstance()->getShortTitle(), LLSD("mute list"), ADD_TOP);
+-	
+-	std::set<LLHandle<LLFloater> >::const_iterator floater_handle_it;
+-
+-	if (gIMMgr->getIMFloaterHandles().size() > 0)
+-	{
+-		communicate_button->addSeparator(ADD_TOP);
+-	}
+-
+-	for(floater_handle_it = gIMMgr->getIMFloaterHandles().begin(); floater_handle_it != gIMMgr->getIMFloaterHandles().end(); ++floater_handle_it)
+-	{
+-		LLFloaterIMPanel* im_floaterp = (LLFloaterIMPanel*)floater_handle_it->get();
+-		if (im_floaterp)
+-		{
+-			std::string floater_title = im_floaterp->getNumUnreadMessages() > 0 ? "*" : "";
+-			floater_title.append(im_floaterp->getShortTitle());
+-			itemp = communicate_button->add(floater_title, im_floaterp->getSessionID(), ADD_TOP);
+-			if (im_floaterp  == frontmost_floater)
+-			{
+-				((LLScrollListText*)itemp->getColumn(0))->setFontStyle(LLFontGL::BOLD);
+-				if (selected.isUndefined())
+-				{
+-					selected = itemp->getValue();
+-				}
+-			}
+-		}
+-	}
+-
+-	communicate_button->setToggleState(gSavedSettings.getBOOL("ShowCommunicate"));
+-	communicate_button->setValue(selected);
+ }
+ 
+ 
+ // static
+-void LLToolBar::onClickCommunicate(LLUICtrl* ctrl, void* user_data)
++void LLToolBar::onClickCommunicate(void* user_data)
+ {
+-	LLToolBar* toolbar = (LLToolBar*)user_data;
+-	LLFlyoutButton* communicate_button = toolbar->getChild<LLFlyoutButton>("communicate_btn");
+-	
+-	LLSD selected_option = communicate_button->getValue();
+-    
+-	if (selected_option.asString() == "contacts")
+-	{
+-		LLFloaterMyFriends::showInstance();
+-	}
+-	else if (selected_option.asString() == "local chat")
+-	{
+-		LLFloaterChat::showInstance();
+-	}
+-	else if (selected_option.asString() == "redock")
+-	{
+-		LLFloaterChatterBox::getInstance()->addFloater(LLFloaterMyFriends::getInstance(), FALSE);
+-		LLFloaterChatterBox::getInstance()->addFloater(LLFloaterChat::getInstance(), FALSE);
+-		LLUUID session_to_show;
+-		
+-		std::set<LLHandle<LLFloater> >::const_iterator floater_handle_it;
+-		for(floater_handle_it = gIMMgr->getIMFloaterHandles().begin(); floater_handle_it != gIMMgr->getIMFloaterHandles().end(); ++floater_handle_it)
+-		{
+-			LLFloater* im_floaterp = floater_handle_it->get();
+-			if (im_floaterp)
+-			{
+-				if (im_floaterp->isFrontmost())
+-				{
+-					session_to_show = ((LLFloaterIMPanel*)im_floaterp)->getSessionID();
+-				}
+-				LLFloaterChatterBox::getInstance()->addFloater(im_floaterp, FALSE);
+-			}
+-		}
+-
+-		LLFloaterChatterBox::showInstance(session_to_show);
+-	}
+-	else if (selected_option.asString() == "mute list")
+-	{
+-		LLFloaterMute::showInstance();
+-	}
+-	else if (selected_option.isUndefined()) // user just clicked the communicate button, treat as toggle
+-	{
+-		if (LLFloaterChatterBox::getInstance()->getFloaterCount() == 0)
+-		{
+-			LLFloaterMyFriends::toggleInstance();
+-		}
+-		else
+-		{
+-			LLFloaterChatterBox::toggleInstance();
+-		}
+-	}
+-	else // otherwise selection_option is a specific IM session id
+-	{
+-		LLFloaterChatterBox::showInstance(selected_option);
+-	}
++	LLFloaterChatterBox::toggleInstance(LLSD());
+ }
+ 
+ 
+@@ -441,6 +367,7 @@
+ 	handle_chat(NULL);
+ }
+ 
++
+ // static
+ void LLToolBar::onClickAppearance(void*)
+ {
+@@ -522,6 +449,20 @@
+ 
+ 
+ // static
++void LLToolBar::onClickFriends(void*)
++{
++	LLFloaterFriends::toggle();
++}
++
++
++// static
++void LLToolBar::onClickGroups(void*)
++{
++	LLFloaterGroups::toggle();
++}
++
++
++// static
+ void LLToolBar::onClickInventory(void*)
+ {
+ 	handle_inventory(NULL);
+diff -urN linden/indra/newview/lltoolbar.h linden-patched/indra/newview/lltoolbar.h
+--- linden/indra/newview/lltoolbar.h	2009-02-05 18:15:15.000000000 +0100
++++ linden-patched/indra/newview/lltoolbar.h	2009-02-05 23:55:11.000000000 +0100
+@@ -47,7 +47,7 @@
+ :	public LLPanel
+ {
+ public:
+-	LLToolBar();
++	LLToolBar(const std::string& name, const LLRect& rect );
+ 	~LLToolBar();
+ 
+ 	/*virtual*/ BOOL postBuild();
+@@ -70,8 +70,10 @@
+ 	void refresh();
+ 
+ 	// callbacks
+-	static void onClickCommunicate(LLUICtrl*, void*);
++	static void onClickCommunicate(void*);
+ 	static void onClickChat(void* data);
++	static void onClickFriends(void* data);
++	static void onClickGroups(void* data);
+ 	static void onClickAppearance(void* data);
+ 	static void onClickClothing(void* data);
+ 	static void onClickFly(void*);
+@@ -86,10 +88,6 @@
+ 	static F32 sInventoryAutoOpenTime;
+ 
+ private:
+-	void updateCommunicateList();
+-
+-
+-private:
+ 	BOOL		mInventoryAutoOpen;
+ 	LLFrameTimer mInventoryAutoOpenTimer;
+ 	S32			mNumUnreadIMs;
+diff -urN linden/indra/newview/llviewermenu.cpp linden-patched/indra/newview/llviewermenu.cpp
+--- linden/indra/newview/llviewermenu.cpp	2009-02-05 18:15:16.000000000 +0100
++++ linden-patched/indra/newview/llviewermenu.cpp	2009-02-05 23:55:11.000000000 +0100
+@@ -1738,23 +1738,6 @@
+ 	}
+ };
+ 
+-class LLViewCommunicate : public view_listener_t
+-{
+-	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
+-	{
+-		if (LLFloaterChatterBox::getInstance()->getFloaterCount() == 0)
+-		{
+-			LLFloaterMyFriends::toggleInstance();
+-		}
+-		else
+-		{
+-			LLFloaterChatterBox::toggleInstance();
+-		}
+-		return true;
+-	}
+-};
+-
+-
+ void handle_toggle_flycam()
+ {
+ 	LLViewerJoystick::getInstance()->toggleFlycam();
+@@ -2838,7 +2821,7 @@
+ 		}
+ 		if (!fullname.empty())
+ 		{
+-			LLPanelFriends::requestFriendshipDialog(dest_id, fullname);
++			LLFloaterFriends::requestFriendshipDialog(dest_id, fullname);
+ 		}
+ 		else
+ 		{
+@@ -5150,7 +5133,7 @@
+ 		}
+ 		else if (floater_name == "friends")
+ 		{
+-			LLFloaterMyFriends::toggleInstance(0);
++			LLFloaterFriends::toggle(NULL);
+ 		}
+ 		else if (floater_name == "preferences")
+ 		{
+@@ -5166,7 +5149,7 @@
+ 		}
+ 		else if (floater_name == "im")
+ 		{
+-			LLFloaterChatterBox::toggleInstance(LLSD());
++			LLIMMgr::toggle(NULL);
+ 		}
+ 		else if (floater_name == "inventory")
+ 		{
+@@ -5290,7 +5273,7 @@
+ 		bool new_value = false;
+ 		if (floater_name == "friends")
+ 		{
+-			new_value = LLFloaterMyFriends::instanceVisible(0);
++			new_value = LLFloaterFriends::visible(NULL);
+ 		}
+ 		else if (floater_name == "communicate")
+ 		{
+@@ -5306,7 +5289,7 @@
+ 		}
+ 		else if (floater_name == "im")
+ 		{
+-			new_value = LLFloaterMyFriends::instanceVisible(0);
++			new_value = LLFloaterChatterBox::instanceVisible(0);
+ 		}
+ 		else if (floater_name == "mute list")
+ 		{
+@@ -5408,7 +5391,19 @@
+ {
+ 	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
+ 	{
+-		LLFloaterMyFriends::toggleInstance(1);
++		LLUUID agent_id;
++		if (userdata.asString() == "agent")
++		{
++			agent_id = gAgent.getID();
++		}
++		else
++		{
++			agent_id = userdata.asUUID();
++		}
++		if(agent_id.notNull())
++		{
++			LLFloaterGroups::show();
++		}
+ 		return true;
+ 	}
+ };
+@@ -7449,7 +7444,6 @@
+ 	addMenu(new LLViewMouselook(), "View.Mouselook");
+ 	addMenu(new LLViewBuildMode(), "View.BuildMode");
+ 	addMenu(new LLViewJoystickFlycam(), "View.JoystickFlycam");
+-	addMenu(new LLViewCommunicate(), "View.Communicate");
+ 	addMenu(new LLViewResetView(), "View.ResetView");
+ 	addMenu(new LLViewLookAtLastChatter(), "View.LookAtLastChatter");
+ 	addMenu(new LLViewShowHoverTips(), "View.ShowHoverTips");
+diff -urN linden/indra/newview/llviewerwindow.cpp linden-patched/indra/newview/llviewerwindow.cpp
+--- linden/indra/newview/llviewerwindow.cpp	2009-02-05 18:15:16.000000000 +0100
++++ linden-patched/indra/newview/llviewerwindow.cpp	2009-02-05 23:55:11.000000000 +0100
+@@ -1623,7 +1623,7 @@
+ 	LLRect console_rect = full_window;
+ 	console_rect.mTop    -= 24;
+ 
+-	console_rect.mBottom += getChatConsoleBottomPad();
++	console_rect.mBottom += getChatConsoleBottomPad() + STATUS_BAR_HEIGHT;
+ 
+ 	// TODO: Eliminate magic constants - please used named constants if changing this - don't be a programmer hater
+ 	console_rect.mLeft   += 24; //gSavedSettings.getS32("StatusBarButtonWidth") + gSavedSettings.getS32("StatusBarPad");
+@@ -1654,6 +1654,14 @@
+ 	gDebugView->setVisible(TRUE);
+ 	mRootView->addChild(gDebugView);
+ 
++	// HUD elements just below floaters
++	LLRect hud_rect = full_window;
++	hud_rect.mTop -= 24;
++	hud_rect.mBottom += STATUS_BAR_HEIGHT;
++	gHUDView = new LLHUDView("hud_view", hud_rect);
++	gHUDView->setFollowsAll();
++	mRootView->addChild(gHUDView);
++
+ 	// Add floater view at the end so it will be on top, and give it tab priority over others
+ 	mRootView->addChild(gFloaterView, -1);
+ 	mRootView->addChild(gSnapshotFloaterView);
+@@ -1830,10 +1838,27 @@
+ 	S32 width = mRootView->getRect().getWidth();
+ 	LLRect full_window(0, height, width, 0);
+ 
+-	if ( gBottomPanel == NULL )			// Don't re-enter if objects are alreay created
++	if ( gToolBar == NULL )			// Don't re-enter if objects are alreay created
+ 	{
++		LLRect bar_rect(-1, STATUS_BAR_HEIGHT, width+1, -1);
++		gToolBar = new LLToolBar("toolbar", bar_rect);
++
++		LLRect chat_bar_rect(-1,CHAT_BAR_HEIGHT, width+1, -1);
++		chat_bar_rect.translate(0, STATUS_BAR_HEIGHT-1);
++		gChatBar = new LLChatBar("chat", chat_bar_rect);
++
++		bar_rect.translate(0, STATUS_BAR_HEIGHT-1);
++		bar_rect.translate(0, CHAT_BAR_HEIGHT-1);
++		gOverlayBar = new LLOverlayBar("overlay", bar_rect);
++
+ 		// panel containing chatbar, toolbar, and overlay, over floaters
+-		gBottomPanel = new LLBottomPanel(mRootView->getRect());
++		LLRect bottom_rect(-1, 2*STATUS_BAR_HEIGHT + CHAT_BAR_HEIGHT, width+1, -1);
++		gBottomPanel = new LLBottomPanel("bottom panel", bottom_rect);
++
++		// the order here is important
++		gBottomPanel->addChild(gChatBar);
++		gBottomPanel->addChild(gToolBar);
++		gBottomPanel->addChild(gOverlayBar);
+ 		mRootView->addChild(gBottomPanel);
+ 
+ 		// View for hover information
+@@ -2933,9 +2958,23 @@
+ 	}
+ 
+ 	// Update rectangles for the various toolbars
+-	if (gOverlayBar && gNotifyBoxView && gConsole && gToolBar)
++	if (gOverlayBar && gNotifyBoxView && gConsole && gToolBar && gChatBar)
+ 	{
+ 		LLRect bar_rect(-1, STATUS_BAR_HEIGHT, getWindowWidth()+1, -1);
++		if (gToolBar->getVisible())
++		{
++			gToolBar->setRect(bar_rect);
++			bar_rect.translate(0, STATUS_BAR_HEIGHT-1);
++		}
++
++		if (gChatBar->getVisible())
++		{
++			// fix up the height
++			LLRect chat_bar_rect = bar_rect;
++			chat_bar_rect.mTop = chat_bar_rect.mBottom + CHAT_BAR_HEIGHT + 1;
++			gChatBar->setRect(chat_bar_rect);
++			bar_rect.translate(0, CHAT_BAR_HEIGHT-1);
++		}
+ 
+ 		LLRect notify_box_rect = gNotifyBoxView->getRect();
+ 		notify_box_rect.mBottom = bar_rect.mBottom;
+@@ -2953,40 +2992,44 @@
+ 			gFloaterView->setRect(floater_rect);
+ 		}
+ 
+-		// snap floaters to top of chat bar/button strip
+-		LLView* chatbar_and_buttons = gOverlayBar->getChild<LLView>("chatbar_and_buttons", TRUE);
+-		// find top of chatbar and state buttons, if either are visible
+-		if (chatbar_and_buttons && !chatbar_and_buttons->getLocalBoundingRect().isNull())
+-		{
+-			// convert top/left corner of chatbar/buttons container to gFloaterView-relative coordinates
+-			S32 top, left;
+-			chatbar_and_buttons->localPointToOtherView(
+-												chatbar_and_buttons->getLocalBoundingRect().mLeft, 
+-												chatbar_and_buttons->getLocalBoundingRect().mTop,
+-												&left,
+-												&top,
+-												gFloaterView);
+-			gFloaterView->setSnapOffsetBottom(top);
+-		}
+-		else if (gToolBar->getVisible())
+-		{
+-			S32 top, left;
+-			gToolBar->localPointToOtherView(
+-											gToolBar->getLocalBoundingRect().mLeft,
+-											gToolBar->getLocalBoundingRect().mTop,
+-											&left,
+-											&top,
+-											gFloaterView);
+-			gFloaterView->setSnapOffsetBottom(top);
++		if (gOverlayBar->getVisible())
++		{
++			LLRect overlay_rect = bar_rect;
++			overlay_rect.mTop = overlay_rect.mBottom + OVERLAY_BAR_HEIGHT;
++
++			// Fitt's Law: Push buttons flush with bottom of screen if
++			// nothing else visible.
++			if (!gToolBar->getVisible()
++				&& !gChatBar->getVisible())
++			{
++				// *NOTE: this is highly depenent on the XML
++				// describing the position of the buttons
++				overlay_rect.translate(0, 0);
++			}
++
++			gOverlayBar->setRect(overlay_rect);
++			gOverlayBar->updateBoundingRect();
++			bar_rect.translate(0, gOverlayBar->getRect().getHeight());
++
++			gFloaterView->setSnapOffsetBottom(OVERLAY_BAR_HEIGHT);
+ 		}
+ 		else
+ 		{
+ 			gFloaterView->setSnapOffsetBottom(0);
+ 		}
+ 
++		// fix rectangle of bottom panel focus indicator
++		if(gBottomPanel && gBottomPanel->getFocusIndicator())
++		{
++			LLRect focus_rect = gBottomPanel->getFocusIndicator()->getRect();
++			focus_rect.mTop = (gToolBar->getVisible() ? STATUS_BAR_HEIGHT : 0) + 
++				(gChatBar->getVisible() ? CHAT_BAR_HEIGHT : 0) - 2;
++			gBottomPanel->getFocusIndicator()->setRect(focus_rect);
++		}
++
+ 		// Always update console
+ 		LLRect console_rect = gConsole->getRect();
+-		console_rect.mBottom = gHUDView->getRect().mBottom + getChatConsoleBottomPad();
++		console_rect.mBottom = bar_rect.mBottom - 8;
+ 		gConsole->reshape(console_rect.getWidth(), console_rect.getHeight());
+ 		gConsole->setRect(console_rect);
+ 	}
+@@ -5099,22 +5142,17 @@
+ 
+ ////////////////////////////////////////////////////////////////////////////
+ 
+-LLBottomPanel::LLBottomPanel(const LLRect &rect) : 
+-	LLPanel(LLStringUtil::null, rect, FALSE),
++LLBottomPanel::LLBottomPanel(const std::string &name, const LLRect &rect) : 
++	LLPanel(name, rect, FALSE),
+ 	mIndicator(NULL)
+ {
+ 	// bottom panel is focus root, so Tab moves through the toolbar and button bar, and overlay
+ 	setFocusRoot(TRUE);
++ 	// don't capture mouse clicks that don't hit a child
++ 	setMouseOpaque(FALSE);
++ 	setFollows(FOLLOWS_LEFT | FOLLOWS_RIGHT | FOLLOWS_BOTTOM);
+ 	// flag this panel as chrome so buttons don't grab keyboard focus
+ 	setIsChrome(TRUE);
+-
+-	mFactoryMap["toolbar"] = LLCallbackMap(createToolBar, NULL);
+-	mFactoryMap["overlay"] = LLCallbackMap(createOverlayBar, NULL);
+-	mFactoryMap["hud"] = LLCallbackMap(createHUD, NULL);
+-	LLUICtrlFactory::getInstance()->buildPanel(this, "panel_bars.xml", &getFactoryMap());
+-	
+-	setOrigin(rect.mLeft, rect.mBottom);
+-	reshape(rect.getWidth(), rect.getHeight());
+ }
+ 
+ void LLBottomPanel::setFocusIndicator(LLView * indicator)
+@@ -5133,28 +5171,6 @@
+ 	LLPanel::draw();
+ }
+ 
+-void* LLBottomPanel::createHUD(void* data)
+-{
+-	delete gHUDView;
+-	gHUDView = new LLHUDView();
+-	return gHUDView;
+-}
+-
+-
+-void* LLBottomPanel::createOverlayBar(void* data)
+-{
+-	delete gOverlayBar;
+-	gOverlayBar = new LLOverlayBar();
+-	return gOverlayBar;
+-}
+-
+-void* LLBottomPanel::createToolBar(void* data)
+-{
+-	delete gToolBar;
+-	gToolBar = new LLToolBar();
+-	return gToolBar;
+-}
+-
+ //
+ // LLPickInfo
+ //
+diff -urN linden/indra/newview/llviewerwindow.h linden-patched/indra/newview/llviewerwindow.h
+--- linden/indra/newview/llviewerwindow.h	2009-02-05 18:15:15.000000000 +0100
++++ linden-patched/indra/newview/llviewerwindow.h	2009-02-05 23:55:11.000000000 +0100
+@@ -442,15 +442,11 @@
+ class LLBottomPanel : public LLPanel
+ {
+ public:
+-	LLBottomPanel(const LLRect& rect);
++	LLBottomPanel(const std::string& name, const LLRect& rect);
+ 	void setFocusIndicator(LLView * indicator);
+ 	LLView * getFocusIndicator() { return mIndicator; }
+ 	/*virtual*/ void draw();
+ 
+-	static void* createHUD(void* data);
+-	static void* createOverlayBar(void* data);
+-	static void* createToolBar(void* data);
+-
+ protected:
+ 	LLView * mIndicator;
+ };
+diff -urN linden/indra/newview/llvoiceremotectrl.cpp linden-patched/indra/newview/llvoiceremotectrl.cpp
+--- linden/indra/newview/llvoiceremotectrl.cpp	2009-02-05 18:15:16.000000000 +0100
++++ linden-patched/indra/newview/llvoiceremotectrl.cpp	2009-02-05 23:55:11.000000000 +0100
+@@ -48,15 +48,16 @@
+ LLVoiceRemoteCtrl::LLVoiceRemoteCtrl (const std::string& name) : LLPanel(name)
+ {
+ 	setIsChrome(TRUE);
+-
++/*
+ 	if (gSavedSettings.getBOOL("ShowVoiceChannelPopup"))
+ 	{
+ 		LLUICtrlFactory::getInstance()->buildPanel(this, "panel_voice_remote_expanded.xml");
+ 	}
+ 	else
+ 	{
++*/
+ 		LLUICtrlFactory::getInstance()->buildPanel(this, "panel_voice_remote.xml");
+-	}
++//	}
+ 
+ 	setFocusRoot(TRUE);
+ }
+@@ -81,6 +82,7 @@
+ 	mSpeakersBtn->setCallbackUserData(this);
+ 
+ 	childSetAction("show_channel", onClickPopupBtn, this);
++/*
+ 	childSetAction("end_call_btn", onClickEndCall, this);
+ 
+ 	LLTextBox* text = getChild<LLTextBox>("channel_label");
+@@ -90,7 +92,7 @@
+ 	}
+ 
+ 	childSetAction("voice_channel_bg", onClickVoiceChannel, this);
+-
++*/
+ 
+ 	return TRUE;
+ }
+@@ -161,7 +163,7 @@
+ 	{
+ 		active_channel_name = voice_floater->getShortTitle();
+ 	}
+-
++/*
+ 	LLVoiceChannel* current_channel = LLVoiceChannel::getCurrentVoiceChannel();
+ 	childSetEnabled("end_call_btn", LLVoiceClient::voiceEnabled() 
+ 								&& current_channel
+@@ -198,7 +200,7 @@
+ 			voice_channel_bg->setImageColor(bg_color);
+ 		}
+ 	}
+-
++*/
+ 	LLButton* expand_button = getChild<LLButton>("show_channel");
+ 	if (expand_button)
+ 	{
+diff -urN linden/indra/newview/skins/default/xui/en-us/floater_audio_volume.xml linden-patched/indra/newview/skins/default/xui/en-us/floater_audio_volume.xml
+--- linden/indra/newview/skins/default/xui/en-us/floater_audio_volume.xml	2009-02-05 18:15:23.000000000 +0100
++++ linden-patched/indra/newview/skins/default/xui/en-us/floater_audio_volume.xml	2009-02-05 23:55:11.000000000 +0100
+@@ -1,8 +1,11 @@
+ <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+-<floater bottom="40" can_close="true" can_drag_on_left="false" can_minimize="false"
+-     can_resize="false" height="200" left="40" name="Volume"
+-     rect_control="FloaterAudioVolumeRect" title="Volume" width="250">
+-	<panel border="true" bottom="-210" enabled="true" filename="panel_audio.xml"
+-	     follows="left|top|right|bottom" height="180" label="Volume" left="5"
+-	     mouse_opaque="true" name="Volume Panel" width="175" />
++<floater bottom="40" left="40" height="200" width="180" 
++	 rect_control="FloaterAudioVolumeRect"
++	 can_resize="false" can_close="true" can_drag_on_left="false" can_minimize="false"
++	 name="Volume" title="Volume">
++	<panel border="true" bottom="-210" enabled="true" follows="left|top|right|bottom"
++	       hidden="false" label="Volume" left="5" height="180" width="175"
++	       mouse_opaque="true" name="Volume Panel"
++	       filename="panel_audio2.xml">
++	</panel>
+ </floater>
+diff -urN linden/indra/newview/skins/default/xui/en-us/floater_chat_history2.xml linden-patched/indra/newview/skins/default/xui/en-us/floater_chat_history2.xml
+--- linden/indra/newview/skins/default/xui/en-us/floater_chat_history2.xml	1970-01-01 01:00:00.000000000 +0100
++++ linden-patched/indra/newview/skins/default/xui/en-us/floater_chat_history2.xml	2009-02-05 23:55:11.000000000 +0100
+@@ -0,0 +1,105 @@
++<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
++<floater bottom="27" can_close="true" can_drag_on_left="false" can_minimize="false"
++     can_resize="true" can_tear_off="true" enabled="true" height="270"
++     hidden="false" left="15" min_height="150" min_width="425"
++     mouse_opaque="true" name="chat floater" rect_control="FloaterChatRect"
++     title="Chat History" short_title="Near Me" width="435">
++	<string name="ringing">
++		Connecting to in-world Voice Chat...
++	</string>
++	<string name="connected">
++		Connected
++	</string>
++	<string name="unavailable">
++		Voice not available at your current location
++	</string>
++	<string name="hang_up">
++		Disconnected from in-world Voice Chat
++	</string>
++	<string name="voice_icon">
++		icn_voice-localchat.tga
++	</string>
++	<string name="IM_logging_string">
++		-- Instant message logging enabled --
++	</string>
++	<string name="IM_end_log_string">
++		-- End of Log --
++	</string>
++
++	<string name="hang_up">Disconnected from in-world Voice Chat</string>
++     
++    <layout_stack border="false" left="2" bottom="2" width="430" height="250" follows="left|top|right|bottom" orientation="horizontal">
++    	<layout_panel border="false" name="im_contents_panel" min_width="275" left="0" bottom="0" width="305" height="130" default_tab_group="1">
++    		 
++		<check_box left="4" enabled="true" follows="left|top" font="SansSerifSmall"
++				height="20" initial_value="false" label="Show Muted Text"
++				left_delta="10" name="show mutes" radio_style="false"
++				width="116" />
++
++    		<button left="270" right="303" bottom_delta="0" height="20" width="70" label="&lt; &lt;" label_selected="&gt; &gt;" follows="right|top" name="toggle_active_speakers_btn" visible="true" tool_tip="Click here to show list of active partipants in this IM session."/>
++
++			<text_editor type="string" length="1" bottom="5" embedded_items="false" enabled="false"
++				follows="left|top|right|bottom" font="SansSerif" height="90"
++				hidden="false" left="6" max_length="2147483647" mouse_opaque="true" track_bottom="true"
++				name="Chat History Editor" text_color="ChatHistoryTextColor"
++				text_readonly_color="ChatHistoryTextColor" width="300" word_wrap="true" />
++			<text_editor type="string" length="1" bottom="5" embedded_items="false" enabled="false"
++				follows="left|top|right|bottom" font="SansSerif" height="90"
++				hidden="false" left="6" max_length="2147483647" mouse_opaque="true" track_bottom="true"
++				name="Chat History Editor with mute" text_color="ChatHistoryTextColor"
++				text_readonly_color="ChatHistoryTextColor" width="300" word_wrap="true" />
++    		   		
++    	</layout_panel>
++
++		<layout_panel name="active_speakers_panel" auto_resize="false" left="0" bottom="0" right="140" height="120" min_width="140" visible="false">
++			<scroll_list name="speakers_list" left="0" right="140" top="120" bottom="78" column_padding="0" follows="left|top|bottom|right" draw_heading="true" draw_stripes="false" multi_select="false" search_column="1">
++	   			<column name="icon_speaking_status" width="20" sort="speaking_status"/>	
++				<column name="speaker_name" label="Name" dynamicwidth="true"/>
++				<column name="speaking_status" label="" width="0"/>
++			</scroll_list>
++			<panel name="volume_container" left="0" right="140" bottom="0" border="true" mouse_opaque="true" bevel_style="in" can_resize="false" height="77" follows="left|bottom|right">
++				<button left="0" right="30" bottom="-28" height="24" name="profile_btn" follows="left|top" label="" image_overlay="icon_avatar_offline.tga" enabled="false"/>
++				<text left_delta="34" bottom_delta="9" name="resident_name" valign="center" follows="left|top|bottom|right" width="100" font="SansSerif">Rumplstiltskin Califragilistic</text>
++				<volume_slider
++					name="speaker_volume"
++					left="5"
++					width="85"
++					bottom_delta="-29"
++					height="15"
++					follows="left|top"
++					min_val="0.0"
++					max_val="1.0"
++					increment="0.05"
++					initial_val="0.5"
++				/>
++				<text type="string" width="45" bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
++					drop_shadow_visible="true" enabled="true" follows="left|top"
++					font="SansSerifSmall" height="16" hidden="false"
++					left="4" mouse_opaque="true" bottom_delta="-25" name="Mute:" v_pad="0">
++					Mute:
++				</text>
++				<check_box
++					name="mute_text_btn"
++					width="50"
++					bottom_delta="0"
++					left_delta="32"
++					follows="left|top"
++					height="25"
++					enabled="false"
++					label="Text"
++				/>
++				<check_box
++					name="mute_btn"
++					follows="left|top"
++					width="50"
++					bottom_delta="0"
++					left_delta="45"
++					height="25"
++					enabled="false"
++					label="Voice"
++				/>
++			</panel>
++		</layout_panel>
++	</layout_stack>
++
++</floater>
+diff -urN linden/indra/newview/skins/default/xui/en-us/floater_chat_history.xml linden-patched/indra/newview/skins/default/xui/en-us/floater_chat_history.xml
+--- linden/indra/newview/skins/default/xui/en-us/floater_chat_history.xml	2009-02-05 18:15:23.000000000 +0100
++++ linden-patched/indra/newview/skins/default/xui/en-us/floater_chat_history.xml	2009-02-05 23:55:11.000000000 +0100
+@@ -45,17 +45,15 @@
+ 			<text_editor type="string" length="1" bg_readonly_color="ChatHistoryBgColor" bg_writeable_color="ChatHistoryBgColor"
+ 			     bottom="28" embedded_items="false" enabled="false"
+ 			     follows="left|top|right|bottom" font="SansSerif" height="74" left="5"
+-			     max_length="2147483647" mouse_opaque="true" name="Chat History Editor"
+-           track_bottom="true" 
++			     max_length="2147483647" mouse_opaque="true" name="Chat History Editor" track_bottom="true"
+ 			     text_color="ChatHistoryTextColor"
+ 			     text_readonly_color="ChatHistoryTextColor" width="299" word_wrap="true" />
+-      <text_editor type="string" length="1" bg_readonly_color="ChatHistoryBgColor" bg_writeable_color="ChatHistoryBgColor"
++			<text_editor type="string" length="1" bg_readonly_color="ChatHistoryBgColor" bg_writeable_color="ChatHistoryBgColor"
+ 			     bottom="28" embedded_items="false" enabled="false"
+ 			     follows="left|top|right|bottom" font="SansSerif" height="74" left="5"
+-			     max_length="2147483647" mouse_opaque="true"
++			     max_length="2147483647" mouse_opaque="true" track_bottom="true"
+ 			     name="Chat History Editor with mute" text_color="ChatHistoryTextColor"
+-           track_bottom="true" 
+-			     text_readonly_color="ChatHistoryTextColor" width="300" word_wrap="true"/>
++			     text_readonly_color="ChatHistoryTextColor" width="300" word_wrap="true" />
+ 			<panel bottom="5" follows="left|right|bottom" left="5" name="chat_panel" right="-5"
+ 			     tab_group="1" top="25">
+         <string name="gesture_label">Gestures</string>
+@@ -63,25 +61,64 @@
+ 				     enabled="true" follows="left|right|bottom" font="SansSerif"
+ 				     handle_edit_keys_directly="false" height="20" label="Click here to chat."
+ 				     left="0" max_length="254" mouse_opaque="true" name="Chat Editor"
+-				     right="-70" select_all_on_focus_received="false" select_on_focus="false"
++				     right="-110" select_all_on_focus_received="false" select_on_focus="false"
+ 				     tab_group="1" />
+-				<flyout_button bottom="0" follows="right|bottom" height="20" label="Say" left="-65"
+-				     list_position="above" mouse_opaque="true" name="Say" tool_tip="(Enter)"
+-				     width="70">
+-					<flyout_button_item value="shout" name="shout_item">
+-						Shout
+-					</flyout_button_item>
+-					<flyout_button_item value="say" name="say_item">
+-						Say
+-					</flyout_button_item>
+-					<flyout_button_item value="whisper" name="whisper_item">
+-						Whisper
+-					</flyout_button_item>
+-				</flyout_button>
++				<button bottom="0" follows="bottom|right" font="SansSerif"
++					halign="center" height="20" label="Say" left="-105"
++					mouse_opaque="true" name="Say" scale_image="true" width="50" />
++				<button bottom="0" follows="bottom|right" font="SansSerif"
++					halign="center" height="20" label="Shout" left="-55"
++					mouse_opaque="true" name="Shout" scale_image="true" width="50" />
+ 			</panel>
+ 		</layout_panel>
+-		<layout_panel auto_resize="false" bottom="0" can_resize="true"
+-		     filename="panel_speaker_controls.xml" height="120" left="0" min_width="140"
+-		     name="active_speakers_panel" top_delta="0" visible="false" width="140" />
++		<layout_panel name="active_speakers_panel" auto_resize="false" left="0" bottom="0" right="140" height="120" min_width="140" visible="false">
++			<scroll_list name="speakers_list" left="0" right="140" top="120" bottom="78" column_padding="0" follows="left|top|bottom|right" draw_heading="true" draw_stripes="false" multi_select="false" search_column="1">
++	   			<column name="icon_speaking_status" width="20" sort="speaking_status"/>	
++				<column name="speaker_name" label="Name" dynamicwidth="true"/>
++				<column name="speaking_status" label="" width="0"/>
++			</scroll_list>
++			<panel name="volume_container" left="0" right="140" bottom="0" border="true" mouse_opaque="true" bevel_style="in" can_resize="false" height="77" follows="left|bottom|right">
++				<button left="0" right="30" bottom="-28" height="24" name="profile_btn" follows="left|top" label="" image_overlay="icon_avatar_offline.tga" enabled="false"/>
++				<text left_delta="34" bottom_delta="9" name="resident_name" valign="center" follows="left|top|bottom|right" width="100" font="SansSerif">Rumplstiltskin Califragilistic</text>
++				<volume_slider
++					name="speaker_volume"
++					left="5"
++					width="85"
++					bottom_delta="-29"
++					height="15"
++					follows="left|top"
++					min_val="0.0"
++					max_val="1.0"
++					increment="0.05"
++					initial_val="0.5"
++				/>
++				<text type="string" width="45" bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
++					drop_shadow_visible="true" enabled="true" follows="left|top"
++					font="SansSerifSmall" height="16" hidden="false"
++					left="4" mouse_opaque="true" bottom_delta="-25" name="Mute:" v_pad="0">
++					Mute:
++				</text>
++				<check_box
++					name="mute_text_btn"
++					width="50"
++					bottom_delta="0"
++					left_delta="32"
++					follows="left|top"
++					height="25"
++					enabled="false"
++					label="Text"
++				/>
++				<check_box
++					name="mute_btn"
++					follows="left|top"
++					width="50"
++					bottom_delta="0"
++					left_delta="45"
++					height="25"
++					enabled="false"
++					label="Voice"
++				/>
++ 			</panel>
++ 		</layout_panel>
+ 	</layout_stack>
+ </floater>
+diff -urN linden/indra/newview/skins/default/xui/en-us/floater_friends.xml linden-patched/indra/newview/skins/default/xui/en-us/floater_friends.xml
+--- linden/indra/newview/skins/default/xui/en-us/floater_friends.xml	1970-01-01 01:00:00.000000000 +0100
++++ linden-patched/indra/newview/skins/default/xui/en-us/floater_friends.xml	2009-02-05 23:55:11.000000000 +0100
+@@ -0,0 +1,59 @@
++<?xml version="1.0" encoding="utf-8" standalone="yes"?>
++<floater name="friends"	title="Friends"	can_resize="true" can_minimize="true"
++         can_close="true" can_drag_on_left="false" rect_control="FloaterFriendsRect"
++         min_width="293" min_height="300">
++	<string name="Multiple">
++		Multiple friends...
++	</string>
++	<scroll_list bottom="56" can_resize="true" column_padding="0" draw_heading="true"
++	             follows="left|top|bottom|right" left="10" multi_select="true"
++	             name="friend_list" right="-10" search_column="1"
++	             tool_tip="Hold shift or control while clicking to select multiple friends"
++	             top="-20">
++		<column image="ff_online_status_button.tga" name="icon_online_status"
++		        tool_tip="Online status" width="20" />
++		<column dynamicwidth="true" label="Name" name="friend_name" tool_tip="Name" />
++		<column image="ff_visible_online_button.tga" name="icon_visible_online"
++		        tool_tip="Friend can see when you&apos;re online" width="20" />
++		<column image="ff_visible_map_button.tga" name="icon_visible_map"
++		        tool_tip="Friend can locate you on the map" width="20" />
++		<column image="ff_edit_mine_button.tga" name="icon_edit_mine"
++		        tool_tip="Friend can edit, delete or take objects" width="20" />
++		<column image="ff_edit_theirs_button.tga" name="icon_edit_theirs"
++		        tool_tip="You can edit this friend&apos;s objects" width="20" />
++		<column name="friend_last_update_generation" width="0" />
++	</scroll_list>
++	<button	name="im_btn" label="IM"
++		tool_tip="Open Instant Message session"
++		left="10" bottom_delta="-28" width="70"	height="20"
++		font="SansSerifSmall" follows="bottom|left"
++		/>	
++
++	<button	name="offer_teleport_btn" label="Teleport..."
++		tool_tip="Offer this friend a teleport to your current location"
++		left="85" bottom_delta="0" width="70" height="20"
++		font="SansSerifSmall"
++		follows="bottom|left"
++		/>
++	
++	<button	name="add_btn" label="Add..."
++		tool_tip="Offer friendship to a resident"
++		left="165" bottom_delta="0" width="70" height="20"
++		font="SansSerifSmall" follows="bottom|left"
++		/>
++	<button	name="profile_btn" label="Profile"
++		tool_tip="Show picture, groups, and other information"
++		left="10" bottom_delta="-20" width="70" height="20"
++		font="SansSerifSmall" follows="bottom|left"
++		/>		
++	<button	name="pay_btn" label="Pay..."
++		tool_tip="Give Linden dollars (L$) to this friend"
++		left="85" bottom_delta="0" width="70" height="20"
++		font="SansSerifSmall" follows="bottom|left"
++		/>
++	<button	name="remove_btn" label="Remove..."
++		tool_tip="Remove this person from your friends list"
++		left="165" bottom_delta="0" width="70" height="20"
++		font="SansSerifSmall" follows="bottom|left"
++		/>	
++</floater>
+diff -urN linden/indra/newview/skins/default/xui/en-us/floater_groups.xml linden-patched/indra/newview/skins/default/xui/en-us/floater_groups.xml
+--- linden/indra/newview/skins/default/xui/en-us/floater_groups.xml	1970-01-01 01:00:00.000000000 +0100
++++ linden-patched/indra/newview/skins/default/xui/en-us/floater_groups.xml	2009-02-05 23:55:11.000000000 +0100
+@@ -0,0 +1,58 @@
++<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
++<floater bottom="-371" can_close="true" can_drag_on_left="false" can_minimize="true"
++     can_resize="true" can_tear_off="false" enabled="true" follows="left|top"
++     height="300" hidden="false" left="280" min_height="200" min_width="275"
++     rect_control="FloaterGroupsRect"
++     mouse_opaque="true" name="groups" title="Groups" width="280">
++	<text type="string" length="1" bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
++	     bottom="-36" drop_shadow_visible="true" enabled="true" follows="left|top"
++	     font="SansSerifSmall" h_pad="0" halign="left" height="16" hidden="false"
++	     left="12" mouse_opaque="false" name="groupdesc" tab_stop="false" v_pad="0"
++	     width="248">
++		Your currently active group is displayed in bold.
++	</text>
++	<scroll_list background_visible="true" bottom="-228" column_padding="5" draw_border="true"
++	     draw_heading="false" draw_stripes="true" enabled="true"
++	     follows="left|top|right|bottom" height="190" hidden="false" left="12"
++	     mouse_opaque="true" multi_select="false" name="group list" tab_stop="true"
++	     width="248">
++		<column label="" name="name" width="248" />
++	</scroll_list>
++	<text type="string" length="1" bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
++	     bottom="-246" drop_shadow_visible="true" enabled="true"
++	     follows="left|bottom" font="SansSerifSmall" h_pad="0" halign="left"
++	     height="16" hidden="false" left="12" mouse_opaque="false" name="groupcount"
++	     tab_stop="false" v_pad="0" width="248">
++		You belong to [COUNT] groups (of [MAX] maximum).
++	</text>
++	<button border_height="16" border_width="16" bottom="-268" enabled="false"
++	     follows="left|bottom" font="SansSerif" halign="center" height="20"
++	     hidden="false" label="Activate"
++	     label_selected="Activate" left="12" mouse_opaque="true" name="Activate"
++	     scale_image="true" tab_stop="true" width="80" />
++	<button border_height="16" border_width="16" bottom="-268" enabled="true"
++	     follows="left|bottom" font="SansSerif" halign="center" height="20"
++	     hidden="false" label="Info"
++	     label_selected="Info" left="100" mouse_opaque="true" name="Info"
++	     scale_image="true" tab_stop="true" width="80" />
++	<button border_height="16" border_width="16" bottom="-268" enabled="true"
++	     follows="left|bottom" font="SansSerif" halign="center" height="20"
++	     hidden="false" label="Leave"
++	     label_selected="Leave" left="188" mouse_opaque="true" name="Leave"
++	     scale_image="true" tab_stop="true" width="80" />
++	<button border_height="16" border_width="16" bottom="-292" enabled="true"
++	     follows="left|bottom" font="SansSerif" halign="center" height="20"
++	     hidden="false" label="Create"
++	     label_selected="Create" left="12" mouse_opaque="true" name="Create"
++	     scale_image="true" tab_stop="true" width="80" />
++	<button border_height="16" border_width="16" bottom="-292" enabled="true"
++	     follows="left|bottom" font="SansSerif" halign="center" height="20"
++	     hidden="false" label="Search..."
++	     label_selected="Search..." left="100" mouse_opaque="true" name="Search..."
++	     scale_image="true" tab_stop="true" width="80" />
++	<button border_height="16" border_width="16" bottom="-292" enabled="true"
++	     follows="left|bottom" font="SansSerif" halign="center" height="20"
++	     hidden="false" label="IM/Call"
++	     label_selected="Close" left="188" mouse_opaque="true" name="IM"
++	     scale_image="true" tab_stop="true" width="80" />
++</floater>
+diff -urN linden/indra/newview/skins/default/xui/en-us/floater_moveview.xml linden-patched/indra/newview/skins/default/xui/en-us/floater_moveview.xml
+--- linden/indra/newview/skins/default/xui/en-us/floater_moveview.xml	2009-02-05 18:15:23.000000000 +0100
++++ linden-patched/indra/newview/skins/default/xui/en-us/floater_moveview.xml	2009-02-05 23:55:11.000000000 +0100
+@@ -3,7 +3,7 @@
+      can_resize="false" can_tear_off="true" enabled="true" follows="bottom"
+      height="58"  left="521" min_height="100" min_width="100"
+      mouse_opaque="true" name="move floater" rect_control="FloaterMoveRect2"
+-     title="" width="135">
++     title="" width="185">
+ 	<button bottom="-54" enabled="true" follows="left|bottom" font="SansSerif"
+ 	     halign="center" height="25" image_disabled="UIImgBtnLeftOutUUID"
+ 	     image_disabled_selected="UIImgBtnLeftInUUID"
+@@ -31,12 +31,10 @@
+ 	     image_unselected="UIImgBtnMoveDownOutUUID" label="" label_selected=""
+ 	     left="91" mouse_opaque="true" name="move down btn" scale_image="false"
+ 	     tool_tip="Crouch or Fly Down" width="25" />
+-	<!--
+ 	<button bottom="-54" control_name="FlyBtnState" enabled="true" follows="left|bottom"
+ 	     font="SansSerif" halign="center" height="20" label="Fly"
+ 	     label_selected="Fly" left="116" mouse_opaque="true" name="fly btn"
+ 	     scale_image="true" tool_tip="Start or stop flying" width="65" />
+-	-->
+ 	<joystick_slide bottom="-29" enabled="true" follows="left|bottom" halign="center" height="25"
+ 	     image_selected="UIImgBtnSlideLeftInUUID"
+ 	     image_unselected="UIImgBtnSlideLeftOutUUID" left="20" mouse_opaque="true"
+diff -urN linden/indra/newview/skins/default/xui/en-us/menu_viewer.xml linden-patched/indra/newview/skins/default/xui/en-us/menu_viewer.xml
+--- linden/indra/newview/skins/default/xui/en-us/menu_viewer.xml	2009-02-05 18:15:23.000000000 +0100
++++ linden-patched/indra/newview/skins/default/xui/en-us/menu_viewer.xml	2009-02-05 23:55:11.000000000 +0100
+@@ -260,21 +260,21 @@
+ 			<on_click function="ShowFloater" userdata="toolbar" />
+ 			<on_check function="FloaterVisible" userdata="toolbar" />
+ 		</menu_item_check>
+-		<menu_item_check bottom="-132" enabled="true" height="19" label="Local Chat" left="0"
+-		     mouse_opaque="true" name="Chat History" shortcut="control|H" width="211">
+-             <on_click function="ShowFloater" userdata="chat history"/>
+-             <on_check function="FloaterVisible" userdata="chat history" />
+-        </menu_item_check>
+-		<menu_item_check bottom="-151" enabled="true" height="19" label="Communicate" left="0"
++  		<menu_item_check bottom="-132" enabled="true" height="19" label="Local Chat" left="0"
++  		     mouse_opaque="true" name="Chat History" shortcut="control|H" width="211">
++			<on_click function="ShowFloater" userdata="chat history"/>
++			<on_check function="FloaterVisible" userdata="chat history" />
++		</menu_item_check>
++		<menu_item_check bottom="-151" enabled="true" height="19" label="Instant Message" left="0"
+ 		     mouse_opaque="true" name="Instant Message" shortcut="control|T" width="211">
+-			<on_click function="View.Communicate"/>
+-            <on_check function="FloaterVisible" userdata="communicate" />
+-        </menu_item_check>
++			<on_click function="ShowFloater" userdata="im" />
++			<on_check function="FloaterVisible" userdata="im" />
++ 		</menu_item_check>
+ 		<menu_item_check bottom="-170" enabled="true" height="19" label="Inventory" left="0"
+ 		     mouse_opaque="true" name="Inventory" shortcut="control|I" width="211">
+ 			<on_click function="ShowFloater" userdata="inventory" />
+-            <on_check function="FloaterVisible" userdata="inventory" />
+-        </menu_item_check>
++		<on_check function="FloaterVisible" userdata="inventory" />
++		</menu_item_check>
+ 		<menu_item_check bottom="-189" enabled="true" height="19" label="Active Speakers" left="0"
+ 		     mouse_opaque="true" name="Active Speakers" width="211">
+ 			<on_click function="ShowFloater" userdata="active speakers" />
+diff -urN linden/indra/newview/skins/default/xui/en-us/panel_audio2.xml linden-patched/indra/newview/skins/default/xui/en-us/panel_audio2.xml
+--- linden/indra/newview/skins/default/xui/en-us/panel_audio2.xml	1970-01-01 01:00:00.000000000 +0100
++++ linden-patched/indra/newview/skins/default/xui/en-us/panel_audio2.xml	2009-02-05 23:55:11.000000000 +0100
+@@ -0,0 +1,60 @@
++<?xml version="1.0" encoding="utf-8" standalone="yes"?>
++<panel border="false" follows="left|top|right|bottom" height="160"
++     label="Audio &amp; Video" name="Media panel" width="175">
++	<slider bottom_delta="-20" control_name="AudioLevelMaster" follows="left|top|right"
++	     height="15" increment="0.05" initial_val="0.5" label="Master"
++	     label_width="55" left="10" max_val="1" min_val="0" mouse_opaque="true"
++	     name="System Volume" show_text="false" volume="true" width="140" />
++	<button bottom_delta="0" control_name="MuteAudio" follows="top|right" height="16"
++	     image_selected="icn_speaker-muted_dark.tga"
++	     image_unselected="icn_speaker_dark.tga" label="" label_width="55"
++	     left="150" name="mute_music" tab_stop="false" toggle="true" width="25" />
++	<slider bottom_delta="-30" control_name="AudioLevelMusic" follows="left|top|right"
++	     height="15" increment="0.05" initial_val="0.5" label="Music"
++	     label_width="55" left="10" max_val="1" min_val="0" name="Music Volume"
++	     show_text="false" volume="true" width="140" />
++	<button bottom_delta="0" control_name="MuteMusic" follows="top|right" height="16"
++	     image_selected="icn_speaker-muted_dark.tga"
++	     image_unselected="icn_speaker_dark.tga" label="" label_width="55"
++	     left="150" name="mute_music" tab_stop="false" toggle="true" width="25" />
++	<slider bottom_delta="-20" control_name="AudioLevelMedia" follows="left|top|right"
++	     height="15" increment="0.05" initial_val="0.5" label="Media"
++	     label_width="55" left="10" max_val="1" min_val="0" name="Media Volume"
++	     show_text="false" volume="true" width="140" />
++	<button bottom_delta="0" control_name="MuteMedia" follows="top|right" height="16"
++	     image_selected="icn_speaker-muted_dark.tga"
++	     image_unselected="icn_speaker_dark.tga" label="" label_width="55"
++	     left="150" name="mute_media" tab_stop="false" toggle="true" width="25" />
++	<slider bottom_delta="-20" control_name="AudioLevelVoice" follows="left|top|right"
++	     height="15" increment="0.05" initial_val="0.5" label="Voice"
++	     label_width="55" left="10" max_val="1" min_val="0" name="Voice Volume"
++	     show_text="false" volume="true" width="140" />
++	<button bottom_delta="0" control_name="MuteVoice" follows="top|right" height="16"
++	     image_selected="icn_speaker-muted_dark.tga"
++	     image_unselected="icn_speaker_dark.tga" label="" label_width="55"
++	     left="150" name="mute_voice" tab_stop="false" toggle="true" width="25" />
++	<slider bottom_delta="-20" control_name="AudioLevelSFX" follows="left|top|right"
++	     height="15" increment="0.05" initial_val="0.5" label="Sounds"
++	     label_width="55" left="10" max_val="1" min_val="0" name="SFX Volume"
++	     show_text="false" volume="true" width="140" />
++	<button bottom_delta="0" control_name="MuteSounds" follows="top|right" height="16"
++	     image_selected="icn_speaker-muted_dark.tga"
++	     image_unselected="icn_speaker_dark.tga" label="" label_width="55"
++	     left="150" name="mute_sfx" tab_stop="false" toggle="true" width="25" />
++	<slider bottom_delta="-20" control_name="AudioLevelAmbient" follows="left|top|right"
++	     height="15" increment="0.05" initial_val="0.5" label="Ambient"
++	     label_width="55" left="10" max_val="1" min_val="0" name="Wind Volume"
++	     show_text="false" volume="true" width="140" />
++	<button bottom_delta="0" control_name="MuteAmbient" follows="top|right" height="16"
++	     image_selected="icn_speaker-muted_dark.tga"
++	     image_unselected="icn_speaker_dark.tga" label="" label_width="55"
++	     left="150" name="mute_wind" tab_stop="false" toggle="true" width="25" />
++	<slider bottom_delta="-20" control_name="AudioLevelUI" follows="left|top|right"
++	     height="15" increment="0.05" initial_val="0.5" label="UI" label_width="55"
++	     left="10" max_val="1" min_val="0" name="UI Volume" show_text="false"
++	     volume="true" width="140" />
++	<button bottom_delta="0" control_name="MuteUI" follows="top|right" height="16"
++	     image_selected="icn_speaker-muted_dark.tga"
++	     image_unselected="icn_speaker_dark.tga" label="" label_width="55"
++	     left="150" name="mute_ui" tab_stop="false" toggle="true" width="25" />
++</panel>
+diff -urN linden/indra/newview/skins/default/xui/en-us/panel_chat_bar.xml linden-patched/indra/newview/skins/default/xui/en-us/panel_chat_bar.xml
+--- linden/indra/newview/skins/default/xui/en-us/panel_chat_bar.xml	2009-02-05 18:15:23.000000000 +0100
++++ linden-patched/indra/newview/skins/default/xui/en-us/panel_chat_bar.xml	2009-02-05 23:55:11.000000000 +0100
+@@ -1,34 +1,28 @@
+ <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+-<panel bottom="-1" default_tab_group="1" follows="left|bottom|right" height="25"
+-     left="0" name="chat_bar" width="395">
+-	<panel bottom="1" follows="left|right|bottom" height="23" left="0"
+-	     use_bounding_rect="true" width="397" bg_visible="false" border="false" border_visible="false">
+-		<panel bottom="0" filename="panel_bg_tab.xml" height="22" left="-398" width="396" />
+-	</panel>
+-	<button bottom="-23" follows="left|bottom" font="SansSerif" halign="center" height="20"
+-	     label="Local Chat" left="7" name="History"
+-	     tool_tip="Click here to see what has been said" width="93" />
+-	<line_editor bevel_style="in" border_style="line" border_thickness="1" bottom="-23"
+-	     follows="left|right|bottom" font="SansSerif"
+-	     handle_edit_keys_directly="false" height="20" label="Click here to chat."
+-	     left="107" max_length="254" name="Chat Editor"
+-	     select_all_on_focus_received="false" select_on_focus="false" tab_group="1"
+-	     tool_tip="Press Enter to say, Ctrl-Enter to shout." width="105" />
+-	<flyout_button bottom="-23" follows="right|bottom" height="20" label="Say" left_delta="110"
+-	     list_position="above" mouse_opaque="true" name="Say" tool_tip="(Enter)"
+-	     width="80">
+-		<flyout_button_item value="shout" name="shout_item">
+-			Shout
+-		</flyout_button_item>
+-		<flyout_button_item value="say" name="say_item">
+-			Say
+-		</flyout_button_item>
+-		<flyout_button_item value="whisper" name="whisper_item">
+-			Whisper
+-		</flyout_button_item>
+-	</flyout_button>
+-	<combo_box allow_text_entry="false" bottom="-23" follows="right|bottom" height="20"
+-	     label="Gestures" left_delta="85" max_chars="20" name="Gesture" width="90">
+-  </combo_box>
++<panel bottom="24" enabled="true" follows="left|right|bottom" height="29"
++     hidden="false" left="-1" mouse_opaque="true" name="chat" width="256" 
++     default_tab_group="1">
++	<button bottom="-28" enabled="true" follows="left|bottom" font="SansSerif"
++	     halign="center" height="24" hidden="false" label="History"
++	     label_selected="History" left="0" mouse_opaque="true" name="History"
++	     tool_tip="Click here to see what has been said" width="100" />
++	<line_editor bevel_style="in" border_style="line" border_thickness="1" bottom="-26"
++	     enabled="true" follows="left|right|bottom" font="SansSerif"
++	     handle_edit_keys_directly="false" height="24" hidden="false"
++	     label="Click here to chat." left="107" max_length="254"
++	     mouse_opaque="true" name="Chat Editor" select_all_on_focus_received="false"
++	     select_on_focus="false" tab_group="1"
++	     tool_tip="Press Enter to say, Ctrl-Enter to shout, Shift-Enter to whisper." width="100" />
++	<button bottom="-28" enabled="true" follows="left|bottom" font="SansSerif"
++	     halign="center" height="24" hidden="false" label="Say" label_selected="Say"
++	     left="748" mouse_opaque="true" name="Say" tool_tip="(Enter)" width="100" />
++	<button bottom="-28" enabled="true" follows="left|bottom" font="SansSerif"
++	     halign="center" height="24" hidden="false" label="Shout"
++	     label_selected="Shout" left="855" mouse_opaque="true" name="Shout"
++	     tool_tip="(Ctrl-Enter)" width="100" />
++	<combo_box allow_text_entry="false" bottom="-26" enabled="true" follows="left|bottom"
++	     height="20" hidden="false" label="Gestures" left="962" max_chars="20"
++	     mouse_opaque="true" name="Gesture" width="150">
++	</combo_box>
+   <string name="gesture_label">Gestures</string>
+ </panel>
+diff -urN linden/indra/newview/skins/default/xui/en-us/panel_master_volume.xml linden-patched/indra/newview/skins/default/xui/en-us/panel_master_volume.xml
+--- linden/indra/newview/skins/default/xui/en-us/panel_master_volume.xml	2009-02-05 18:15:24.000000000 +0100
++++ linden-patched/indra/newview/skins/default/xui/en-us/panel_master_volume.xml	2009-02-05 23:55:11.000000000 +0100
+@@ -1,15 +1,15 @@
+-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+ <panel bg_visible="false" border="false" border_visible="false" bottom="-34"
+-     name="master_volume">
+-	<button bottom="-22" height="22" label=""
+-	     left="2" name="volume" toggle="true"
++     enabled="true" follows="left|top" hidden="false"
++     mouse_opaque="true" name="master_volume">
++<!-- 	<button bottom="-22" height="22" label="Volume" left="2" name="volume" -->
++<!-- 	     tool_tip="Master Volume Control, click for volume settings" width="55" /> -->
++	<button bottom="-22" height="22" label="" image_overlay="icn-overlay_volume-panel.tga" left="2" name="volume"
+ 	     tool_tip="Master Volume Control, click for volume settings" width="28" />
+-	<volume_slider bottom="-20" control_name="AudioLevelMaster" height="17" increment="0.05"
+-	     initial_val="0.5" left_delta="22" max_val="1" min_val="0"
+-	     mouse_opaque="true" name="volume_slider"
+-	     tool_tip="Change the volume using this slider" width="50" />
+-	<button bottom="-20" control_name="MuteAudio" height="20"
+-	     image_selected="icn_speaker-muted_dark.tga"
+-	     image_unselected="icn_speaker_dark.tga" label="" left_delta="52"
+-	     name="mute_master" toggle="true" width="25" />
++<!--
++	<volume_slider control_name="AudioLevelMaster"
++	     bottom="-20" enabled="true" follows="left|top" height="17" hidden="false"
++	     increment="0.05" initial_val="0.5" left_delta="25" max_val="1" min_val="0"
++	     mouse_opaque="true" name="volume_slider" width="40"
++	     tool_tip="Change the volume using this slider" />
++-->
+ </panel>
+diff -urN linden/indra/newview/skins/default/xui/en-us/panel_media_remote.xml linden-patched/indra/newview/skins/default/xui/en-us/panel_media_remote.xml
+--- linden/indra/newview/skins/default/xui/en-us/panel_media_remote.xml	2009-02-05 18:15:23.000000000 +0100
++++ linden-patched/indra/newview/skins/default/xui/en-us/panel_media_remote.xml	2009-02-05 23:55:11.000000000 +0100
+@@ -1,7 +1,33 @@
+-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+-<panel bg_visible="false" border="false" border_visible="false" bottom="0"
+-     enabled="true" follows="right|bottom" height="20" left="0"
+-     name="media_remote" use_bounding_rect="true" width="220">
+-	<panel bottom="1" filename="panel_bg_tab.xml" height="22" left="0" width="220" />
+-	<panel bottom="3" filename="panel_media_controls.xml" height="20" left="0" width="220" />
++<panel bg_visible="false" border="false" border_visible="false" bottom="-34"
++     enabled="true" follows="left|top" hidden="false" left="571"
++     mouse_opaque="true" name="media_remote" >
++	<icon name="media_icon" left="4" bottom="-19" width="16" height="16" image_name="media_icon.tga"/>
++	<button bottom="-20" enabled="true" follows="left|top" font="SansSerif" halign="center"
++	     height="17" hidden="false" image_selected="button_anim_play_selected.tga"
++	     image_unselected="button_anim_play.tga" label="" label_selected=""
++	     left_delta="20" mouse_opaque="true" name="media_play" scale_image="true"
++	     tool_tip="Play media stream" width="17" />
++	<button bottom="-20" enabled="false" follows="left|top" font="SansSerif"
++	     halign="center" height="17" hidden="false"
++	     image_disabled="button_disabled_32x128.tga"
++	     image_disabled_selected="button_disabled_32x128.tga"
++	     image_selected="button_anim_pause_selected.tga"
++	     image_unselected="button_anim_pause.tga" label="" label_selected=""
++	     left_delta="0" mouse_opaque="true" name="media_pause" scale_image="true"
++	     tool_tip="Pause media stream" width="17" />
++	<button bottom="-20" enabled="false" follows="left|top" font="SansSerif"
++	     halign="center" height="17" hidden="false"
++	     image_selected="button_anim_stop_selected.tga"
++	     image_unselected="button_anim_stop.tga" label="" label_selected=""
++	     left_delta="17" mouse_opaque="true" name="media_stop" scale_image="true"
++	     tool_tip="Stop media" width="17" />
++	<string name="play_label">
++		Play
++	</string>
++	<string name="stop_label">
++		Stop
++	</string>
++	<string name="pause_label">
++		Pause
++	</string>
+ </panel>
+diff -urN linden/indra/newview/skins/default/xui/en-us/panel_music_remote.xml linden-patched/indra/newview/skins/default/xui/en-us/panel_music_remote.xml
+--- linden/indra/newview/skins/default/xui/en-us/panel_music_remote.xml	1970-01-01 01:00:00.000000000 +0100
++++ linden-patched/indra/newview/skins/default/xui/en-us/panel_music_remote.xml	2009-02-05 23:55:11.000000000 +0100
+@@ -0,0 +1,32 @@
++<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
++<panel bg_visible="false" border="false" border_visible="false" bottom="-34"
++     enabled="true" follows="left|top" mouse_opaque="true" name="music_remote">
++	<icon bottom="-19" height="16" image_name="music_icon.tga" left="4" name="music_icon"
++	     width="16" />
++	<button bottom="-20" enabled="true" follows="left|top" font="SansSerif" halign="center"
++	     height="17" image_selected="button_anim_play_selected.tga"
++	     image_unselected="button_anim_play.tga" label="" label_selected=""
++	     left_delta="20" mouse_opaque="true" name="music_play" scale_image="true"
++	     tool_tip="Play media stream" width="17" />
++	<button bottom="-20" enabled="false" follows="left|top" font="SansSerif"
++	     halign="center" height="17" image_disabled="button_disabled_32x128.tga"
++	     image_disabled_selected="button_disabled_32x128.tga"
++	     image_selected="button_anim_pause_selected.tga"
++	     image_unselected="button_anim_pause.tga" label="" label_selected=""
++	     left_delta="0" mouse_opaque="true" name="music_pause" scale_image="true"
++	     tool_tip="Pause media stream" width="17" />
++	<button bottom="-20" enabled="false" follows="left|top" font="SansSerif"
++	     halign="center" height="17" image_selected="button_anim_stop_selected.tga"
++	     image_unselected="button_anim_stop.tga" label="" label_selected=""
++	     left_delta="17" mouse_opaque="true" name="music_stop" scale_image="true"
++	     tool_tip="Stop media" width="17" />
++	<string name="play_label">
++		Play
++	</string>
++	<string name="stop_label">
++		Stop
++	</string>
++	<string name="pause_label">
++		Pause
++	</string>
++</panel>
+diff -urN linden/indra/newview/skins/default/xui/en-us/panel_overlaybar.xml linden-patched/indra/newview/skins/default/xui/en-us/panel_overlaybar.xml
+--- linden/indra/newview/skins/default/xui/en-us/panel_overlaybar.xml	2009-02-05 18:15:23.000000000 +0100
++++ linden-patched/indra/newview/skins/default/xui/en-us/panel_overlaybar.xml	2009-02-05 23:55:11.000000000 +0100
+@@ -1,55 +1,37 @@
+ <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+-<panel follows="left|right|bottom|top" height="200" left="-1" mouse_opaque="false"
+-     name="overlay" use_bounding_rect="true" width="728">
+-	<layout_stack bottom="0" follows="left|right|bottom" height="200" left="0"
+-	     mouse_opaque="false" name="overlay_layout_panel" orientation="horizontal"
+-	     right="-1" use_bounding_rect="true">
+-		<layout_panel auto_resize="true" bottom="0" left="0" min_width="420" mouse_opaque="false"
+-		     use_bounding_rect="true" user_resize="false" width="420" name="main_panel">
+-			<layout_stack bottom="0" follows="left|right|bottom|top" height="50" left="0"
+-			     mouse_opaque="false" name="chatbar_and_buttons" orientation="vertical"
+-			     right="420" use_bounding_rect="true">
+-				<layout_panel auto_resize="true" bottom="0" follows="left|bottom|right|top" height="0"
+-				     left="0" min_height="20" min_width="100" mouse_opaque="false"
+-				     name="padding" use_bounding_rect="true" user_resize="false" width="420" />
+-				<layout_panel auto_resize="false" bottom="0" follows="left|bottom|right|top" height="20"
+-				     left="0" min_height="20" min_width="100" mouse_opaque="false"
+-				     name="state_buttons" use_bounding_rect="true" user_resize="false"
+-				     width="420">
+-					<button bottom="1" follows="left|bottom" font="SansSerif" halign="center" height="20"
+-					     label="IM Received" label_selected="IM Received" left="0"
+-					     name="IM Received" scale_image="true"
+-					     tool_tip="You have an instant message pending. Click to show IMs."
+-					     width="102" />
+-					<button bottom="1" follows="left|bottom" font="SansSerif" halign="center" height="20"
+-					     label="Set Not Busy" label_selected="Set Not Busy" left="114"
+-					     name="Set Not Busy" scale_image="true"
+-					     tool_tip="Chat and IM is hidden for you. Click here to set yourself not busy."
+-					     width="102" />
+-					<button bottom="1" follows="left|bottom" font="SansSerif" halign="center" height="20"
+-					     label="Mouselook" label_selected="Mouselook" left="343" name="Mouselook"
+-					     scale_image="true"
+-					     tool_tip="Use mouse to steer your view. If you have a gun, clicking will shoot."
+-					     width="102" />
+-					<button bottom="1" follows="left|bottom" font="SansSerif" halign="center" height="20"
+-					     label="Stand Up" label_selected="Stand Up" left="457" name="Stand Up"
+-					     scale_image="true" tool_tip="Click here to stand up." width="102" />
+-				</layout_panel>
+-				<layout_panel auto_resize="false" background_visible="false" border="false" bottom="0"
+-				     filename="panel_chat_bar.xml" follows="left|right|bottom" left="0"
+-				     min_height="24" mouse_opaque="false" name="chat_bar"
+-				     use_bounding_rect="true" width="395" />
+-			</layout_stack>
+-		</layout_panel>
+-		<layout_panel auto_resize="false" bottom="0" left="0" min_width="220" mouse_opaque="false"
+-		     name="media_remote_container" use_bounding_rect="true" user_resize="false"
+-		     width="220">
+-			<panel background_visible="false" border="false" bottom="0" name="media_remote" />
+-		</layout_panel>
+-		<layout_panel auto_resize="false" bottom="0" left="0" min_width="130" mouse_opaque="false"
+-		     name="voice_remote_container" use_bounding_rect="true" user_resize="false"
+-		     width="128">
+-			<panel background_visible="false" border="false" bottom="0" name="voice_remote" />
+-		</layout_panel>
+-	</layout_stack>
++<panel bottom="51" enabled="true" follows="left|right|bottom" height="42"
++     hidden="false" left="-1" mouse_opaque="false" name="overlay" width="800">
++	<button bottom="-41" enabled="true" follows="left|top" font="SansSerif" halign="center"
++	     height="20" hidden="false" label="IM Received" label_selected="IM Received"
++	     left="0" mouse_opaque="true" name="IM Received" scale_image="true"
++	     tool_tip="You have an instant message pending. Click to show IMs."
++	     width="102" />
++	<button bottom="-41" enabled="true" follows="left|top" font="SansSerif" halign="center"
++	     height="20" hidden="false" label="Set Not Busy"
++	     label_selected="Set Not Busy" left="114" mouse_opaque="true"
++	     name="Set Not Busy" scale_image="true"
++	     tool_tip="Chat and IM is hidden for you. Click here to set yourself not busy."
++	     width="102" />
++	<button bottom="-41" enabled="true" follows="left|top" font="SansSerif" halign="center"
++	     height="20" hidden="false" label="Mouselook" label_selected="Mouselook"
++	     left="343" mouse_opaque="true" name="Mouselook" scale_image="true"
++	     tool_tip="Use mouse to steer your view. If you have a gun, clicking will shoot."
++	     width="102" />
++	<button bottom="-41" enabled="true" follows="left|top" font="SansSerif" halign="center"
++	     height="20" hidden="false" label="Stand Up" label_selected="Stand Up"
++	     left="457" mouse_opaque="true" name="Stand Up" scale_image="true"
++	     tool_tip="Click here to stand up." width="102" />
++	<panel background_visible="false" border="false" bottom="-41" enabled="true"
++	     follows="right|top" height="20" hidden="false" left="400"
++	     mouse_opaque="true" name="voice_remote" width="108" />
++	<panel background_visible="false" border="false" bottom="-41" enabled="true"
++	     follows="right|top" height="20" hidden="false" left="550"
++	     mouse_opaque="true" name="media_remote" width="64" />
++	<panel background_visible="false" border="false" bottom="-41" enabled="true"
++	     follows="right|top" height="20" hidden="false" left="650"
++	     mouse_opaque="true" name="music_remote" width="64" />
++	<panel background_visible="false" border="false" bottom="-41" enabled="true"
++	     follows="right|top" height="20" hidden="false" left="750"
++	     mouse_opaque="true" name="master_volume" width="32" />
++
+ </panel>
+diff -urN linden/indra/newview/skins/default/xui/en-us/panel_status_bar2.xml linden-patched/indra/newview/skins/default/xui/en-us/panel_status_bar2.xml
+--- linden/indra/newview/skins/default/xui/en-us/panel_status_bar2.xml	1970-01-01 01:00:00.000000000 +0100
++++ linden-patched/indra/newview/skins/default/xui/en-us/panel_status_bar2.xml	2009-02-05 23:55:11.000000000 +0100
+@@ -0,0 +1,123 @@
++<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
++<panel background_opaque="true" background_visible="true"
++     bg_opaque_color="0.25 0.25 0.25 1.0" bottom="0" enabled="true"
++     follows="top|left|right" height="18" left="0" mouse_opaque="false"
++     name="status" width="1000">
++	<text type="string" length="1" bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
++	     bottom="-22" drop_shadow_visible="true" enabled="true"
++	     follows="left|right|bottom" font="SansSerifSmall" h_pad="0" halign="left"
++	     height="18" hover="true" left="561" mouse_opaque="true"
++	     name="ParcelNameText" text_color="ParcelTextColor" hover_color="ParcelHoverColor"
++	     tool_tip="Name of land parcel on which you are standing. Click for About Land."
++	     v_pad="2" width="1039">
++		parcel name goes here
++	</text>
++	<text type="string" length="1" bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
++	     bottom="-20" disabled_color="BalanceTextColor" drop_shadow_visible="true"
++	     enabled="true" follows="right|bottom" font="SansSerifSmall" h_pad="0"
++	     halign="right" height="18" left="-210" mouse_opaque="true"
++	     name="BalanceText" text_color="BalanceTextColor" tool_tip="Account Balance"
++	     v_pad="2" width="76">
++		Loading...
++	</text>
++	<button bottom="-17" enabled="true" follows="right|bottom" font="SansSerif"
++	     halign="center" height="16"
++	     image_selected="status_buy_currency_pressed.tga"
++	     image_unselected="legacy_status_buy_currency.tga" label="" label_selected=""
++	     left="-210" mouse_opaque="true" name="buycurrency" scale_image="true"
++	     tool_tip="Buy currency" width="16" />
++	<text type="string" length="12" bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
++	     bottom="-20" disabled_color="TimeTextColor" drop_shadow_visible="true"
++	     enabled="true" follows="right|bottom" font="SansSerifSmall" h_pad="0"
++	     halign="right" height="18" left="-300" mouse_opaque="true" name="TimeText"
++	     text_color="TimeTextColor" tool_tip="Current Time (Pacific)" v_pad="2" width="80">
++		12:00 AM
++	</text>
++	<string name="StatBarDaysOfWeek">
++		Sunday:Monday:Tuesday:Wednesday:Thursday:Friday:Saturday
++	</string>
++	<string name="StatBarMonthsOfYear">
++		January:February:March:April:May:June:July:August:September:October:November:December
++	</string>
++	<button bottom="-18" enabled="true" follows="right|bottom" font="SansSerif"
++	     halign="center" height="16" image_selected="status_script_debug.tga"
++	     image_unselected="status_script_debug.tga" label="" label_selected=""
++	     left="378" mouse_opaque="true" name="scriptout" scale_image="false"
++	     tool_tip="Script Warnings and Errors" visible="false" width="16" />
++	<button bottom="-22" enabled="true" follows="right|bottom" font="SansSerif"
++	     halign="center" height="18" image_selected="status_health.tga"
++	     image_unselected="status_health.tga" label="" label_selected="" left="394"
++	     mouse_opaque="true" name="health" scale_image="false" tool_tip="Health"
++	     visible="false" width="24" />
++	<text type="string" length="1" bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
++	     bottom="-18" disabled_color="HealthTextColor" drop_shadow_visible="true"
++	     enabled="true" follows="rsight|bottom" font="SansSerifSmall" h_pad="0"
++	     halign="left" height="18" left="418" mouse_opaque="true" name="HealthText"
++	     text_color="HealthTextColor" tool_tip="Health" v_pad="2" visible="false" width="31">
++		100%
++	</text>
++	<button bottom="-22" enabled="true" follows="right|bottom" font="SansSerif"
++	     halign="center" height="18" image_selected="status_no_fly.tga"
++	     image_unselected="legacy_status_no_fly.tga" label="" label_selected="" left="449"
++	     mouse_opaque="true" name="no_fly" scale_image="false"
++	     tool_tip="Flying not allowed" visible="false" width="24" />
++	<button bottom="-22" enabled="true" follows="right|bottom" font="SansSerif"
++	     halign="center" height="18" image_selected="status_no_build.tga"
++	     image_unselected="legacy_status_no_build.tga" label="" label_selected=""
++	     left="473" name="no_build" scale_image="false"
++	     tool_tip="Building/Rezzing not allowed" visible="false" width="24" />
++	<button bottom="-22" enabled="true" follows="right|bottom" font="SansSerif"
++	     halign="center" height="18" image_selected="status_no_scripts.tga"
++	     image_unselected="legacy_status_no_scripts.tga" label="" label_selected=""
++	     left="497" mouse_opaque="true" name="no_scripts" scale_image="false"
++	     tool_tip="Scripts not allowed" visible="false" width="24" />
++	<button bottom="-22" enabled="true" follows="right|bottom" font="SansSerif"
++	     halign="center" height="18" image_selected="status_no_push.tga"
++	     image_unselected="legacy_status_no_push.tga" label="" label_selected="" left="521"
++	     mouse_opaque="true" name="restrictpush" scale_image="false"
++	     tool_tip="llPushObject restricted" visible="false" width="24" />
++	<button bottom="-22" enabled="true" follows="right|bottom" font="SansSerif"
++	     halign="center" height="18" image_selected="status_no_voice.tga"
++	     image_unselected="legacy_status_no_voice.tga" label="" label_selected=""
++	     left="545" mouse_opaque="true" name="status_no_voice" scale_image="false"
++	     tool_tip="Voice not available here" visible="false" width="24" />
++	<button bottom="-17" enabled="true" follows="right|bottom" font="SansSerif"
++	     halign="center" height="16" image_selected="status_buy_land_pressed.tga"
++	     image_unselected="status_buy_land.tga" label="" label_selected=""
++	     left="576" mouse_opaque="true" name="buyland" scale_image="true"
++	     tool_tip="Buy this parcel" visible="false" width="16" />
++
++  <!-- Totally unsexy button hack to get a sexy bevel for sexy search bevel -brent -->
++  <button bottom="-17" height="16" left="-97" width="96" 
++          image_unselected="sm_rounded_corners_simple.tga"
++          image_selected="sm_rounded_corners_simple.tga"
++          image_hover_selected="sm_rounded_corners_simple.tga"
++          image_hover_unselected="sm_rounded_corners_simple.tga"
++          image_disabled_selected="sm_rounded_corners_simple.tga"
++          image_disabled="sm_rounded_corners_simple.tga"
++          label="" scale_image="true" enabled="true" mouse_opaque="false" name="menubar_search_bevel_bg" />
++
++  <line_editor bevel_style="none" border_style="line" border_thickness="0" bottom="-16"
++	     commit_on_focus_lost="false" enabled="true" follows="right|bottom"
++	     font="SansSerifSmall" handle_edit_keys_directly="false" height="13"
++	     label="Search" left="-95" max_length="254" mouse_opaque="true"
++	     name="search_editor" select_all_on_focus_received="false"
++	     select_on_focus="false" tab_group="1" tool_tip="Search Second Life"
++	     width="80" />
++	<button bottom="-16" enabled="true" follows="right|bottom" font="SansSerifSmall"
++	     halign="center" height="12" image_disabled="status_search.tga"
++	     image_disabled_selected="status_search.tga"
++	     image_selected="status_search.tga" image_unselected="status_search.tga"
++	     label="" label_selected="" left="-16" mouse_opaque="true" name="search_btn"
++	     tool_tip="Search Second Life" width="12" scale_image="true"/>
++	<text type="string" length="1" bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
++	     bottom="-16" enabled="false" follows="right|bottom" font="SansSerifSmall"
++	     halign="center" height="12" left="-20" mouse_opaque="true"
++	     name="stat_btn" width="20" />
++	<string name="packet_loss_tooltip">
++		Packet Loss
++	</string>
++	<string name="bandwidth_tooltip">
++		Bandwidth
++	</string>
++</panel>
+diff -urN linden/indra/newview/skins/default/xui/en-us/panel_toolbar1.xml linden-patched/indra/newview/skins/default/xui/en-us/panel_toolbar1.xml
+--- linden/indra/newview/skins/default/xui/en-us/panel_toolbar1.xml	1970-01-01 01:00:00.000000000 +0100
++++ linden-patched/indra/newview/skins/default/xui/en-us/panel_toolbar1.xml	2009-02-05 23:55:11.000000000 +0100
+@@ -0,0 +1,31 @@
++<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
++<panel background_opaque="true" background_visible="true" can_close="true"
++     can_minimize="false" can_resize="false" follows="left|right|bottom"
++     height="26" name="panel_toolbar" width="1024">
++	<button bottom="0" font="SansSerif" height="24" label="Chat" left="0" name="chat_btn"
++	     tool_tip="Talk to people nearby. (Enter)" width="50" />
++	<button bottom="0" font="SansSerif" height="24" label="IM" left="0" name="communicate_btn"
++	     tool_tip="Instant Message your friends and groups." width="50" />
++	<button bottom="0" font="SansSerif" height="24" label="Friends" left="0"
++	     name="friends_btn" tool_tip="Find and communicate with your buddies."
++	     width="50" />
++	<button bottom="0" font="SansSerif" height="24" label="Fly"
++	     label_selected="Stop Flying" left="0" name="fly_btn"
++	     tool_tip="Start flying. Use E/C or PgUp/PgDn to fly up and down."
++	     width="50" />
++	<button bottom="0" font="SansSerif" height="24" label="Snapshot" left="0"
++	     name="snapshot_btn" tool_tip="Save a screen shot to disk or inventory."
++	     width="50" />
++	<button bottom="0" font="SansSerif" height="24" label="Search" left="0"
++	     name="directory_btn"
++	     tool_tip="Search for places, events, people, and more." width="50" />
++	<button bottom="0" font="SansSerif" height="24" label="Build" left="0" name="build_btn"
++	     tool_tip="Create new objects." width="50" />
++	<button bottom="0" font="SansSerif" height="24" label="Mini-Map" left="0"
++	     name="radar_btn" tool_tip="Map of the area around you. (Ctrl-Shift-M)"
++	     width="50" />
++	<button bottom="0" font="SansSerif" height="24" label="Map" left="0" name="map_btn"
++	     tool_tip="Map of the world. (Ctrl-M)" width="50" />
++	<button bottom="0" font="SansSerif" height="24" label="Inventory" left="0"
++	     name="inventory_btn" tool_tip="Your items. (Ctrl-I)" width="50" />
++</panel>
+diff -urN linden/indra/newview/skins/default/xui/en-us/panel_toolbar2.xml linden-patched/indra/newview/skins/default/xui/en-us/panel_toolbar2.xml
+--- linden/indra/newview/skins/default/xui/en-us/panel_toolbar2.xml	1970-01-01 01:00:00.000000000 +0100
++++ linden-patched/indra/newview/skins/default/xui/en-us/panel_toolbar2.xml	2009-02-05 23:55:11.000000000 +0100
+@@ -0,0 +1,34 @@
++<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
++<panel background_opaque="true" background_visible="true" can_close="true"
++     can_minimize="false" can_resize="false" follows="left|right|bottom"
++     height="26" name="panel_toolbar" width="1024">
++	<button bottom="0" font="SansSerif" height="24" label="Chat" left="0" name="chat_btn"
++	     tool_tip="Talk to people nearby. (Enter)" width="50" />
++	<button bottom="0" font="SansSerif" height="24" label="IM" left="0" name="communicate_btn"
++	     tool_tip="Instant Message your friends and groups." width="50" />
++	<button bottom="0" font="SansSerif" height="24" label="Friends" left="0"
++	     name="friends_btn" tool_tip="Find and communicate with your buddies."
++	     width="50" />
++	<button bottom="0" font="SansSerif" height="24" label="Groups" left="0"
++	     name="groups_btn" tool_tip="Deal with your groups."
++	     width="50" />
++	<button bottom="0" font="SansSerif" height="24" label="Fly"
++	     label_selected="Stop Flying" left="0" name="fly_btn"
++	     tool_tip="Start flying. Use E/C or PgUp/PgDn to fly up and down."
++	     width="50" />
++	<button bottom="0" font="SansSerif" height="24" label="Snapshot" left="0"
++	     name="snapshot_btn" tool_tip="Save a screen shot to disk or inventory."
++	     width="50" />
++	<button bottom="0" font="SansSerif" height="24" label="Search" left="0"
++	     name="directory_btn"
++	     tool_tip="Search for places, events, people, and more." width="50" />
++	<button bottom="0" font="SansSerif" height="24" label="Build" left="0" name="build_btn"
++	     tool_tip="Create new objects." width="50" />
++	<button bottom="0" font="SansSerif" height="24" label="Mini-Map" left="0"
++	     name="radar_btn" tool_tip="Map of the area around you. (Ctrl-Shift-M)"
++	     width="50" />
++	<button bottom="0" font="SansSerif" height="24" label="Map" left="0" name="map_btn"
++	     tool_tip="Map of the world. (Ctrl-M)" width="50" />
++	<button bottom="0" font="SansSerif" height="24" label="Inventory" left="0"
++	     name="inventory_btn" tool_tip="Your items. (Ctrl-I)" width="50" />
++</panel>
+diff -urN linden/indra/newview/skins/default/xui/en-us/panel_voice_remote.xml linden-patched/indra/newview/skins/default/xui/en-us/panel_voice_remote.xml
+--- linden/indra/newview/skins/default/xui/en-us/panel_voice_remote.xml	2009-02-05 18:15:23.000000000 +0100
++++ linden-patched/indra/newview/skins/default/xui/en-us/panel_voice_remote.xml	2009-02-06 00:00:29.000000000 +0100
+@@ -1,8 +1,13 @@
+-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+-<panel bg_visible="false" border="false" border_visible="false" bottom="0"
+-     enabled="true" follows="right|bottom" height="20" left="0"
+-     mouse_opaque="true" name="voice_remote" use_bounding_rect="true"
+-     width="130">
+-	<panel bottom="1" filename="panel_bg_tab.xml" name="panel_bg_tab" height="22" left="0" width="130" />
+-	<panel bottom="3" filename="panel_voice_controls.xml" name="panel_voice_controls" height="20" left="1" width="130" />
+-</panel>
++<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
++<panel bg_visible="false" border="false" border_visible="false" bottom="-34"
++     enabled="true" follows="left|top" hidden="false"
++     mouse_opaque="true" name="voice_remote" >
++	<button bottom="-22" height="22" label="" image_overlay="active_speakers.tga" left="2" name="speakers_btn"
++	     tool_tip="Show list of residents using voice chat around you" width="38" />
++	<button bottom="-22" height="22" label="Talk" left_delta="40" name="push_to_talk"
++	     tab_stop="false" tool_tip="Hold the button to talk" width="64" />
++	<button bottom="-19" height="16" image_selected="ptt_lock_on.tga"
++	     image_unselected="ptt_lock_off.tga" label="" left_delta="4" name="ptt_lock"
++	     scale_image="true" toggle="true" tool_tip="Click lock to switch to talk mode" width="16" />
++	<icon name="voice_volume" left_delta="40" bottom="-19" width="16" height="16" image_name="icn_voice_ptt-off.tga"/>
++</panel>
+diff -urN linden/indra/newview/skins/silver/xui/en-us/floater_chat_history2.xml linden-patched/indra/newview/skins/silver/xui/en-us/floater_chat_history2.xml
+--- linden/indra/newview/skins/silver/xui/en-us/floater_chat_history2.xml	1970-01-01 01:00:00.000000000 +0100
++++ linden-patched/indra/newview/skins/silver/xui/en-us/floater_chat_history2.xml	2009-02-05 23:55:11.000000000 +0100
+@@ -0,0 +1,106 @@
++<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
++<floater bottom="27" can_close="true" can_drag_on_left="false" can_minimize="false"
++     can_resize="true" can_tear_off="true" enabled="true" height="270"
++     hidden="false" left="15" min_height="150" min_width="425"
++     mouse_opaque="true" name="chat floater" rect_control="FloaterChatRect"
++     title="Chat History" short_title="Near Me" width="435">
++	<string name="ringing">
++		Connecting to in-world Voice Chat...
++	</string>
++	<string name="connected">
++		Connected
++	</string>
++	<string name="unavailable">
++		Voice not available at your current location
++	</string>
++	<string name="hang_up">
++		Disconnected from in-world Voice Chat
++	</string>
++	<string name="voice_icon">
++		icn_voice-localchat.tga
++	</string>
++	<string name="IM_logging_string">
++		-- Instant message logging enabled --
++	</string>
++	<string name="IM_end_log_string">
++		-- End of Log --
++	</string>
++
++	<string name="hang_up">Disconnected from in-world Voice Chat</string>
++     
++    <layout_stack border="false" left="2" bottom="2" width="430" height="250" follows="left|top|right|bottom" orientation="horizontal">
++    	<layout_panel border="false" name="im_contents_panel" min_width="275" left="0" bottom="0" width="305" height="130" default_tab_group="1">
++    		 
++		<check_box left="4" enabled="true" follows="left|top" font="SansSerifSmall"
++				height="20" initial_value="false" label="Show Muted Text"
++				left_delta="10" name="show mutes" radio_style="false"
++				width="116" />
++
++    		<button left="270" right="303" bottom_delta="0" height="20" width="70" label="&lt; &lt;" label_selected="&gt; &gt;" follows="right|top" name="toggle_active_speakers_btn" visible="true" tool_tip="Click here to show list of active partipants in this IM session."/>
++
++			<text_editor type="string" length="1" bottom="5" embedded_items="false" enabled="false"
++				follows="left|top|right|bottom" font="SansSerif" height="90"
++				hidden="false" left="6" max_length="2147483647" mouse_opaque="true" track_bottom="true"
++				name="Chat History Editor" width="300" word_wrap="true"
++				text_color="ChatHistoryTextColor" text_readonly_color="ChatHistoryTextColor"
++				bg_readonly_color="ChatHistoryBgColor" bg_writeable_color="ChatHistoryBgColor" />
++			<text_editor type="string" length="1" bottom="5" embedded_items="false" enabled="false"
++				follows="left|top|right|bottom" font="SansSerif" height="90"
++				hidden="false" left="6" max_length="2147483647" mouse_opaque="true" track_bottom="true"
++				name="Chat History Editor with mute" width="300" word_wrap="true"
++				text_color="ChatHistoryTextColor" text_readonly_color="ChatHistoryTextColor"
++				bg_readonly_color="ChatHistoryBgColor" bg_writeable_color="ChatHistoryBgColor" />	
++    	</layout_panel>
++
++		<layout_panel name="active_speakers_panel" auto_resize="false" left="0" bottom="0" right="140" height="120" min_width="140" visible="false">
++			<scroll_list name="speakers_list" left="0" right="140" top="120" bottom="78" column_padding="0" follows="left|top|bottom|right" draw_heading="true" draw_stripes="false" multi_select="false" search_column="1">
++	   			<column name="icon_speaking_status" width="20" sort="speaking_status"/>	
++				<column name="speaker_name" label="Name" dynamicwidth="true"/>
++				<column name="speaking_status" label="" width="0"/>
++			</scroll_list>
++			<panel name="volume_container" left="0" right="140" bottom="0" border="true" mouse_opaque="true" bevel_style="in" can_resize="false" height="77" follows="left|bottom|right">
++				<button left="0" right="30" bottom="-28" height="24" name="profile_btn" follows="left|top" label="" image_overlay="icon_avatar_offline.tga" enabled="false"/>
++				<text left_delta="34" bottom_delta="9" name="resident_name" valign="center" follows="left|top|bottom|right" width="100" font="SansSerif">Rumplstiltskin Califragilistic</text>
++				<volume_slider
++					name="speaker_volume"
++					left="5"
++					width="85"
++					bottom_delta="-29"
++					height="15"
++					follows="left|top"
++					min_val="0.0"
++					max_val="1.0"
++					increment="0.05"
++					initial_val="0.5"
++				/>
++				<text type="string" width="45" bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
++					drop_shadow_visible="true" enabled="true" follows="left|top"
++					font="SansSerifSmall" height="16" hidden="false"
++					left="4" mouse_opaque="true" bottom_delta="-25" name="Mute:" v_pad="0">
++					Mute:
++				</text>
++				<check_box
++					name="mute_text_btn"
++					width="50"
++					bottom_delta="0"
++					left_delta="32"
++					follows="left|top"
++					height="25"
++					enabled="false"
++					label="Text"
++				/>
++				<check_box
++					name="mute_btn"
++					follows="left|top"
++					width="50"
++					bottom_delta="0"
++					left_delta="45"
++					height="25"
++					enabled="false"
++					label="Voice"
++				/>
++			</panel>
++		</layout_panel>
++	</layout_stack>
++
++</floater>

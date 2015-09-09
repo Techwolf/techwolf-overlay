@@ -1,0 +1,898 @@
+
+# HG changeset patch
+# User Monroe Linden <monroe@lindenlab.com>
+# Date 1284586782 25200
+# Node ID 8013456524035afaebdbd14054ad8416f09ec3aa
+# Parent  25e7fe8517c0a99ac7bbd982b68489542208259f
+Enable web popups to specify size and position of the Media Browser window from javascript.
+
+This includes a Mac build of llqtwebkit from the following sources:
+
+revision aacdf69cbf5aa12d77c179296e31ef643ed1ef4a of http://qt.gitorious.org/+lindenqt/qt/lindenqt (currently head of the 'lindenqt' branch)
+revision 81ab5ae326f0 of http://hg.secondlife.com/llqtwebkit (currently head of the default branch)
+
+Reviewed by Callum.
+
+diff -r 25e7fe8517c0 -r 801345652403 indra/llplugin/llpluginclassmedia.cpp
+--- a/indra/llplugin/llpluginclassmedia.cpp	Mon Sep 13 16:15:08 2010 -0700
++++ b/indra/llplugin/llpluginclassmedia.cpp	Wed Sep 15 14:39:42 2010 -0700
+@@ -74,6 +74,7 @@
+ 	
+ 	// Queue up the media init message -- it will be sent after all the currently queued messages.
+ 	LLPluginMessage message(LLPLUGIN_MESSAGE_CLASS_MEDIA, "init");
++	message.setValue("target", mTarget);
+ 	sendMessage(message);
+ 	
+ 	mPlugin->init(launcher_filename, plugin_filename, debug);
+@@ -143,7 +144,7 @@
+ 	mProgressPercent = 0;	
+ 	mClickURL.clear();
+ 	mClickTarget.clear();
+-	mClickTargetType = TARGET_NONE;
++	mClickUUID.clear();
+ 	
+ 	// media_time class
+ 	mCurrentTime = 0.0f;
+@@ -727,24 +728,9 @@
+ 	sendMessage(message);
+ }
+ 
+-LLPluginClassMedia::ETargetType getTargetTypeFromLLQtWebkit(int target_type)
++void LLPluginClassMedia::setTarget(const std::string &target)
+ {
+-	// convert a LinkTargetType value from llqtwebkit to an ETargetType
+-	// so that we don't expose the llqtwebkit header in viewer code
+-	switch (target_type)
+-	{
+-	case LLQtWebKit::LTT_TARGET_NONE:
+-		return LLPluginClassMedia::TARGET_NONE;
+-
+-	case LLQtWebKit::LTT_TARGET_BLANK:
+-		return LLPluginClassMedia::TARGET_BLANK;
+-
+-	case LLQtWebKit::LTT_TARGET_EXTERNAL:
+-		return LLPluginClassMedia::TARGET_EXTERNAL;
+-
+-	default:
+-		return LLPluginClassMedia::TARGET_OTHER;
+-	}
++	mTarget = target;
+ }
+ 
+ /* virtual */ 
+@@ -1003,15 +989,13 @@
+ 		{
+ 			mClickURL = message.getValue("uri");
+ 			mClickTarget = message.getValue("target");
+-			U32 target_type = message.getValueU32("target_type");
+-			mClickTargetType = ::getTargetTypeFromLLQtWebkit(target_type);
++			mClickUUID = message.getValue("uuid");
+ 			mediaEvent(LLPluginClassMediaOwner::MEDIA_EVENT_CLICK_LINK_HREF);
+ 		}
+ 		else if(message_name == "click_nofollow")
+ 		{
+ 			mClickURL = message.getValue("uri");
+ 			mClickTarget.clear();
+-			mClickTargetType = TARGET_NONE;
+ 			mediaEvent(LLPluginClassMediaOwner::MEDIA_EVENT_CLICK_LINK_NOFOLLOW);
+ 		}
+ 		else if(message_name == "cookie_set")
+@@ -1025,6 +1009,16 @@
+ 		{
+ 			mediaEvent(LLPluginClassMediaOwner::MEDIA_EVENT_CLOSE_REQUEST);
+ 		}
++		else if(message_name == "geometry_change")
++		{
++			mClickUUID = message.getValue("uuid");
++			mGeometryX = message.getValueS32("x");
++			mGeometryY = message.getValueS32("y");
++			mGeometryWidth = message.getValueS32("width");
++			mGeometryHeight = message.getValueS32("height");
++				
++			mediaEvent(LLPluginClassMediaOwner::MEDIA_EVENT_GEOMETRY_CHANGE);
++		}
+ 		else
+ 		{
+ 			LL_WARNS("Plugin") << "Unknown " << message_name << " class message: " << message_name << LL_ENDL;
+@@ -1179,6 +1173,25 @@
+ 	sendMessage(message);
+ }
+ 
++void LLPluginClassMedia::proxyWindowOpened(const std::string &target, const std::string &uuid)
++{
++	LLPluginMessage message(LLPLUGIN_MESSAGE_CLASS_MEDIA_BROWSER, "proxy_window_opened");
++
++	message.setValue("target", target);
++	message.setValue("uuid", uuid);
++
++	sendMessage(message);
++}
++
++void LLPluginClassMedia::proxyWindowClosed(const std::string &uuid)
++{
++	LLPluginMessage message(LLPLUGIN_MESSAGE_CLASS_MEDIA_BROWSER, "proxy_window_closed");
++
++	message.setValue("uuid", uuid);
++
++	sendMessage(message);
++}
++
+ void LLPluginClassMedia::crashPlugin()
+ {
+ 	LLPluginMessage message(LLPLUGIN_MESSAGE_CLASS_INTERNAL, "crash");
+diff -r 25e7fe8517c0 -r 801345652403 indra/llplugin/llpluginclassmedia.h
+--- a/indra/llplugin/llpluginclassmedia.h	Mon Sep 13 16:15:08 2010 -0700
++++ b/indra/llplugin/llpluginclassmedia.h	Wed Sep 15 14:39:42 2010 -0700
+@@ -178,6 +178,7 @@
+ 	void	setLanguageCode(const std::string &language_code);
+ 	void	setPluginsEnabled(const bool enabled);
+ 	void	setJavascriptEnabled(const bool enabled);
++	void	setTarget(const std::string &target);
+ 	
+ 	///////////////////////////////////
+ 	// media browser class functions
+@@ -195,6 +196,8 @@
+ 	void browse_back();
+ 	void set_status_redirect(int code, const std::string &url);
+ 	void setBrowserUserAgent(const std::string& user_agent);
++	void proxyWindowOpened(const std::string &target, const std::string &uuid);
++	void proxyWindowClosed(const std::string &uuid);
+ 	
+ 	// This is valid after MEDIA_EVENT_NAVIGATE_BEGIN or MEDIA_EVENT_NAVIGATE_COMPLETE
+ 	std::string	getNavigateURI() const { return mNavigateURI; };
+@@ -220,16 +223,14 @@
+ 	// This is valid after MEDIA_EVENT_CLICK_LINK_HREF
+ 	std::string getClickTarget() const { return mClickTarget; };
+ 
+-	typedef enum 
+-	{
+-		TARGET_NONE,        // empty href target string
+-		TARGET_BLANK,       // target to open link in user's preferred browser
+-		TARGET_EXTERNAL,    // target to open link in external browser
+-		TARGET_OTHER        // nonempty and unsupported target type
+-	}ETargetType;
+-
+-	// This is valid after MEDIA_EVENT_CLICK_LINK_HREF
+-	ETargetType getClickTargetType() const { return mClickTargetType; };
++	// This is valid during MEDIA_EVENT_CLICK_LINK_HREF and MEDIA_EVENT_GEOMETRY_CHANGE
++	std::string getClickUUID() const { return mClickUUID; };
++	
++	// These are valid during MEDIA_EVENT_GEOMETRY_CHANGE
++	S32 getGeometryX() const { return mGeometryX; };
++	S32 getGeometryY() const { return mGeometryY; };
++	S32 getGeometryWidth() const { return mGeometryWidth; };
++	S32 getGeometryHeight() const { return mGeometryHeight; };
+ 
+ 	std::string getMediaName() const { return mMediaName; };
+ 	std::string getMediaDescription() const { return mMediaDescription; };
+@@ -349,6 +350,8 @@
+ 	
+ 	LLColor4		mBackgroundColor;
+ 	
++	std::string		mTarget;
++	
+ 	/////////////////////////////////////////
+ 	// media_browser class
+ 	std::string		mNavigateURI;
+@@ -361,7 +364,11 @@
+ 	std::string		mLocation;
+ 	std::string		mClickURL;
+ 	std::string		mClickTarget;
+-	ETargetType     mClickTargetType;
++	std::string		mClickUUID;
++	S32				mGeometryX;
++	S32				mGeometryY;
++	S32				mGeometryWidth;
++	S32				mGeometryHeight;
+ 	
+ 	/////////////////////////////////////////
+ 	// media_time class
+diff -r 25e7fe8517c0 -r 801345652403 indra/llplugin/llpluginclassmediaowner.h
+--- a/indra/llplugin/llpluginclassmediaowner.h	Mon Sep 13 16:15:08 2010 -0700
++++ b/indra/llplugin/llpluginclassmediaowner.h	Wed Sep 15 14:39:42 2010 -0700
+@@ -56,6 +56,7 @@
+ 		MEDIA_EVENT_CLICK_LINK_NOFOLLOW,
+ 		MEDIA_EVENT_CLOSE_REQUEST,			// The plugin requested its window be closed (currently hooked up to javascript window.close in webkit)
+ 		MEDIA_EVENT_PICK_FILE_REQUEST,		// The plugin wants the user to pick a file
++		MEDIA_EVENT_GEOMETRY_CHANGE,		// The plugin requested its window geometry be changed (per the javascript window interface)
+ 		
+ 		MEDIA_EVENT_PLUGIN_FAILED_LAUNCH,	// The plugin failed to launch 
+ 		MEDIA_EVENT_PLUGIN_FAILED			// The plugin died unexpectedly
+diff -r 25e7fe8517c0 -r 801345652403 indra/media_plugins/webkit/media_plugin_webkit.cpp
+--- a/indra/media_plugins/webkit/media_plugin_webkit.cpp	Mon Sep 13 16:15:08 2010 -0700
++++ b/indra/media_plugins/webkit/media_plugin_webkit.cpp	Wed Sep 15 14:39:42 2010 -0700
+@@ -115,6 +115,7 @@
+ 	F32 mBackgroundR;
+ 	F32 mBackgroundG;
+ 	F32 mBackgroundB;
++	std::string mTarget;
+ 	
+ 	VolumeCatcher mVolumeCatcher;
+ 
+@@ -303,7 +304,7 @@
+ 		LLQtWebKit::getInstance()->enableJavascript( mJavascriptEnabled );
+ 		
+ 		// create single browser window
+-		mBrowserWindowId = LLQtWebKit::getInstance()->createBrowserWindow( mWidth, mHeight );
++		mBrowserWindowId = LLQtWebKit::getInstance()->createBrowserWindow( mWidth, mHeight, mTarget);
+ 
+ 		// tell LLQtWebKit about the size of the browser window
+ 		LLQtWebKit::getInstance()->setSize( mBrowserWindowId, mWidth, mHeight );
+@@ -313,9 +314,6 @@
+ 
+ 		// append details to agent string
+ 		LLQtWebKit::getInstance()->setBrowserAgentId( mUserAgent );
+-
+-		// Set up window open behavior
+-		LLQtWebKit::getInstance()->setWindowOpenBehavior(mBrowserWindowId, LLQtWebKit::WOB_SIMULATE_BLANK_HREF_CLICK);
+ 		
+ #if !LL_QTWEBKIT_USES_PIXMAPS
+ 		// don't flip bitmap
+@@ -507,9 +505,9 @@
+ 	void onClickLinkHref(const EventType& event)
+ 	{
+ 		LLPluginMessage message(LLPLUGIN_MESSAGE_CLASS_MEDIA_BROWSER, "click_href");
+-		message.setValue("uri", event.getStringValue());
+-		message.setValue("target", event.getStringValue2());
+-		message.setValueU32("target_type", event.getLinkType());
++		message.setValue("uri", event.getEventUri());
++		message.setValue("target", event.getStringValue());
++		message.setValue("uuid", event.getStringValue2());
+ 		sendMessage(message);
+ 	}
+ 	
+@@ -518,7 +516,7 @@
+ 	void onClickLinkNoFollow(const EventType& event)
+ 	{
+ 		LLPluginMessage message(LLPLUGIN_MESSAGE_CLASS_MEDIA_BROWSER, "click_nofollow");
+-		message.setValue("uri", event.getStringValue());
++		message.setValue("uri", event.getEventUri());
+ 		sendMessage(message);
+ 	}
+ 	
+@@ -539,8 +537,24 @@
+ 	// virtual
+ 	void onWindowCloseRequested(const EventType& event)
+ 	{
+-		llwarns << "onWindowCloseRequested " << llendl;
+ 		LLPluginMessage message(LLPLUGIN_MESSAGE_CLASS_MEDIA_BROWSER, "close_request");
++		message.setValue("uuid", event.getStringValue());
++		sendMessage(message);
++	}
++
++	////////////////////////////////////////////////////////////////////////////////
++	// virtual
++	void onWindowGeometryChangeRequested(const EventType& event)
++	{
++		int x, y, width, height;
++		event.getRectValue(x, y, width, height);
++
++		LLPluginMessage message(LLPLUGIN_MESSAGE_CLASS_MEDIA_BROWSER, "geometry_change");
++		message.setValue("uuid", event.getStringValue());
++		message.setValueS32("x", x);
++		message.setValueS32("y", y);
++		message.setValueS32("width", width);
++		message.setValueS32("height", height);
+ 		sendMessage(message);
+ 	}
+ 
+@@ -853,6 +867,8 @@
+ 		{
+ 			if(message_name == "init")
+ 			{
++				mTarget = message_in.getValue("target");
++				
+ 				// This is the media init message -- all necessary data for initialization should have been received.
+ 				if(initBrowser())
+ 				{
+@@ -1179,6 +1195,17 @@
+ 					}
+ 				}
+ 			}
++			else if(message_name == "proxy_window_opened")
++			{
++				std::string target = message_in.getValue("target");
++				std::string uuid = message_in.getValue("uuid");
++				LLQtWebKit::getInstance()->proxyWindowOpened(mBrowserWindowId, target, uuid);
++			}
++			else if(message_name == "proxy_window_closed")
++			{
++				std::string uuid = message_in.getValue("uuid");
++				LLQtWebKit::getInstance()->proxyWindowClosed(mBrowserWindowId, uuid);
++			}
+ 			else
+ 			{
+ //				std::cerr << "MediaPluginWebKit::receiveMessage: unknown media_browser message: " << message_string << std::endl;
+diff -r 25e7fe8517c0 -r 801345652403 indra/newview/app_settings/settings.xml
+--- a/indra/newview/app_settings/settings.xml	Mon Sep 13 16:15:08 2010 -0700
++++ b/indra/newview/app_settings/settings.xml	Wed Sep 15 14:39:42 2010 -0700
+@@ -5195,7 +5195,7 @@
+     <key>Type</key>
+     <string>Boolean</string>
+     <key>Value</key>
+-    <integer>0</integer>
++    <integer>1</integer>
+   </map>
+   <key>MediaOnAPrimUI</key>
+   <map>
+diff -r 25e7fe8517c0 -r 801345652403 indra/newview/llfloatermediabrowser.cpp
+--- a/indra/newview/llfloatermediabrowser.cpp	Mon Sep 13 16:15:08 2010 -0700
++++ b/indra/newview/llfloatermediabrowser.cpp	Wed Sep 15 14:39:42 2010 -0700
+@@ -45,7 +45,8 @@
+ #include "llviewermedia.h"
+ #include "llviewerparcelmedia.h"
+ #include "llcombobox.h"
+-
++#include "llwindow.h"
++#include "lllayoutstack.h"
+ 
+ // TEMP
+ #include "llsdutil.h"
+@@ -56,16 +57,25 @@
+ }
+ 
+ //static 
+-void LLFloaterMediaBrowser::create(const std::string &url, const std::string& target)
++void LLFloaterMediaBrowser::create(const std::string &url, const std::string& target, const std::string& uuid)
+ {
++	lldebugs << "url = " << url << ", target = " << target << ", uuid = " << uuid << llendl;
++	
+ 	std::string tag = target;
+ 	
+ 	if(target.empty() || target == "_blank")
+ 	{
+-		// create a unique tag for this instance
+-		LLUUID id;
+-		id.generate();
+-		tag = id.asString();
++		if(!uuid.empty())
++		{
++			tag = uuid;
++		}
++		else
++		{
++			// create a unique tag for this instance
++			LLUUID id;
++			id.generate();
++			tag = id.asString();
++		}
+ 	}
+ 	
+ 	S32 browser_window_limit = gSavedSettings.getS32("MediaBrowserWindowLimit");
+@@ -98,11 +108,70 @@
+ 	llassert(browser);
+ 	if(browser)
+ 	{
++		browser->mUUID = uuid;
++
+ 		// tell the browser instance to load the specified URL
+-		browser->openMedia(url);
++		browser->openMedia(url, target);
++		LLViewerMedia::proxyWindowOpened(target, uuid);
+ 	}
+ }
+ 
++//static 
++void LLFloaterMediaBrowser::closeRequest(const std::string &uuid)
++{
++	LLFloaterReg::const_instance_list_t& inst_list = LLFloaterReg::getFloaterList("media_browser");
++	lldebugs << "instance list size is " << inst_list.size() << ", incoming uuid is " << uuid << llendl;
++	for (LLFloaterReg::const_instance_list_t::const_iterator iter = inst_list.begin(); iter != inst_list.end(); ++iter)
++	{
++		LLFloaterMediaBrowser* i = dynamic_cast<LLFloaterMediaBrowser*>(*iter);
++		lldebugs << "    " << i->mUUID << llendl;
++		if (i && i->mUUID == uuid)
++		{
++			i->closeFloater(false);
++			return;
++ 		}
++ 	}
++}
++
++//static 
++void LLFloaterMediaBrowser::geometryChanged(const std::string &uuid, S32 x, S32 y, S32 width, S32 height)
++{
++	LLFloaterReg::const_instance_list_t& inst_list = LLFloaterReg::getFloaterList("media_browser");
++	lldebugs << "instance list size is " << inst_list.size() << ", incoming uuid is " << uuid << llendl;
++	for (LLFloaterReg::const_instance_list_t::const_iterator iter = inst_list.begin(); iter != inst_list.end(); ++iter)
++	{
++		LLFloaterMediaBrowser* i = dynamic_cast<LLFloaterMediaBrowser*>(*iter);
++		lldebugs << "    " << i->mUUID << llendl;
++		if (i && i->mUUID == uuid)
++		{
++			i->geometryChanged(x, y, width, height);
++			return;
++ 		}
++ 	}
++}
++	
++void LLFloaterMediaBrowser::geometryChanged(S32 x, S32 y, S32 width, S32 height)
++{	
++	// Make sure the layout of the browser control is updated, so this calculation is correct.
++	LLLayoutStack::updateClass();
++		
++	// TODO: need to adjust size and constrain position to make sure floaters aren't moved outside the window view, etc.
++	LLCoordWindow window_size;
++	getWindow()->getSize(&window_size);
++
++	// Adjust width and height for the size of the chrome on the Media Browser window.
++	width += getRect().getWidth() - mBrowser->getRect().getWidth();
++	height += getRect().getHeight() - mBrowser->getRect().getHeight();
++	
++	LLRect geom;
++	geom.setOriginAndSize(x, window_size.mY - (y + height), width, height);
++
++	lldebugs << "geometry change: " << geom << llendl;
++	
++	handleReshape(geom,false);
++}
++
++
+ void LLFloaterMediaBrowser::draw()
+ {
+ 	getChildView("go")->setEnabled(!mAddressCombo->getValue().asString().empty());
+@@ -161,6 +230,7 @@
+ 	childSetAction("assign", onClickAssign, this);
+ 
+ 	buildURLHistory();
++
+ 	return TRUE;
+ }
+ 
+@@ -201,6 +271,7 @@
+ //virtual
+ void LLFloaterMediaBrowser::onClose(bool app_quitting)
+ {
++	LLViewerMedia::proxyWindowClosed(mUUID);
+ 	//setVisible(FALSE);
+ 	destroy();
+ }
+@@ -222,7 +293,12 @@
+ 		// The browser instance wants its window closed.
+ 		closeFloater();
+ 	}
++	else if(event == MEDIA_EVENT_GEOMETRY_CHANGE)
++	{
++		geometryChanged(self->getGeometryX(), self->getGeometryY(), self->getGeometryWidth(), self->getGeometryHeight());
++	}
+ }
++
+ void LLFloaterMediaBrowser::setCurrentURL(const std::string& url)
+ {
+ 	mCurrentURL = url;
+@@ -368,9 +444,10 @@
+ 	if(self->mBrowser->getMediaPlugin())
+ 		self->mBrowser->getMediaPlugin()->start(2.0f);
+ }
+-void LLFloaterMediaBrowser::openMedia(const std::string& media_url)
++void LLFloaterMediaBrowser::openMedia(const std::string& media_url, const std::string& target)
+ {
+ 	mBrowser->setHomePageUrl(media_url);
++	mBrowser->setTarget(target);
+ 	mBrowser->navigateTo(media_url);
+ 	setCurrentURL(media_url);
+ }
+diff -r 25e7fe8517c0 -r 801345652403 indra/newview/llfloatermediabrowser.h
+--- a/indra/newview/llfloatermediabrowser.h	Mon Sep 13 16:15:08 2010 -0700
++++ b/indra/newview/llfloatermediabrowser.h	Wed Sep 15 14:39:42 2010 -0700
+@@ -42,7 +42,11 @@
+     LOG_CLASS(LLFloaterMediaBrowser);
+ 	LLFloaterMediaBrowser(const LLSD& key);
+ 
+-	static void create(const std::string &url, const std::string& target);
++	static void create(const std::string &url, const std::string& target, const std::string& uuid = LLStringUtil::null);
++
++	static void closeRequest(const std::string &uuid);
++	static void geometryChanged(const std::string &uuid, S32 x, S32 y, S32 width, S32 height);
++	void geometryChanged(S32 x, S32 y, S32 width, S32 height);
+ 	
+ 	/*virtual*/ BOOL postBuild();
+ 	/*virtual*/ void onClose(bool app_quitting);
+@@ -51,7 +55,7 @@
+ 	// inherited from LLViewerMediaObserver
+ 	/*virtual*/ void handleMediaEvent(LLPluginClassMedia* self, EMediaEvent event);
+ 
+-	void openMedia(const std::string& media_url);
++	void openMedia(const std::string& media_url, const std::string& target);
+ 	void buildURLHistory();
+ 	std::string getSupportURL();
+ 	void setCurrentURL(const std::string& url);
+@@ -73,6 +77,7 @@
+ 	LLMediaCtrl* mBrowser;
+ 	LLComboBox* mAddressCombo;
+ 	std::string mCurrentURL;
++	std::string mUUID;
+ };
+ 
+ #endif  // LL_LLFLOATERMEDIABROWSER_H
+diff -r 25e7fe8517c0 -r 801345652403 indra/newview/llmediactrl.cpp
+--- a/indra/newview/llmediactrl.cpp	Mon Sep 13 16:15:08 2010 -0700
++++ b/indra/newview/llmediactrl.cpp	Wed Sep 15 14:39:42 2010 -0700
+@@ -572,6 +572,15 @@
+ 	}
+ }
+ 
++void LLMediaCtrl::setTarget(const std::string& target)
++{
++	mTarget = target;
++	if (mMediaSource)
++	{
++		mMediaSource->setTarget(mTarget);
++	}
++}
++
+ ////////////////////////////////////////////////////////////////////////////////
+ //
+ bool LLMediaCtrl::setCaretColor(unsigned int red, unsigned int green, unsigned int blue)
+@@ -613,6 +622,7 @@
+ 		{
+ 			mMediaSource->setUsedInUI(true);
+ 			mMediaSource->setHomeURL(mHomePageUrl, mHomePageMimeType);
++			mMediaSource->setTarget(mTarget);
+ 			mMediaSource->setVisible( getVisible() );
+ 			mMediaSource->addObserver( this );
+ 			mMediaSource->setBackgroundColor( getBackgroundColor() );
+@@ -962,6 +972,12 @@
+ 			LL_DEBUGS("Media") <<  "Media event:  MEDIA_EVENT_PICK_FILE_REQUEST" << LL_ENDL;
+ 		}
+ 		break;
++		
++		case MEDIA_EVENT_GEOMETRY_CHANGE:
++		{
++			LL_DEBUGS("Media") << "Media event:  MEDIA_EVENT_GEOMETRY_CHANGE, uuid is " << self->getClickUUID() << LL_ENDL;
++		}
++		break;
+ 	};
+ 
+ 	// chain all events to any potential observers of this object.
+diff -r 25e7fe8517c0 -r 801345652403 indra/newview/llmediactrl.h
+--- a/indra/newview/llmediactrl.h	Mon Sep 13 16:15:08 2010 -0700
++++ b/indra/newview/llmediactrl.h	Wed Sep 15 14:39:42 2010 -0700
+@@ -107,6 +107,8 @@
+ 
+ 		void setHomePageUrl( const std::string& urlIn, const std::string& mime_type = LLStringUtil::null );
+ 		std::string getHomePageUrl();
++		
++		void setTarget(const std::string& target);
+ 
+ 		// set/clear URL to visit when a 404 page is reached
+ 		void set404RedirectUrl( std::string redirect_url );
+@@ -171,6 +173,7 @@
+ 		std::string mHomePageUrl;
+ 		std::string mHomePageMimeType;
+ 		std::string mCurrentNavUrl;
++		std::string mTarget;
+ 		bool mIgnoreUIScale;
+ 		bool mAlwaysRefresh;
+ 		viewer_media_t mMediaSource;
+diff -r 25e7fe8517c0 -r 801345652403 indra/newview/llviewermedia.cpp
+--- a/indra/newview/llviewermedia.cpp	Mon Sep 13 16:15:08 2010 -0700
++++ b/indra/newview/llviewermedia.cpp	Wed Sep 15 14:39:42 2010 -0700
+@@ -61,6 +61,8 @@
+ //#include "llfirstuse.h"
+ #include "llwindow.h"
+ 
++#include "llfloatermediabrowser.h"	// for handling window close requests and geometry change requests in media browser windows.
++
+ #include <boost/bind.hpp>	// for SkinFolder listener
+ #include <boost/signals2.hpp>
+ 
+@@ -1366,6 +1368,38 @@
+ 	setOpenIDCookie();
+ }
+ 
++/////////////////////////////////////////////////////////////////////////////////////////
++// static
++void LLViewerMedia::proxyWindowOpened(const std::string &target, const std::string &uuid)
++{
++	if(uuid.empty())
++		return;
++		
++	for (impl_list::iterator iter = sViewerMediaImplList.begin(); iter != sViewerMediaImplList.end(); iter++)
++	{
++		if((*iter)->mMediaSource && (*iter)->mMediaSource->pluginSupportsMediaBrowser())
++		{
++			(*iter)->mMediaSource->proxyWindowOpened(target, uuid);
++		}
++	}
++}
++
++/////////////////////////////////////////////////////////////////////////////////////////
++// static
++void LLViewerMedia::proxyWindowClosed(const std::string &uuid)
++{
++	if(uuid.empty())
++		return;
++
++	for (impl_list::iterator iter = sViewerMediaImplList.begin(); iter != sViewerMediaImplList.end(); iter++)
++	{
++		if((*iter)->mMediaSource && (*iter)->mMediaSource->pluginSupportsMediaBrowser())
++		{
++			(*iter)->mMediaSource->proxyWindowClosed(uuid);
++		}
++	}
++}
++
+ bool LLViewerMedia::hasInWorldMedia()
+ {
+ 	if (sInWorldMediaDisabled) return false;
+@@ -1599,7 +1633,7 @@
+ 
+ //////////////////////////////////////////////////////////////////////////////////////////
+ /*static*/
+-LLPluginClassMedia* LLViewerMediaImpl::newSourceFromMediaType(std::string media_type, LLPluginClassMediaOwner *owner /* may be NULL */, S32 default_width, S32 default_height)
++LLPluginClassMedia* LLViewerMediaImpl::newSourceFromMediaType(std::string media_type, LLPluginClassMediaOwner *owner /* may be NULL */, S32 default_width, S32 default_height, const std::string target)
+ {
+ 	std::string plugin_basename = LLMIMETypes::implType(media_type);
+ 	
+@@ -1655,7 +1689,9 @@
+ 			// collect 'javascript enabled' setting from prefs and send to embedded browser
+ 			bool javascript_enabled = gSavedSettings.getBOOL( "BrowserJavascriptEnabled" );
+ 			media_source->setJavascriptEnabled( javascript_enabled );
+-
++			
++			media_source->setTarget(target);
++			
+ 			if (media_source->init(launcher_name, plugin_name, gSavedSettings.getBOOL("PluginAttachDebuggerToPlugins")))
+ 			{
+ 				return media_source;
+@@ -1706,7 +1742,7 @@
+ 	// Save the MIME type that really caused the plugin to load
+ 	mCurrentMimeType = mMimeType;
+ 
+-	LLPluginClassMedia* media_source = newSourceFromMediaType(mMimeType, this, mMediaWidth, mMediaHeight);
++	LLPluginClassMedia* media_source = newSourceFromMediaType(mMimeType, this, mMediaWidth, mMediaHeight, mTarget);
+ 	
+ 	if (media_source)
+ 	{
+@@ -2806,6 +2842,7 @@
+ //////////////////////////////////////////////////////////////////////////////////////////
+ void LLViewerMediaImpl::handleMediaEvent(LLPluginClassMedia* plugin, LLPluginClassMediaOwner::EMediaEvent event)
+ {
++	bool pass_through = true;
+ 	switch(event)
+ 	{
+ 		case MEDIA_EVENT_CLICK_LINK_NOFOLLOW:
+@@ -2822,21 +2859,10 @@
+ 			// retrieve the event parameters
+ 			std::string url = plugin->getClickURL();
+ 			std::string target = plugin->getClickTarget();
+-			U32 target_type = plugin->getClickTargetType();
+-
+-			switch (target_type)
+-			{
+-			case LLPluginClassMedia::TARGET_NONE:
+-				// ignore this click and let media plugin handle it
+-				break;
+-			default:
+-				if(gSavedSettings.getBOOL("MediaEnablePopups"))
+-				{
+-					// loadURL now handles distinguishing between _blank, _external, and other named targets.
+-					LLWeb::loadURL(url, target);
+-				}
+-				break;
+-			}
++			std::string uuid = plugin->getClickUUID();
++			
++			// loadURL now handles distinguishing between _blank, _external, and other named targets.
++			LLWeb::loadURL(url, target, uuid);
+ 		};
+ 		break;
+ 		case MEDIA_EVENT_PLUGIN_FAILED_LAUNCH:
+@@ -2985,12 +3011,53 @@
+ 		}
+ 		break;
+ 		
++		case LLViewerMediaObserver::MEDIA_EVENT_CLOSE_REQUEST:
++		{
++			std::string uuid = plugin->getClickUUID();
++
++			llinfos << "MEDIA_EVENT_CLOSE_REQUEST for uuid " << uuid << llendl;
++
++			if(uuid.empty())
++			{
++				// This close request is directed at this instance, let it fall through.
++			}
++			else
++			{
++				// This close request is directed at another instance
++				pass_through = false;
++				LLFloaterMediaBrowser::closeRequest(uuid);
++			}
++		}
++		break;
++
++		case LLViewerMediaObserver::MEDIA_EVENT_GEOMETRY_CHANGE:
++		{
++			std::string uuid = plugin->getClickUUID();
++
++			llinfos << "MEDIA_EVENT_GEOMETRY_CHANGE for uuid " << uuid << llendl;
++
++			if(uuid.empty())
++			{
++				// This geometry change request is directed at this instance, let it fall through.
++			}
++			else
++			{
++				// This request is directed at another instance
++				pass_through = false;
++				LLFloaterMediaBrowser::geometryChanged(uuid, plugin->getGeometryX(), plugin->getGeometryY(), plugin->getGeometryWidth(), plugin->getGeometryHeight());
++			}
++		}
++		break;
++
+ 		default:
+ 		break;
+ 	}
+ 
+-	// Just chain the event to observers.
+-	emitEvent(plugin, event);
++	if(pass_through)
++	{
++		// Just chain the event to observers.
++		emitEvent(plugin, event);
++	}
+ }
+ 
+ ////////////////////////////////////////////////////////////////////////////////
+diff -r 25e7fe8517c0 -r 801345652403 indra/newview/llviewermedia.h
+--- a/indra/newview/llviewermedia.h	Mon Sep 13 16:15:08 2010 -0700
++++ b/indra/newview/llviewermedia.h	Wed Sep 15 14:39:42 2010 -0700
+@@ -152,6 +152,9 @@
+ 	static void openIDSetup(const std::string &openid_url, const std::string &openid_token);
+ 	static void openIDCookieResponse(const std::string &cookie);
+ 	
++	static void proxyWindowOpened(const std::string &target, const std::string &uuid);
++	static void proxyWindowClosed(const std::string &uuid);
++	
+ private:
+ 	static void setOpenIDCookie();
+ 	static void onTeleportFinished();
+@@ -271,8 +274,10 @@
+ 
+ 	ECursorType getLastSetCursor() { return mLastSetCursor; }
+ 	
++	void setTarget(const std::string& target) { mTarget = target; }
++	
+ 	// utility function to create a ready-to-use media instance from a desired media type.
+-	static LLPluginClassMedia* newSourceFromMediaType(std::string media_type, LLPluginClassMediaOwner *owner /* may be NULL */, S32 default_width, S32 default_height);
++	static LLPluginClassMedia* newSourceFromMediaType(std::string media_type, LLPluginClassMediaOwner *owner /* may be NULL */, S32 default_width, S32 default_height, const std::string target = LLStringUtil::null);
+ 
+ 	// Internally set our desired browser user agent string, including
+ 	// the Second Life version and skin name.  Used because we can
+@@ -438,6 +443,7 @@
+ 	bool mNavigateSuspended;
+ 	bool mNavigateSuspendedDeferred;
+ 	bool mTrustedBrowser;
++	std::string mTarget;
+ 	
+ private:
+ 	BOOL mIsUpdated ;
+diff -r 25e7fe8517c0 -r 801345652403 indra/newview/llviewerparcelmedia.cpp
+--- a/indra/newview/llviewerparcelmedia.cpp	Mon Sep 13 16:15:08 2010 -0700
++++ b/indra/newview/llviewerparcelmedia.cpp	Wed Sep 15 14:39:42 2010 -0700
+@@ -580,6 +580,12 @@
+ 			LL_DEBUGS("Media") <<  "Media event:  MEDIA_EVENT_PICK_FILE_REQUEST" << LL_ENDL;
+ 		}
+ 		break;
++
++		case MEDIA_EVENT_GEOMETRY_CHANGE:
++		{
++			LL_DEBUGS("Media") << "Media event:  MEDIA_EVENT_GEOMETRY_CHANGE, uuid is " << self->getClickUUID() << LL_ENDL;
++		}
++		break;
+ 	};
+ }
+ 
+diff -r 25e7fe8517c0 -r 801345652403 indra/newview/llweb.cpp
+--- a/indra/newview/llweb.cpp	Mon Sep 13 16:15:08 2010 -0700
++++ b/indra/newview/llweb.cpp	Wed Sep 15 14:39:42 2010 -0700
+@@ -78,12 +78,12 @@
+ 
+ 
+ // static
+-void LLWeb::loadURL(const std::string& url, const std::string& target)
++void LLWeb::loadURL(const std::string& url, const std::string& target, const std::string& uuid)
+ {
+ 	if(target == "_internal")
+ 	{
+ 		// Force load in the internal browser, as if with a blank target.
+-		loadURLInternal(url);
++		loadURLInternal(url, "", uuid);
+ 	}
+ 	else if (gSavedSettings.getBOOL("UseExternalBrowser") || (target == "_external"))
+ 	{
+@@ -91,28 +91,31 @@
+ 	}
+ 	else
+ 	{
+-		loadURLInternal(url, target);
++		loadURLInternal(url, target, uuid);
+ 	}
+ }
+ 
+ 
+ // static
+-void LLWeb::loadURLInternal(const std::string &url, const std::string& target)
++void LLWeb::loadURLInternal(const std::string &url, const std::string& target, const std::string& uuid)
+ {
+-	LLFloaterMediaBrowser::create(url, target);
++	LLFloaterMediaBrowser::create(url, target, uuid);
+ }
+ 
+ 
+ // static
+-void LLWeb::loadURLExternal(const std::string& url)
++void LLWeb::loadURLExternal(const std::string& url, const std::string& uuid)
+ {
+ 	loadURLExternal(url, true);
+ }
+ 
+ 
+ // static
+-void LLWeb::loadURLExternal(const std::string& url, bool async)
++void LLWeb::loadURLExternal(const std::string& url, bool async, const std::string& uuid)
+ {
++	// Act like the proxy window was closed, since we won't be able to track targeted windows in the external browser.
++	LLViewerMedia::proxyWindowClosed(uuid);
++	
+ 	LLSD payload;
+ 	payload["url"] = url;
+ 	LLNotificationsUtil::add( "WebLaunchExternalTarget", LLSD(), payload, boost::bind(on_load_url_external_response, _1, _2, async));
+diff -r 25e7fe8517c0 -r 801345652403 indra/newview/llweb.h
+--- a/indra/newview/llweb.h	Mon Sep 13 16:15:08 2010 -0700
++++ b/indra/newview/llweb.h	Wed Sep 15 14:39:42 2010 -0700
+@@ -43,18 +43,19 @@
+ 	static void initClass();
+ 	
+ 	/// Load the given url in the user's preferred web browser
+-	static void loadURL(const std::string& url, const std::string& target);
++	static void loadURL(const std::string& url, const std::string& target, const std::string& uuid = LLStringUtil::null);
+ 	static void loadURL(const std::string& url) { loadURL(url, LLStringUtil::null); }
+ 	/// Load the given url in the user's preferred web browser	
+ 	static void loadURL(const char* url, const std::string& target) { loadURL( ll_safe_string(url), target); }
+ 	static void loadURL(const char* url) { loadURL( ll_safe_string(url), LLStringUtil::null ); }
+ 	/// Load the given url in the Second Life internal web browser
+-	static void loadURLInternal(const std::string &url, const std::string& target);
++	static void loadURLInternal(const std::string &url, const std::string& target, const std::string& uuid = LLStringUtil::null);
+ 	static void loadURLInternal(const std::string &url) { loadURLInternal(url, LLStringUtil::null); }
+ 	/// Load the given url in the operating system's web browser, async if we want to return immediately
+ 	/// before browser has spawned
+-	static void loadURLExternal(const std::string& url);
+-	static void loadURLExternal(const std::string& url, bool async);
++	static void loadURLExternal(const std::string& url) { loadURLExternal(url,  LLStringUtil::null); };
++	static void loadURLExternal(const std::string& url, const std::string& uuid);
++	static void loadURLExternal(const std::string& url, bool async, const std::string& uuid = LLStringUtil::null);
+ 
+ 	/// Returns escaped url (eg, " " to "%20") - used by all loadURL methods
+ 	static std::string escapeURL(const std::string& url);
+diff -r 25e7fe8517c0 -r 801345652403 indra/test_apps/llplugintest/llmediaplugintest.cpp
+--- a/indra/test_apps/llplugintest/llmediaplugintest.cpp	Mon Sep 13 16:15:08 2010 -0700
++++ b/indra/test_apps/llplugintest/llmediaplugintest.cpp	Wed Sep 15 14:39:42 2010 -0700
+@@ -2218,6 +2218,10 @@
+ 			// TODO: display an actual file picker
+ 			self->sendPickFileResponse("cake");
+ 		break;
++
++		case MEDIA_EVENT_GEOMETRY_CHANGE:
++			std::cerr <<  "Media event:  MEDIA_EVENT_GEOMETRY_CHANGE, uuid is " << self->getClickUUID() << ", rect is " << self->getGeometryRect() << std::endl;
++		break;
+ 	}
+ }
+ 
+diff -r 25e7fe8517c0 -r 801345652403 install.xml
+--- a/install.xml	Mon Sep 13 16:15:08 2010 -0700
++++ b/install.xml	Wed Sep 15 14:39:42 2010 -0700
+@@ -941,9 +941,9 @@
+           <key>darwin</key>
+           <map>
+             <key>md5sum</key>
+-            <string>9f4243cf304366030d02f2881357a928</string>
++            <string>34d9e4c93678a422cf80521bf0cd7628</string>
+             <key>url</key>
+-            <uri>http://s3.amazonaws.com/viewer-source-downloads/install_pkgs/llqtwebkit-4.6-darwin-20100817.tar.bz2</uri>
++            <uri>http://s3.amazonaws.com/viewer-source-downloads/install_pkgs/llqtwebkit-4.6-darwin-20100914.tar.bz2</uri>
+           </map>
+           <key>linux</key>
+           <map>
+

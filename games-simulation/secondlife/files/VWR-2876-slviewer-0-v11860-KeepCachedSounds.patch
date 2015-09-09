@@ -1,0 +1,18 @@
+diff -urN linden/indra/newview/llappviewer.cpp linden-patched/indra/newview/llappviewer.cpp
+--- linden/indra/newview/llappviewer.cpp	2007-12-07 01:19:21.000000000 +0100
++++ linden-patched/indra/newview/llappviewer.cpp	2007-12-07 17:34:19.000000000 +0100
+@@ -1588,11 +1588,11 @@
+ 	gAudiop = NULL;
+ 
+ 	// delete some of the files left around in the cache.
+-	removeCacheFiles("*.wav");
++//	removeCacheFiles("*.wav");
+ 	removeCacheFiles("*.tmp");
+-	removeCacheFiles("*.lso");
++//	removeCacheFiles("*.lso");
+ 	removeCacheFiles("*.out");
+-	removeCacheFiles("*.dsf");
++//	removeCacheFiles("*.dsf");
+ 	removeCacheFiles("*.bodypart");
+ 	removeCacheFiles("*.clothing");
+ 

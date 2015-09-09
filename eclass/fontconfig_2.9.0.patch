@@ -1,0 +1,11 @@
+--- a/indra/llwindow/llwindowsdl.cpp	2012-05-09 00:56:01.092077696 -0400
++++ b/indra/llwindow/llwindowsdl.cpp	2012-05-09 07:39:20.515999824 -0400
+@@ -2622,6 +2622,7 @@
+ 	{
+ 		// Sort the list of system fonts from most-to-least-desirable.
++		FcResult fresult;
+ 		fs = FcFontSort(NULL, sortpat, elide_unicode_coverage,
+-				NULL, NULL);
++				NULL, &fresult);
+ 		FcPatternDestroy(sortpat);
+ 	}

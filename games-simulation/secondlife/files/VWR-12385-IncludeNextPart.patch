@@ -1,0 +1,92 @@
+--- linden/doc/contributions.txt.org	2009-03-11 13:51:31.000000000 -0400
++++ linden/doc/contributions.txt	2009-03-13 01:02:45.000000000 -0400
+@@ -392,6 +392,8 @@
+ 	VWR-4111
+ Teardrops Fall
+ 	VWR-5366
++Techwolf Lupindo
++	VWR-12385
+ tenebrous pau
+ 	VWR-247
+ TBBle Kurosawa
+--- linden/indra/newview/llviewermenu.cpp.org	2009-03-13 00:51:09.000000000 -0400
++++ linden/indra/newview/llviewermenu.cpp	2009-03-13 00:55:48.000000000 -0400
+@@ -4203,6 +4203,9 @@
+ 			if (selected && selected->getRootEdit())
+ 			{
+ 				bool fwd = (userdata.asString() == "next");
++				bool prev = (userdata.asString() == "previous");
++				bool ifwd = (userdata.asString() == "includenext");
++				bool iprev = (userdata.asString() == "includeprevious");
+ 				LLViewerObject* to_select = NULL;
+ 				LLViewerObject::child_list_t children = selected->getRootEdit()->getChildren();
+ 				children.push_front(selected->getRootEdit());	// need root in the list too
+@@ -4211,7 +4214,7 @@
+ 				{
+ 					if ((*iter)->isSelected())
+ 					{
+-						if (object_count > 1)	// multiple selection, find first or last selected
++						if (object_count > 1 && (fwd || prev))	// multiple selection, find first or last selected if not include
+ 						{
+ 							to_select = *iter;
+ 							if (fwd)
+@@ -4219,23 +4222,23 @@
+ 								break;
+ 							}
+ 						}
+-						else if (object_count == 1)	// single selection
++						else if ((object_count == 1) || (ifwd || iprev))	// single selection or include
+ 						{
+-							if (fwd)
++							if (fwd || ifwd)
+ 							{
+ 								++iter;
+-								while (iter != children.end() && (*iter)->isAvatar())
++								while (iter != children.end() && ((*iter)->isAvatar() || (ifwd && (*iter)->isSelected())))
+ 								{
+-									++iter;	// skip sitting avatars
++									++iter;	// skip sitting avatars and selected if include
+ 								}
+ 							}
+ 							else
+ 							{
+ 								iter = (iter == children.begin() ? children.end() : iter);
+ 								--iter;
+-								while (iter != children.begin() && (*iter)->isAvatar())
++								while (iter != children.begin() && ((*iter)->isAvatar() || (iprev && (*iter)->isSelected())))
+ 								{
+-									--iter;	// skip sitting avatars
++									--iter;	// skip sitting avatars and selected if include
+ 								}
+ 							}
+ 							iter = (iter == children.end() ? children.begin() : iter);
+@@ -4251,7 +4254,10 @@
+ 					{
+ 						gFocusMgr.setKeyboardFocus(NULL);	// force edit toolbox to commit any changes
+ 					}
++					if (fwd || prev)
++					{
+ 					LLSelectMgr::getInstance()->deselectAll();
++					}
+ 					LLSelectMgr::getInstance()->selectObjectOnly(to_select);
+ 					return true;
+ 				}
+--- linden/indra/newview/skins/default/xui/en-us/menu_viewer.xml.org	2009-03-13 00:51:09.000000000 -0400
++++ linden/indra/newview/skins/default/xui/en-us/menu_viewer.xml	2009-03-13 00:55:48.000000000 -0400
+@@ -631,6 +631,16 @@
+ 				<on_click function="Tools.SelectNextPart" userdata="previous" />
+ 				<on_enable function="Tools.EnableSelectNextPart" />
+ 			</menu_item_call>
++			<menu_item_call enabled="false" label="Include Next Part" mouse_opaque="true"
++				 name="Include Next Part" shortcut="control|shift|]">
++				<on_click function="Tools.SelectNextPart" userdata="includenext" />
++				<on_enable function="Tools.EnableSelectNextPart" />
++			</menu_item_call>
++			<menu_item_call enabled="false" label="Include Previous Part" mouse_opaque="true"
++				 name="Include Previous Part" shortcut="control|shift|[">
++				<on_click function="Tools.SelectNextPart" userdata="includeprevious" />
++				<on_enable function="Tools.EnableSelectNextPart" />
++			</menu_item_call>
+ 		</menu>
+ 		<menu_item_call bottom="-262" enabled="false" height="19" label="Link" left="0"
+ 		     mouse_opaque="true" name="Link" shortcut="control|L" width="250">

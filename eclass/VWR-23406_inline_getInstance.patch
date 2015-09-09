@@ -1,0 +1,98 @@
+diff -r eb6470b3ab94 indra/newview/llmoveview.cpp
+--- a/indra/newview/llmoveview.cpp	Tue Oct 12 17:32:56 2010 -0400
++++ b/indra/newview/llmoveview.cpp	Wed Oct 13 17:29:31 2010 +0200
+@@ -545,17 +545,12 @@
+ 	mStopFlyingButton(NULL),
+ 	mAttached(false)
+ {
+-	// make sure we have the only instance of this class
+-	static bool b = true;
+-	llassert_always(b);
+-	b=false;
+-}
++	buildFromFile("panel_stand_stop_flying.xml");
++	setVisible(FALSE);
+ 
+-// static
+-inline LLPanelStandStopFlying* LLPanelStandStopFlying::getInstance()
+-{
+-	static LLPanelStandStopFlying* panel = getStandStopFlyingPanel();
+-	return panel;
++	llinfos << "Build LLPanelStandStopFlying panel" << llendl;
++
++	updatePosition();
+ }
+ 
+ //static
+@@ -693,21 +688,6 @@
+ // Private Section
+ //////////////////////////////////////////////////////////////////////////
+ 
+-//static
+-LLPanelStandStopFlying* LLPanelStandStopFlying::getStandStopFlyingPanel()
+-{
+-	LLPanelStandStopFlying* panel = new LLPanelStandStopFlying();
+-	panel->buildFromFile("panel_stand_stop_flying.xml");
+-
+-	panel->setVisible(FALSE);
+-	//LLUI::getRootView()->addChild(panel);
+-
+-	llinfos << "Build LLPanelStandStopFlying panel" << llendl;
+-
+-	panel->updatePosition();
+-	return panel;
+-}
+-
+ void LLPanelStandStopFlying::onStandButtonClick()
+ {
+ 	LLFirstUse::sit(false);
+diff -r eb6470b3ab94 indra/newview/llmoveview.h
+--- a/indra/newview/llmoveview.h	Tue Oct 12 17:32:56 2010 -0400
++++ b/indra/newview/llmoveview.h	Wed Oct 13 17:29:31 2010 +0200
+@@ -28,6 +28,7 @@
+ #define LL_LLMOVEVIEW_H
+ 
+ // Library includes
++#include "llsingleton.h"
+ #include "lltransientdockablefloater.h"
+ 
+ class LLButton;
+@@ -117,7 +118,7 @@
+ /**
+  * This class contains Stand Up and Stop Flying buttons displayed above Move button in bottom tray
+  */
+-class LLPanelStandStopFlying : public LLPanel
++class LLPanelStandStopFlying : public LLPanel, public LLSingleton<LLPanelStandStopFlying>
+ {
+ 	LOG_CLASS(LLPanelStandStopFlying);
+ public:
+@@ -127,6 +128,8 @@
+ 		SSFM_STOP_FLYING
+ 	} EStandStopFlyingMode;
+ 
++	LLPanelStandStopFlying();
++
+ 	/**
+ 	 * Attach or detach the panel to/from the movement controls floater.
+ 	 * 
+@@ -140,7 +143,6 @@
+ 	 */
+ 	void reparent(LLFloaterMove* move_view);
+ 
+-	static LLPanelStandStopFlying* getInstance();
+ 	static void setStandStopFlyingMode(EStandStopFlyingMode mode);
+ 	static void clearStandStopFlyingMode(EStandStopFlyingMode mode);
+ 	/*virtual*/ BOOL postBuild();
+@@ -152,12 +154,7 @@
+ 	/*virtual*/ BOOL handleToolTip(S32 x, S32 y, MASK mask);
+ 
+ 
+-protected:
+-	LLPanelStandStopFlying();
+-
+-
+ private:
+-	static LLPanelStandStopFlying* getStandStopFlyingPanel();
+ 	void onStandButtonClick();
+ 	void onStopFlyingButtonClick();
+ 	void updatePosition();

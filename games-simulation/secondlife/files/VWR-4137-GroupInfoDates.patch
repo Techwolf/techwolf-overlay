@@ -1,0 +1,108 @@
+Index: viewer_1-21-slightwind/indra/newview/llgroupmgr.cpp
+===================================================================
+--- viewer_1-21-slightwind/indra/newview/llgroupmgr.cpp	(revision 1325)
++++ viewer_1-21-slightwind/indra/newview/llgroupmgr.cpp	(working copy)
+@@ -841,6 +841,17 @@
+ 			if (member_id.notNull())
+ 			{
+ 				//llinfos << "Member " << member_id << " has powers " << std::hex << agent_powers << std::dec << llendl;
++
++				// *TODO: This should be fixed server side.
++				// Server sends dates as m/d/Y yuck! So convert to ISO 8601 extended.
++				// Allows other strings such as "Online" or an ISO format date to pass unaffected.
++				struct tm tm;
++				if (strptime(online_status.c_str(), "%m/%d/%Y", &tm))
++				{
++					online_status = llformat("%i-%02i-%02i", tm.tm_year + 1900,
++											  tm.tm_mon + 1, tm.tm_mday);
++				}
++
+ 				LLGroupMemberData* newdata = new LLGroupMemberData(member_id, 
+ 																	contribution, 
+ 																	agent_powers, 
+Index: viewer_1-21-slightwind/indra/newview/llpanelgroupnotices.cpp
+===================================================================
+--- viewer_1-21-slightwind/indra/newview/llpanelgroupnotices.cpp	(revision 1325)
++++ viewer_1-21-slightwind/indra/newview/llpanelgroupnotices.cpp	(working copy)
+@@ -175,7 +175,7 @@
+ 	tm* lt = localtime(&t);
+ 	//for some reason, the month is off by 1.  See other uses of
+ 	//"local" time in the code...
+-	std::string buffer = llformat("%i/%i/%i", lt->tm_mon + 1, lt->tm_mday, lt->tm_year + 1900);
++	std::string buffer = llformat("%i-%02i-%02i", lt->tm_year + 1900, lt->tm_mon + 1, lt->tm_mday);
+ 	return buffer;
+ }
+ 
+Index: viewer_1-21-slightwind/indra/newview/llpanelgroupvoting.cpp
+===================================================================
+--- viewer_1-21-slightwind/indra/newview/llpanelgroupvoting.cpp	(revision 1325)
++++ viewer_1-21-slightwind/indra/newview/llpanelgroupvoting.cpp	(working copy)
+@@ -96,7 +96,9 @@
+ 													void** data);
+ 	static void processGroupVoteHistoryItemReply(LLMessageSystem* msg,
+ 												 void** data);
++	static bool formatDateTime(std::string& datetime);
+ 
++
+ public:
+ 	LLUUID mGroupID;
+ 	LLUUID mProposalID;
+@@ -1003,6 +1005,9 @@
+ 		majority_text = llformat("%f", majority);
+ 		quorum_text = llformat("%i", quorum);
+ 
++		formatDateTime(start_datetime);		
++		formatDateTime(end_datetime);		
++
+ 		LLSD row;
+ 		S32 index = 0;
+ 		row["id"] = vote_id;
+@@ -1141,7 +1146,7 @@
+ 	std::string item_num_string;
+ 	std::string proposal_text;
+ 	std::string vote_result;
+-	std::string start_datetime;
++//	std::string start_datetime;
+ 	std::string end_datetime;
+ 	std::string vote_type;
+ 
+@@ -1155,7 +1160,7 @@
+ 
+ 	msg->getStringFast(_PREHASH_HistoryItemData, _PREHASH_TerseDateID, item_num_string );
+ 	msg->getUUIDFast(_PREHASH_HistoryItemData, _PREHASH_VoteID,	vote_id );
+-	msg->getStringFast(_PREHASH_HistoryItemData, _PREHASH_StartDateTime, start_datetime );
++//	msg->getStringFast(_PREHASH_HistoryItemData, _PREHASH_StartDateTime, start_datetime );
+ 	msg->getStringFast(_PREHASH_HistoryItemData, _PREHASH_EndDateTime, end_datetime );
+ 	msg->getUUIDFast(_PREHASH_HistoryItemData, _PREHASH_VoteInitiator, vote_initiator);
+ 	msg->getStringFast(_PREHASH_HistoryItemData, _PREHASH_VoteType, vote_type);
+@@ -1206,6 +1211,8 @@
+ 			std::string vote_text_stripped = vote_text;
+ 			LLStringUtil::stripNonprintable(vote_text_stripped);
+ 
++			formatDateTime(end_datetime);
++
+ 			row["columns"][1]["column"] = "vote_text_stripped";
+ 			row["columns"][1]["value"] = vote_text_stripped;
+ 			row["columns"][1]["font"] = "SANSSERIF_SMALL";
+@@ -1264,6 +1271,21 @@
+ 	}
+ }
+ 
++// static
++bool LLPanelGroupVoting::impl::formatDateTime(std::string& datetime)
++{
++	struct tm t;
++	if (strptime(datetime.c_str(), "%m/%d/%Y %H:%M", &t))
++	{
++		// Convert to pseudo ISO 8601 (ISO extended date and SLT time).
++		datetime = llformat("%i-%02i-%02i  %02i:%02i", t.tm_year + 1900,
++							t.tm_mon + 1, t.tm_mday, t.tm_hour, t.tm_min);
++		return true;
++	}
++
++	return false;
++}
++
+ //static
+ void LLPanelGroupVoting::impl::onClickCreateProposal(void* userdata)
+ {

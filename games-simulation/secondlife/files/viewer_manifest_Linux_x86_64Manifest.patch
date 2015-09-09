@@ -1,0 +1,17 @@
+diff -r fd6fcea097f0 -r 111a293c0e1c indra/newview/viewer_manifest.py
+--- a/indra/newview/viewer_manifest.py	Sun Aug 22 14:50:07 2010 -0400
++++ b/indra/newview/viewer_manifest.py	Sun Aug 22 16:05:41 2010 -0400
+@@ -955,6 +955,13 @@
+             print "* Going strip-crazy on the packaged binaries, since this is a RELEASE build"
+             self.run_command("find %(d)r/bin %(d)r/lib -type f | xargs --no-run-if-empty strip -S" % {'d': self.get_dst_prefix()} ) # makes some small assumptions about our packaged dir structure
+ 
++class Linux_x86_64Manifest(LinuxManifest):
++    def construct(self):
++        super(Linux_x86_64Manifest, self).construct()
++
++        # support file for valgrind debug tool
++        self.path("secondlife-i686.supp")
++
+ ################################################################
+ 
+ if __name__ == "__main__":

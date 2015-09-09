@@ -1,0 +1,16 @@
+diff -urN linden/indra/newview/lltooldraganddrop.cpp linden-patched/indra/newview/lltooldraganddrop.cpp
+--- linden/indra/newview/lltooldraganddrop.cpp	2007-11-08 03:18:13.000000000 +0100
++++ linden-patched/indra/newview/lltooldraganddrop.cpp	2007-11-11 13:43:55.000000000 +0100
+@@ -965,6 +965,12 @@
+ 		{
+ 			LLInventoryObject* cargo = locateInventory(item, cat);
+ 
++			if (!cargo) 
++			{
++				handled = FALSE;
++				break;
++			}
++
+ 			EAcceptance item_acceptance = ACCEPT_NO;
+ 			handled = handled && root_view->handleDragAndDrop(x, y, mask, FALSE,
+ 												mCargoTypes[mCurItemIndex],

@@ -1,0 +1,198 @@
+Index: indra/newview/llfloaterbeacons.cpp
+===================================================================
+--- indra/newview/llfloaterbeacons.cpp	(revision 2584)
++++ indra/newview/llfloaterbeacons.cpp	(working copy)
+@@ -55,6 +55,7 @@
+ 	LLPipeline::setRenderParticleBeacons(     gSavedSettings.getBOOL("particlesbeacon"));
+ 	LLPipeline::setRenderHighlights(          gSavedSettings.getBOOL("renderhighlights"));
+ 	LLPipeline::setRenderBeacons(             gSavedSettings.getBOOL("renderbeacons"));
++	LLPipeline::setRenderActionBuyBeacons(    gSavedSettings.getBOOL("actionbuybeacon"));
+ }
+ 
+ BOOL LLFloaterBeacons::postBuild()
+@@ -66,6 +67,7 @@
+ 	childSetCommitCallback("particles",       onClickUICheck, this);
+ 	childSetCommitCallback("highlights",      onClickUICheck, this);
+ 	childSetCommitCallback("beacons",         onClickUICheck, this);
++	childSetCommitCallback("actionbuy",       onClickUICheck, this);
+ 	return TRUE;
+ }
+ 
+@@ -122,6 +124,7 @@
+ 	else if(name == "physical")       LLPipeline::setRenderPhysicalBeacons(check->get());
+ 	else if(name == "sounds")         LLPipeline::setRenderSoundBeacons(check->get());
+ 	else if(name == "particles")      LLPipeline::setRenderParticleBeacons(check->get());
++	else if(name == "actionbuy")      LLPipeline::setRenderActionBuyBeacons(check->get());
+ 	else if(name == "highlights")
+ 	{
+ 		LLPipeline::toggleRenderHighlights(NULL);
+Index: indra/newview/pipeline.h
+===================================================================
+--- indra/newview/pipeline.h	(revision 2584)
++++ indra/newview/pipeline.h	(working copy)
+@@ -287,6 +287,10 @@
+ 	static void toggleRenderHighlights(void* data);
+ 	static BOOL getRenderHighlights(void* data);
+ 
++	static void setRenderActionBuyBeacons(BOOL val);
++	static void toggleRenderActionBuyBeacons(void* data);
++	static BOOL getRenderActionBuyBeacons(void* data);
++
+ 	static void updateRenderDeferred();
+ 
+ private:
+@@ -575,6 +579,7 @@
+ 	static BOOL				sRenderScriptedBeacons;
+ 	static BOOL				sRenderParticleBeacons;
+ 	static BOOL				sRenderSoundBeacons;
++	static BOOL				sRenderActionBuyBeacons;
+ public:
+ 	static BOOL				sRenderBeacons;
+ 	static BOOL				sRenderHighlight;
+Index: indra/newview/llviewerwindow.cpp
+===================================================================
+--- indra/newview/llviewerwindow.cpp	(revision 2584)
++++ indra/newview/llviewerwindow.cpp	(working copy)
+@@ -548,6 +548,11 @@
+ 				addText(xpos, ypos, "Viewing sound beacons (yellow)");
+ 				ypos += y_inc;
+ 			}
++			if (LLPipeline::getRenderActionBuyBeacons(NULL))
++			{
++				addText(xpos, ypos, "Viewing ClickActionBuy beacons (pink)");
++				ypos += y_inc;
++			}
+ 		}
+ 	}
+ 
+Index: indra/newview/pipeline.cpp
+===================================================================
+--- indra/newview/pipeline.cpp	(revision 2584)
++++ indra/newview/pipeline.cpp	(working copy)
+@@ -101,6 +101,7 @@
+ #include "llwaterparammanager.h"
+ #include "llspatialpartition.h"
+ #include "llmutelist.h"
++#include "llclickaction.h"
+ 
+ #ifdef _DEBUG
+ // Debug indices is disabled for now for debug performance - djs 4/24/02
+@@ -231,6 +232,7 @@
+ BOOL	LLPipeline::sRenderParticleBeacons = FALSE;
+ BOOL	LLPipeline::sRenderSoundBeacons = FALSE;
+ BOOL	LLPipeline::sRenderBeacons = FALSE;
++BOOL	LLPipeline::sRenderActionBuyBeacons = FALSE;
+ BOOL	LLPipeline::sRenderHighlight = TRUE;
+ BOOL	LLPipeline::sForceOldBakedUpload = FALSE;
+ S32		LLPipeline::sUseOcclusion = 0;
+@@ -2112,6 +2114,31 @@
+ 	}
+ }
+ 
++void renderActionBuyBeacons(LLDrawable* drawablep)
++{
++	LLViewerObject *vobj = drawablep->getVObj();
++	if (vobj
++		&& !vobj->isAvatar() 
++		&& !vobj->getParent()
++		&& (vobj->getClickAction() == CLICK_ACTION_BUY))
++	{
++		if (gPipeline.sRenderBeacons)
++		{
++			gObjectList.addDebugBeacon(vobj->getPositionAgent(), "", LLColor4(1.f, 0.f, 1.f, 0.5f), LLColor4(1.f, 1.f, 1.f, 0.5f), gSavedSettings.getS32("DebugBeaconLineWidth"));
++		}
++
++		if (gPipeline.sRenderHighlight)
++		{
++			S32 face_id;
++			S32 count = drawablep->getNumFaces();
++			for (face_id = 0; face_id < count; face_id++)
++			{
++				gPipeline.mHighlightFaces.push_back(drawablep->getFace(face_id) );
++			}
++		}
++	}
++}
++
+ void renderPhysicalBeacons(LLDrawable* drawablep)
+ {
+ 	LLViewerObject *vobj = drawablep->getVObj();
+@@ -2320,6 +2347,11 @@
+ 			forAllVisibleDrawables(renderParticleBeacons);
+ 		}
+ 
++		if (sRenderActionBuyBeacons)
++		{
++			forAllVisibleDrawables(renderActionBuyBeacons);
++		}
++
+ 		// If god mode, also show audio cues
+ 		if (sRenderSoundBeacons && gAudiop)
+ 		{
+@@ -4614,6 +4646,24 @@
+ 	return sRenderHighlight;
+ }
+ 
++// static
++void LLPipeline::setRenderActionBuyBeacons(BOOL val)
++{
++	sRenderActionBuyBeacons = val;
++}
++
++// static
++void LLPipeline::toggleRenderActionBuyBeacons(void*)
++{
++	sRenderActionBuyBeacons = !sRenderActionBuyBeacons;
++}
++
++// static
++BOOL LLPipeline::getRenderActionBuyBeacons(void*)
++{
++	return sRenderActionBuyBeacons;
++}
++
+ LLViewerObject* LLPipeline::lineSegmentIntersectInWorld(const LLVector3& start, const LLVector3& end,
+ 														BOOL pick_transparent,												
+ 														S32* face_hit,
+Index: indra/newview/app_settings/settings.xml
+===================================================================
+--- indra/newview/app_settings/settings.xml	(revision 2584)
++++ indra/newview/app_settings/settings.xml	(working copy)
+@@ -11933,6 +11933,17 @@
+       <key>Value</key>
+       <integer>1</integer>
+     </map>
++    <key>actionbuybeacon</key>
++    <map>
++      <key>Comment</key>
++      <string>Beacon / Highlight mouse click action Buy objects</string>
++      <key>Persist</key>
++      <integer>1</integer>
++      <key>Type</key>
++      <string>Boolean</string>
++      <key>Value</key>
++      <integer>0</integer>
++    </map>
+     <key>soundsbeacon</key>
+     <map>
+       <key>Comment</key>
+Index: indra/newview/skins/default/xui/en-us/floater_beacons.xml
+===================================================================
+--- indra/newview/skins/default/xui/en-us/floater_beacons.xml	(revision 2584)
++++ indra/newview/skins/default/xui/en-us/floater_beacons.xml	(working copy)
+@@ -1,12 +1,13 @@
+ <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+ <floater can_close="true" can_drag_on_left="false" can_minimize="true" can_resize="false"
+-     width="250" height="225"
++     width="250" height="245"
+      name="beacons" title="Beacons"
+      rect_control="FloaterBeaconsRect" control_name="BeaconAlwaysOn">
+-	<panel bottom="10" follows="left|top|right|bottom" left="10" width="230" height="200" name="beacons_panel">
++	<panel bottom="10" follows="left|top|right|bottom" left="10" width="230" height="220" name="beacons_panel">
+   	<check_box bottom_delta="-33" follows="left|top" left="0" name="touch_only" label="Scripted Objects with Touch Only" control_name="scripttouchbeacon" />
+     <check_box bottom_delta="-20" follows="left|top" left="0" name="scripted" label="Scripted Objects" control_name="scriptsbeacon" />
+     <check_box bottom_delta="-20" follows="left|top" left="0" name="physical" label="Physical Objects" control_name="physicalbeacon" />
++    <check_box bottom_delta="-20" follows="left|top" left="0" name="actionbuy" label="Mouse click action Buy objects" control_name="actionbuybeacon" />
+     <check_box bottom_delta="-20" follows="left|top" left="0" name="sounds" label="Sound Sources" control_name="soundsbeacon" />
+     <check_box bottom_delta="-20" follows="left|top" left="0" name="particles" label="Particle Sources" control_name="particlesbeacon" />
+     <check_box bottom_delta="-20" follows="left|top" left="0" name="highlights" label="Render Highlights" control_name="renderhighlights" />

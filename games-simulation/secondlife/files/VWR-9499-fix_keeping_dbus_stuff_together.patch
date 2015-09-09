@@ -1,0 +1,12 @@
+Index: indra/newview/CMakeLists.txt
+===================================================================
+--- indra/newview/CMakeLists.txt	(revision 1280)
++++ indra/newview/CMakeLists.txt	(working copy)
+@@ -876,6 +877,7 @@
+ if (LINUX)
+     LIST(APPEND viewer_SOURCE_FILES llappviewerlinux.cpp)
+     LIST(APPEND viewer_SOURCE_FILES llappviewerlinux_api_dbus.cpp)
++    include_directories (${DBUSGLIB_INCLUDE_DIRS})
+     LIST(APPEND CMAKE_EXE_LINKER_FLAGS -Wl,--as-needed)
+ 
+     set(viewer_LIBRARIES

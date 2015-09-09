@@ -1,0 +1,8 @@
+--- ./indra/newview/ViewerInstall.cmake.org	2009-03-01 00:49:52.000000000 -0500
++++ ./indra/newview/ViewerInstall.cmake	2009-03-01 00:50:07.000000000 -0500
+@@ -1,4 +1,4 @@
+-install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/secondlife-bin
++install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${VIEWER_BINARY_NAME}
+         DESTINATION ${APP_BINARY_DIR}
+         )
+ 

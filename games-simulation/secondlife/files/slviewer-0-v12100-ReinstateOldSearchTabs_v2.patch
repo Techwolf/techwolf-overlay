@@ -1,0 +1,753 @@
+diff -urN linden/indra/newview/llfloaterdirectory.cpp linden-patched/indra/newview/llfloaterdirectory.cpp
+--- linden/indra/newview/llfloaterdirectory.cpp	2008-08-28 17:31:39.000000000 +0200
++++ linden-patched/indra/newview/llfloaterdirectory.cpp	2008-08-31 15:19:58.000000000 +0200
+@@ -92,6 +92,7 @@
+ 	// Build the floater with our tab panel classes
+ 
+ 	LLCallbackMap::map_t factory_map;
++	factory_map["find_all_old_panel"] = LLCallbackMap(createFindAllOld, this);
+ 	factory_map["find_all_panel"] = LLCallbackMap(createFindAll, this);
+ 	factory_map["classified_panel"] = LLCallbackMap(createClassified, this);
+ 	factory_map["events_panel"] = LLCallbackMap(createEvents, this);
+@@ -118,6 +119,7 @@
+ 		mPanelAvatarp->selectTab(0);
+ 	}
+ 	
++	childSetTabChangeCallback("Directory Tabs", "find_all_old_panel", onTabChanged, this);
+ 	childSetTabChangeCallback("Directory Tabs", "find_all_panel", onTabChanged, this);
+ 	childSetTabChangeCallback("Directory Tabs", "classified_panel", onTabChanged, this);
+ 	childSetTabChangeCallback("Directory Tabs", "events_panel", onTabChanged, this);
+@@ -205,7 +207,14 @@
+ void* LLFloaterDirectory::createGroups(void* userdata)
+ {
+ 	LLFloaterDirectory *self = (LLFloaterDirectory*)userdata;
+-	return new LLPanelDirGroups("people_groups", self);
++	return new LLPanelDirGroups("groups_panel", self);
++}
++
++// static
++void *LLFloaterDirectory::createFindAllOld(void* userdata)
++{
++	LLFloaterDirectory *self = (LLFloaterDirectory*)userdata;
++	return new LLPanelDirFindAllOld("find_all_old_panel", self);
+ }
+ 
+ // static
+diff -urN linden/indra/newview/llfloaterdirectory.h linden-patched/indra/newview/llfloaterdirectory.h
+--- linden/indra/newview/llfloaterdirectory.h	2008-08-28 17:31:37.000000000 +0200
++++ linden-patched/indra/newview/llfloaterdirectory.h	2008-08-31 15:19:58.000000000 +0200
+@@ -105,7 +105,8 @@
+ 	static void* createLand(void* userdata);
+ 	static void* createPeople(void* userdata);
+ 	static void* createGroups(void* userdata);
+-
++	static void* createFindAllOld(void* userdata);
++ 
+ 	static void* createClassifiedDetail(void* userdata);
+ 	static void* createAvatarDetail(void* userdata);
+ 	static void* createEventDetail(void* userdata);
+diff -urN linden/indra/newview/llpaneldirfind.cpp linden-patched/indra/newview/llpaneldirfind.cpp
+--- linden/indra/newview/llpaneldirfind.cpp	2008-08-28 17:31:39.000000000 +0200
++++ linden-patched/indra/newview/llpaneldirfind.cpp	2008-08-31 15:19:58.000000000 +0200
+@@ -421,3 +421,121 @@
+ 	panel->focus();
+ }
+ 
++//---------------------------------------------------------------------------
++// LLPanelDirFindAllOld - deprecated if new Google search works out. JC
++//---------------------------------------------------------------------------
++
++LLPanelDirFindAllOld::LLPanelDirFindAllOld(const std::string& name, LLFloaterDirectory* floater)
++	:	LLPanelDirBrowser(name, floater)
++{
++	mMinSearchChars = 3;
++}
++
++BOOL LLPanelDirFindAllOld::postBuild()
++{
++	LLPanelDirBrowser::postBuild();
++
++	childSetKeystrokeCallback("name", &LLPanelDirBrowser::onKeystrokeName, this);
++
++	childSetAction("Search", onClickSearch, this);
++	childDisable("Search");
++	setDefaultBtn( "Search" );
++
++	return TRUE;
++}
++
++LLPanelDirFindAllOld::~LLPanelDirFindAllOld()
++{
++	// Children all cleaned up by default view destructor.
++}
++
++// virtual
++void LLPanelDirFindAllOld::draw()
++{
++	// You only have a choice if you are mature
++	childSetVisible("incmature", !gAgent.isTeen());
++	childSetValue("incmature", gSavedSettings.getBOOL("ShowMatureFindAll"));
++
++	LLPanelDirBrowser::draw();
++}
++
++// static
++void LLPanelDirFindAllOld::onCommitScope(LLUICtrl* ctrl, void* data)
++{
++	LLPanelDirFindAllOld* self = (LLPanelDirFindAllOld*)data;
++	self->setFocus(TRUE);
++}
++
++// static
++void LLPanelDirFindAllOld::onClickSearch(void *userdata)
++{
++	LLPanelDirFindAllOld *self = (LLPanelDirFindAllOld *)userdata;
++
++	if (self->childGetValue("name").asString().length() < self->mMinSearchChars)
++	{
++		return;
++	};
++
++	self->setupNewSearch();
++
++	// Figure out scope
++	U32 scope = 0x0;
++	scope |= DFQ_PEOPLE;	// people (not just online = 0x01 | 0x02)
++	// places handled below
++	scope |= DFQ_EVENTS;	// events
++	scope |= DFQ_GROUPS;	// groups
++
++	BOOL filter_mature = (!gSavedSettings.getBOOL("ShowMatureFindAll") || 
++		 gAgent.isTeen() ||
++		 !self->childGetValue("incmature").asBoolean() );
++
++	if ( filter_mature )
++	{
++		scope |= DFQ_PG_SIMS_ONLY;
++		scope |= DFQ_PG_EVENTS_ONLY;
++		scope |= DFQ_FILTER_MATURE;
++		scope |= DFQ_PG_PARCELS_ONLY;
++	}
++
++	// send the message
++	LLMessageSystem *msg = gMessageSystem;
++	S32 start_row = 0;
++	sendDirFindQuery(msg, self->mSearchID, self->childGetValue("name").asString(), scope, start_row);
++
++	// Also look up classified ads. JC 12/2005
++	BOOL filter_auto_renew = FALSE;
++	U32 classified_flags = pack_classified_flags(filter_mature, filter_auto_renew);
++	msg->newMessage("DirClassifiedQuery");
++	msg->nextBlock("AgentData");
++	msg->addUUID("AgentID", gAgent.getID());
++	msg->addUUID("SessionID", gAgent.getSessionID());
++	msg->nextBlock("QueryData");
++	msg->addUUID("QueryID", self->mSearchID);
++	msg->addString("QueryText", self->childGetValue("name").asString());
++	msg->addU32("QueryFlags", classified_flags);
++	msg->addU32("Category", 0);	// all categories
++	msg->addS32("QueryStart", 0);
++	gAgent.sendReliableMessage();
++
++	// Need to use separate find places query because places are
++	// sent using the more compact DirPlacesReply message.
++	U32 query_flags = DFQ_DWELL_SORT;
++	if ( filter_mature )
++	{
++        query_flags |= DFQ_PG_SIMS_ONLY;
++		query_flags |= DFQ_PG_PARCELS_ONLY;	// FWIW, currently DFQ_PG_PARCELS_ONLY is only supported
++		query_flags |= DFQ_FILTER_MATURE;
++	}
++	msg->newMessage("DirPlacesQuery");
++	msg->nextBlock("AgentData");
++	msg->addUUID("AgentID", gAgent.getID() );
++	msg->addUUID("SessionID", gAgent.getSessionID());
++	msg->nextBlock("QueryData");
++	msg->addUUID("QueryID", self->mSearchID );
++	msg->addString("QueryText", self->childGetValue("name").asString());
++	msg->addU32("QueryFlags", query_flags );
++	msg->addS32("QueryStart", 0 ); // Always get the first 100 when using find ALL
++	msg->addS8("Category", LLParcel::C_ANY);
++	msg->addString("SimName", NULL);
++	gAgent.sendReliableMessage();
++}
+diff -urN linden/indra/newview/llpaneldirfind.h linden-patched/indra/newview/llpaneldirfind.h
+--- linden/indra/newview/llpaneldirfind.h	2008-08-28 17:31:37.000000000 +0200
++++ linden-patched/indra/newview/llpaneldirfind.h	2008-08-31 15:19:58.000000000 +0200
+@@ -91,4 +91,20 @@
+ 	static void focus(LLPanelDirFindAll* panel);
+ };
+ 
++
++class LLPanelDirFindAllOld : public LLPanelDirBrowser
++{
++public:
++	LLPanelDirFindAllOld(const std::string& name, LLFloaterDirectory* floater);
++	/*virtual*/ ~LLPanelDirFindAllOld();
++
++	/*virtual*/ BOOL postBuild();
++
++	/*virtual*/ void draw();
++
++	static void onClickSearch(void *userdata);
++	static void onCommitScope(LLUICtrl* ctrl, void* data);
++	static void onKeystrokeName(LLLineEditor* line, void* data);
++};
++
+ #endif
+diff -urN linden/indra/newview/llpaneldirgroups.cpp linden-patched/indra/newview/llpaneldirgroups.cpp
+--- linden/indra/newview/llpaneldirgroups.cpp	2008-08-28 17:31:38.000000000 +0200
++++ linden-patched/indra/newview/llpaneldirgroups.cpp	2008-08-31 15:19:58.000000000 +0200
+@@ -33,31 +33,99 @@
+ 
+ #include "llpaneldirgroups.h"
+ 
+-#include "llwebbrowserctrl.h"
++// linden library includes
++#include "llagent.h"
++//#include "llfontgl.h"
++#include "message.h"
++#include "llqueryflags.h"
++#include "llviewercontrol.h"
++#include "llviewerwindow.h"
+ 
+ LLPanelDirGroups::LLPanelDirGroups(const std::string& name, LLFloaterDirectory* floater)
+-	:	LLPanelDirFind(name, floater, "groups_browser")
++	:	LLPanelDirBrowser(name, floater)
+ {
++	mMinSearchChars = 3;
+ }
+ 
+ 
+-void LLPanelDirGroups::search(const std::string& search_text)
++BOOL LLPanelDirGroups::postBuild()
+ {
+-	if (!search_text.empty())
++	LLPanelDirBrowser::postBuild();
++
++	childSetKeystrokeCallback("name", &LLPanelDirBrowser::onKeystrokeName, this);
++
++	childSetAction("Search", &LLPanelDirBrowser::onClickSearchCore, this);
++	childDisable("Search");
++	setDefaultBtn( "Search" );
++
++	return TRUE;
++}
++
++LLPanelDirGroups::~LLPanelDirGroups()
++{
++	// Children all cleaned up by default view destructor.
++}
++
++// virtual
++void LLPanelDirGroups::draw()
++{
++	// You only have a choice if you are mature
++	childSetVisible("incmature", !gAgent.isTeen());
++	childSetValue("incmature", gSavedSettings.getBOOL("ShowMatureGroups"));
++	
++	LLPanelDirBrowser::draw();
++}
++
++
++// virtual
++void LLPanelDirGroups::performQuery()
++{
++	std::string group_name = childGetValue("name").asString();
++	if (group_name.length() < mMinSearchChars)
+ 	{
+-		bool mature = childGetValue( "mature_check" ).asBoolean();
+-		std::string selected_collection = "Groups";
+-		std::string url = buildSearchURL(search_text, selected_collection, mature);
+-		if (mWebBrowser)
+-		{
+-			mWebBrowser->navigateTo(url);
+-		}
++		return;
+ 	}
+-	else
++
++    // "hi " is three chars but not a long-enough search
++	std::string query_string = group_name;
++	LLStringUtil::trim( query_string );
++	bool query_was_filtered = (query_string != group_name);
++
++	// possible we threw away all the short words in the query so check length
++	if ( query_string.length() < mMinSearchChars )
+ 	{
+-		// empty search text
+-		navigateToDefaultPage();
++		gViewerWindow->alertXml("SeachFilteredOnShortWordsEmpty");
++		return;
++	};
++
++	// if we filtered something out, display a popup
++	if ( query_was_filtered )
++	{
++		LLStringUtil::format_map_t args;
++		args["[FINALQUERY]"] = query_string;
++		gViewerWindow->alertXml("SeachFilteredOnShortWords", args);
++	};
++
++	setupNewSearch();
++
++	// groups
++	U32 scope = DFQ_GROUPS;
++
++	// Check group mature filter.
++	if ( !gSavedSettings.getBOOL("ShowMatureGroups") 
++				   || gAgent.isTeen() )
++	{
++		scope |= DFQ_FILTER_MATURE;
+ 	}
+ 
+-	childSetText("search_editor", search_text);
++	mCurrentSortColumn = "score";
++	mCurrentSortAscending = FALSE;
++
++	// send the message
++	sendDirFindQuery(
++		gMessageSystem,
++		mSearchID,
++		query_string,
++		scope,
++		mSearchStart);
+ }
+diff -urN linden/indra/newview/llpaneldirgroups.h linden-patched/indra/newview/llpaneldirgroups.h
+--- linden/indra/newview/llpaneldirgroups.h	2008-08-28 17:31:37.000000000 +0200
++++ linden-patched/indra/newview/llpaneldirgroups.h	2008-08-31 15:19:58.000000000 +0200
+@@ -32,14 +32,21 @@
+ #ifndef LLPANELDIRGROUPS_H
+ #define LLPANELDIRGROUPS_H
+ 
+-#include "llpaneldirfind.h"
++#include "llpaneldirbrowser.h"
+ 
+-class LLPanelDirGroups : public LLPanelDirFind
++class LLPanelDirGroups : public LLPanelDirBrowser
+ {
+ public:
+ 	LLPanelDirGroups(const std::string& name, LLFloaterDirectory* floater);
++	virtual ~LLPanelDirGroups();
+ 
+-	/*virtual*/ void search(const std::string& search_text);
++	/*virtual*/ void draw();
++
++	/*virtual*/ BOOL postBuild();
++
++	/*virtual*/ void performQuery();
++
++	static void onClickSearch(void *userdata);
+ };
+ 
+ #endif
+diff -urN linden/indra/newview/skins/default/xui/en-us/floater_directory.xml linden-patched/indra/newview/skins/default/xui/en-us/floater_directory.xml
+--- linden/indra/newview/skins/default/xui/en-us/floater_directory.xml	2008-08-28 17:31:41.000000000 +0200
++++ linden-patched/indra/newview/skins/default/xui/en-us/floater_directory.xml	2008-08-31 15:21:34.000000000 +0200
+@@ -1,12 +1,63 @@
+ <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+ <floater can_close="true" can_drag_on_left="false" can_minimize="true"
+-     can_resize="true" height="570" min_height="570" min_width="780"
++     can_resize="false" height="570" min_height="570" min_width="780"
+      name="directory" rect_control="FloaterFindRect2" title="Search Second Life"
+      width="780">
+ 	<tab_container bottom="-570" follows="left|top|right|bottom" height="550" left="0"
+ 	     mouse_opaque="false" name="Directory Tabs" tab_position="top" width="780">
+ 		<panel border="true" bottom="-549" follows="left|top|right|bottom" height="533"
+-		     label="All" left="1" mouse_opaque="false" name="find_all_panel" width="778">
++		     label="All" left="1" mouse_opaque="false" name="find_all_old_panel"
++		     width="778">
++			<string name="searching_text">
++				Searching...
++			</string>
++			<string name="not_found_text">
++				None Found.
++			</string>
++			<button bottom="-533" follows="left|bottom" font="SansSerif" halign="center"
++			     height="20" label="&lt; Prev" label_selected="&lt; Prev" left="80"
++			     mouse_opaque="true" name="&lt; Prev" width="60" />
++			<button bottom="-533" follows="left|bottom" font="SansSerif" halign="center"
++			     height="20" label="Next &gt;" label_selected="Next &gt;"
++			     mouse_opaque="true" name="Next &gt;" width="60" />
++			<text bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
++			     bottom="-24" drop_shadow_visible="true" follows="left|top" font="SansSerif"
++			     h_pad="0" halign="left" height="16" left="4" mouse_opaque="true"
++			     name="find" v_pad="0" width="50">
++				Find:
++			</text>
++			<line_editor bevel_style="in" border_style="line" border_thickness="1" bottom="-24"
++			     follows="left|top" font="SansSerif" height="18" left_delta="38"
++			     max_length="63" mouse_opaque="true" name="name" width="128" />
++			<button bottom="-26" follows="left|top" font="SansSerif" halign="center" height="20"
++			     label="Search" label_selected="Search" left_delta="136" mouse_opaque="true"
++			     name="Search" width="70" />
++			<check_box bottom="-22" control_name="ShowMatureFindAll" follows="left|top"
++			     font="SansSerifSmall" height="16" initial_value="false"
++			     label="Include Mature content" left_delta="78" mouse_opaque="true"
++			     name="incmature" width="156" />
++			<scroll_list background_visible="true" bottom="-513" column_padding="0" draw_border="true"
++			     draw_heading="false" fg_disable_color="1, 1, 1, 1"
++			     follows="left|top|right|bottom" height="464" left="4" mouse_opaque="true"
++			     multi_select="false" name="results" search_column="1" width="339">
++				<column label="" name="icon" width="24" />
++				<column label="Name" name="name" width="235" />
++				<column label="Price" name="price" width="90" />
++				<column label="Time (PT)" name="date" width="90" />
++				<column label="Time" name="time" width="-1" />
++				<column label="Traffic" name="dwell" width="90" />
++				<column label="Area" name="area" width="90" />
++				<column label="L$/sq.m" name="per_meter" width="90" />
++				<column label="Online" name="online" width="90" />
++				<column label="Members" name="members" width="90" />
++			</scroll_list>
++			<text bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
++			     bottom_delta="-20" drop_shadow_visible="true" follows="left|bottom"
++			     font="SansSerifSmall" h_pad="0" halign="left" height="16" left="4"
++			     mouse_opaque="true" name="result_text" v_pad="0" width="328" />
++		</panel>
++		<panel border="true" bottom="-549" follows="left|top|right|bottom" height="533"
++		     label="All (web)" left="1" mouse_opaque="false" name="find_all_panel" width="778">
+ 			<string name="searching_text">
+ 				Searching...
+ 			</string>
+@@ -140,7 +191,8 @@
+ 			<button bottom="-533" follows="left|bottom" font="SansSerif" halign="center"
+ 			     height="20" label="Delete" label_selected="Delete" left="80"
+ 			     mouse_opaque="true" name="Delete" width="80" />
+-			<scroll_list background_visible="true" bottom="-513" column_padding="0" draw_border="true" draw_heading="true" 			     follows="left|top|right|bottom" height="464" left="4" mouse_opaque="true"
++			<scroll_list background_visible="true" bottom="-513" column_padding="0" draw_border="true" draw_heading="true"
++ 			     follows="left|top|right|bottom" height="464" left="4" mouse_opaque="true"
+ 			     multi_select="false" name="results" search_column="2" width="339">
+ 				<column label="" name="icon" width="24" />
+ 				<column label="" name="type" width="-1" />
+@@ -385,6 +437,7 @@
+ 			     font="SansSerifSmall" h_pad="0" halign="left" height="16" left="4"
+ 			     mouse_opaque="true" name="result_text" v_pad="0" width="328" />
+ 		</panel>
++		
+ 		<panel border="true" bottom="-549" follows="left|top|right|bottom" height="533"
+ 		     label="Places" left="1" mouse_opaque="false" name="places_panel"
+ 		     width="778">
+@@ -459,8 +512,7 @@
+ 			     label="Search" label_selected="Search" left_delta="136" mouse_opaque="true"
+ 			     name="Search" width="70" />
+ 			<scroll_list background_visible="true" bottom="-513" column_padding="0" draw_border="true"
+-			     draw_heading="true" 
+-			     
++			     draw_heading="true"
+ 			     follows="left|top|right|bottom" height="464" left="4" mouse_opaque="true"
+ 			     multi_select="false" name="results" search_column="2" width="339">
+ 				<column label="" name="icon" width="24" />
+@@ -473,6 +525,7 @@
+ 			     font="SansSerifSmall" h_pad="0" halign="left" height="16" left="4"
+ 			     mouse_opaque="true" name="result_text" v_pad="0" width="328" />
+ 		</panel>
++		
+     <panel border="true" bottom="-549" follows="left|top|right|bottom" height="533"
+ 		     label="People" left="1" mouse_opaque="false" name="people_panel"
+ 		     width="778">
+@@ -500,9 +553,8 @@
+       <button bottom="-26" follows="left|top" font="SansSerif" halign="center" height="20"
+ 			     label="Search" label_selected="Search" left_delta="210" mouse_opaque="true"
+ 			     name="Search" width="70" />
+-      <scroll_list background_visible="true" bottom="-513" column_padding="0" draw_border="true"
+-			     draw_heading="true" 
+-                               
++        <scroll_list background_visible="true" bottom="-513" column_padding="0" draw_border="true"
++			     draw_heading="true"
+ 			     follows="left|top|right|bottom" height="464" left="4" mouse_opaque="true"
+ 			     multi_select="false" name="results" search_column="2" width="326">
+         <column label="" name="icon" width="24" />
+@@ -514,71 +566,52 @@
+ 			     font="SansSerifSmall" h_pad="0" halign="left" height="16" left="4"
+ 			     mouse_opaque="true" name="result_text" v_pad="0" width="328" />
+ 		</panel>
+-    <panel border="true" bottom="-549" follows="left|top|right|bottom" height="533"
+-		     label="Groups" left="1" mouse_opaque="false"
+-		     name="groups_panel"
++		<panel border="true" bottom="-549" follows="left|top|right|bottom" height="533"
++		     label="Groups" left="1" mouse_opaque="false" name="groups_panel"
+ 		     width="778">
+-      <string name="searching_text">Searching...</string>
+-      <string name="not_found_text">None Found.</string>
+-      <button bottom="-30" follows="top|left" font="SansSerifSmall" height="20"
+-				label="Back"
+-				left="10"
+-				name="back_btn" width="70" />
+-      <button bottom_delta="0" follows="top|left" font="SansSerifSmall" height="20"
+-				label="Forward" left_delta="75"
+-				name="forward_btn" width="70" />
+-      <line_editor bevel_style="in"
+-						border_style="line"
+-						border_thickness="1"
+-						bottom_delta="0"
+-						enabled="true"
+-						follows="top|left|right"
+-						font="SansSerif"
+-						handle_edit_keys_directly="false"
+-						commit_on_focus_lost="false"
+-						height="20"
+-						hidden="false"
+-						label="Search"
+-						left_delta="80"
+-						width="180"
+-						max_length="254"
+-						mouse_opaque="true"
+-						name="search_editor"
+-						select_all_on_focus_received="false"
+-						select_on_focus="false"
+-						tab_group="1"
+-						tool_tip="Search Second Life" />
+-      <button follows="top|right" font="SansSerif" height="20"
+-				label="Search"
+-				left_delta="185"
+-				bottom_delta="0"
+-				name="search_btn" width="70" />
+-      <check_box bottom_delta="0"
+-				control_name="ShowMatureFindAll" follows="right|top"
++			<string name="searching_text">
++				Searching...
++			</string>
++			<string name="not_found_text">
++				None Found.
++			</string>
++			<button bottom="-533" follows="left|bottom" font="SansSerif" halign="center"
++			     height="20" label="Next &gt;" label_selected="Next &gt;"
++			     mouse_opaque="true" name="Next &gt;" right="344" width="80" />
++			<button bottom_delta="0" follows="left|bottom" font="SansSerif" halign="center"
++			     height="20" label="&lt; Prev" label_selected="&lt; Prev"
++			     mouse_opaque="true" name="&lt; Prev" right="258" width="80" />
++			<text bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
++			     bottom="-24" drop_shadow_visible="true" follows="left|top" font="SansSerif"
++			     h_pad="0" halign="left" height="16" left="4" mouse_opaque="true"
++			     name="find" v_pad="0" width="50">
++				Find:
++			</text>
++			<line_editor bevel_style="in" border_style="line" border_thickness="1" bottom="-24"
++			     follows="left|top" font="SansSerif" height="18" left_delta="38"
++			     max_length="63" mouse_opaque="true" name="name" width="200" />
++			<button bottom="-26" follows="left|top" font="SansSerif" halign="center" height="20"
++			     label="Search" label_selected="Search" left_delta="210" mouse_opaque="true"
++			     name="Search" width="70" />
++			<check_box bottom_delta="-16" control_name="ShowMatureGroups" follows="left|top"
+ 			     font="SansSerifSmall" height="16" initial_value="false"
+-			     label="Include Mature content"
+-			     left_delta="133"
+-			     name="mature_check"
+-			     width="156" />
+-      <web_browser name="groups_browser"
+-				bottom="25"
+-				follows="top|left|bottom|right"
+-				font="SansSerifSmall"
+-				left="10"
+-				right="-10"
+-				top="-40" />
+-      <text bottom="5"
+-				follows="bottom|left"
+-				halign="left"
+-				left="10"
+-				width="150"
+-				name="status_text"
+-				height="16" />
+-      <string name="loading_text">Loading...</string>
+-      <string name="done_text">Done</string>
+-      <string name="redirect_404_url">http://secondlife.com/app/search/notfound.html</string>
+-      <string name="default_search_page">"http://secondlife.com/app/search/index_groups.php?"</string>
+-    </panel>
++			     label="Include Mature groups" left="42" mouse_opaque="true"
++			     name="incmature" width="204" />
++			<scroll_list background_visible="true" bottom="-513" column_padding="0" draw_border="true"
++			     draw_heading="true"
++			     follows="left|top|right|bottom" height="464" left="4" mouse_opaque="true"
++			     multi_select="false" name="results" search_column="2" width="339">
++				<column label="" name="icon" sort="score" sort_ascending="false" width="24" />
++				<column label="" name="type" width="-1" />
++				<column dynamicwidth="true" label="Name" name="name" />
++				<column halign="left" label="Members" name="members" sort_ascending="false" width="100" />
++				<column label="" name="score" width="-1" />
++			</scroll_list>
++			<text bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
++			     bottom_delta="-20" drop_shadow_visible="true" follows="left|bottom"
++			     font="SansSerifSmall" h_pad="0" halign="left" height="16" left="4"
++			     mouse_opaque="true" name="result_text" v_pad="0" width="328" />
++		</panel>
+ 	</tab_container>
+ 	<panel bottom="-560" follows="right|top" height="470" left="340"
+ 	     name="classified_details_panel" width="440" />
+diff -urN linden/indra/newview/skins/silver/xui/en-us/floater_directory.xml linden-patched/indra/newview/skins/silver/xui/en-us/floater_directory.xml
+--- linden/indra/newview/skins/silver/xui/en-us/floater_directory.xml	2008-08-28 17:31:43.000000000 +0200
++++ linden-patched/indra/newview/skins/silver/xui/en-us/floater_directory.xml	2008-08-31 15:19:58.000000000 +0200
+@@ -6,7 +6,57 @@
+ 	<tab_container bottom="-570" follows="left|top|right|bottom" height="550" left="0"
+ 	     mouse_opaque="false" name="Directory Tabs" tab_position="top" width="780">
+ 		<panel border="true" bottom="-549" follows="left|top|right|bottom" height="533"
+-		     label="All" left="1" mouse_opaque="false" name="find_all_panel" width="778">
++		     label="All" left="1" mouse_opaque="false" name="find_all_old_panel"
++		     width="778">
++			<string name="searching_text">
++				Searching...
++			</string>
++			<string name="not_found_text">
++				None Found.
++			</string>
++			<button bottom="-533" follows="left|bottom" font="SansSerif" halign="center"
++			     height="20" label="&lt; Prev" label_selected="&lt; Prev" left="80"
++			     mouse_opaque="true" name="&lt; Prev" width="60" />
++			<button bottom="-533" follows="left|bottom" font="SansSerif" halign="center"
++			     height="20" label="Next &gt;" label_selected="Next &gt;"
++			     mouse_opaque="true" name="Next &gt;" width="60" />
++			<text bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
++			     bottom="-24" drop_shadow_visible="true" follows="left|top" font="SansSerif"
++			     h_pad="0" halign="left" height="16" left="4" mouse_opaque="true"
++			     name="find" v_pad="0" width="50">
++				Find:
++			</text>
++			<line_editor bevel_style="in" border_style="line" border_thickness="1" bottom="-24"
++			     follows="left|top" font="SansSerif" height="18" left_delta="38"
++			     max_length="63" mouse_opaque="true" name="name" width="128" />
++			<button bottom="-26" follows="left|top" font="SansSerif" halign="center" height="20"
++			     label="Search" label_selected="Search" left_delta="136" mouse_opaque="true"
++			     name="Search" width="70" />
++			<check_box bottom="-22" control_name="ShowMatureFindAll" follows="left|top"
++			     font="SansSerifSmall" height="16" initial_value="false"
++			     label="Include Mature content" left_delta="78" mouse_opaque="true"
++			     name="incmature" width="156" />
++			<scroll_list background_visible="true" bottom="-513" column_padding="0" draw_border="true"
++			     draw_heading="false" follows="left|top|right|bottom" height="464" left="4" mouse_opaque="true"
++			     multi_select="false" name="results" search_column="1" width="339">
++				<column label="" name="icon" width="24" />
++				<column label="Name" name="name" width="235" />
++				<column label="Price" name="price" width="90" />
++				<column label="Time (PT)" name="date" width="90" />
++				<column label="Time" name="time" width="-1" />
++				<column label="Traffic" name="dwell" width="90" />
++				<column label="Area" name="area" width="90" />
++				<column label="L$/sq.m" name="per_meter" width="90" />
++				<column label="Online" name="online" width="90" />
++				<column label="Members" name="members" width="90" />
++			</scroll_list>
++			<text bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
++			     bottom_delta="-20" drop_shadow_visible="true" follows="left|bottom"
++			     font="SansSerifSmall" h_pad="0" halign="left" height="16" left="4"
++			     mouse_opaque="true" name="result_text" v_pad="0" width="328" />
++		</panel>
++		<panel border="true" bottom="-549" follows="left|top|right|bottom" height="533"
++		     label="All (web)" left="1" mouse_opaque="false" name="find_all_panel" width="778">
+ 			<string name="searching_text">
+ 				Searching...
+ 			</string>
+@@ -514,71 +564,51 @@
+ 			     font="SansSerifSmall" h_pad="0" halign="left" height="16" left="4"
+ 			     mouse_opaque="true" name="result_text" v_pad="0" width="328" />
+ 		</panel>
+-    <panel border="true" bottom="-549" follows="left|top|right|bottom" height="533"
+-		     label="Groups" left="1" mouse_opaque="false"
+-		     name="groups_panel"
++		<panel border="true" bottom="-549" follows="left|top|right|bottom" height="533"
++		     label="Groups" left="1" mouse_opaque="false" name="groups_panel"
+ 		     width="778">
+-      <string name="searching_text">Searching...</string>
+-      <string name="not_found_text">None Found.</string>
+-      <button bottom="-30" follows="top|left" font="SansSerifSmall" height="20"
+-				label="Back"
+-				left="10"
+-				name="back_btn" width="70" />
+-      <button bottom_delta="0" follows="top|left" font="SansSerifSmall" height="20"
+-				label="Forward" left_delta="75"
+-				name="forward_btn" width="70" />
+-      <line_editor bevel_style="in"
+-						border_style="line"
+-						border_thickness="1"
+-						bottom_delta="0"
+-						enabled="true"
+-						follows="top|left|right"
+-						font="SansSerif"
+-						handle_edit_keys_directly="false"
+-						commit_on_focus_lost="false"
+-						height="20"
+-						hidden="false"
+-						label="Search"
+-						left_delta="80"
+-						width="180"
+-						max_length="254"
+-						mouse_opaque="true"
+-						name="search_editor"
+-						select_all_on_focus_received="false"
+-						select_on_focus="false"
+-						tab_group="1"
+-						tool_tip="Search Second Life" />
+-      <button follows="top|right" font="SansSerif" height="20"
+-				label="Search"
+-				left_delta="185"
+-				bottom_delta="0"
+-				name="search_btn" width="70" />
+-      <check_box bottom_delta="0"
+-				control_name="ShowMatureFindAll" follows="right|top"
++			<string name="searching_text">
++				Searching...
++			</string>
++			<string name="not_found_text">
++				None Found.
++			</string>
++			<button bottom="-533" follows="left|bottom" font="SansSerif" halign="center"
++			     height="20" label="Next &gt;" label_selected="Next &gt;"
++			     mouse_opaque="true" name="Next &gt;" right="344" width="80" />
++			<button bottom_delta="0" follows="left|bottom" font="SansSerif" halign="center"
++			     height="20" label="&lt; Prev" label_selected="&lt; Prev"
++			     mouse_opaque="true" name="&lt; Prev" right="258" width="80" />
++			<text bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
++			     bottom="-24" drop_shadow_visible="true" follows="left|top" font="SansSerif"
++			     h_pad="0" halign="left" height="16" left="4" mouse_opaque="true"
++			     name="find" v_pad="0" width="50">
++				Find:
++			</text>
++			<line_editor bevel_style="in" border_style="line" border_thickness="1" bottom="-24"
++			     follows="left|top" font="SansSerif" height="18" left_delta="38"
++			     max_length="63" mouse_opaque="true" name="name" width="200" />
++			<button bottom="-26" follows="left|top" font="SansSerif" halign="center" height="20"
++			     label="Search" label_selected="Search" left_delta="210" mouse_opaque="true"
++			     name="Search" width="70" />
++			<check_box bottom_delta="-16" control_name="ShowMatureGroups" follows="left|top"
+ 			     font="SansSerifSmall" height="16" initial_value="false"
+-			     label="Include Mature content"
+-			     left_delta="133"
+-			     name="mature_check"
+-			     width="156" />
+-      <web_browser name="groups_browser"
+-				bottom="25"
+-				follows="top|left|bottom|right"
+-				font="SansSerifSmall"
+-				left="10"
+-				right="-10"
+-				top="-40" />
+-      <text bottom="5"
+-				follows="bottom|left"
+-				halign="left"
+-				left="10"
+-				width="150"
+-				name="status_text"
+-				height="16" />
+-      <string name="loading_text">Loading...</string>
+-      <string name="done_text">Done</string>
+-      <string name="redirect_404_url">http://secondlife.com/app/search/notfound.html</string>
+-      <string name="default_search_page">"http://secondlife.com/app/search/index_groups.php?"</string>
+-    </panel>
++			     label="Include Mature groups" left="42" mouse_opaque="true"
++			     name="incmature" width="204" />
++			<scroll_list background_visible="true" bottom="-513" column_padding="0" draw_border="true"
++			     draw_heading="true" follows="left|top|right|bottom" height="464" left="4" mouse_opaque="true"
++			     multi_select="false" name="results" search_column="2" width="339">
++				<column label="" name="icon" sort="score" sort_ascending="false" width="24" />
++				<column label="" name="type" width="-1" />
++				<column dynamicwidth="true" label="Name" name="name" />
++				<column halign="left" label="Members" name="members" sort_ascending="false" width="100" />
++				<column label="" name="score" width="-1" />
++			</scroll_list>
++			<text bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
++			     bottom_delta="-20" drop_shadow_visible="true" follows="left|bottom"
++			     font="SansSerifSmall" h_pad="0" halign="left" height="16" left="4"
++			     mouse_opaque="true" name="result_text" v_pad="0" width="328" />
++		</panel>
+ 	</tab_container>
+ 	<panel bottom="-560" follows="right|top" height="470" left="340"
+ 	     name="classified_details_panel" width="440" />

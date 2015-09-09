@@ -1,0 +1,154 @@
+diff -urN linden/indra/newview/llfloaterurldisplay.cpp linden-patched/indra/newview/llfloaterurldisplay.cpp
+--- linden/indra/newview/llfloaterurldisplay.cpp	2008-10-17 17:55:32.000000000 +0200
++++ linden-patched/indra/newview/llfloaterurldisplay.cpp	2008-10-18 10:40:39.000000000 +0200
+@@ -75,7 +75,8 @@
+ 
+ 	LLUUID region_id;			// don't know this
+ 	LLUUID landmark_asset_id;	// don't know this either
+-	mPlacePanel->displayParcelInfo(pos_local, landmark_asset_id, region_id, pos_global);
++	LLUUID landmark_item_id;	// don't know this either
++	mPlacePanel->displayParcelInfo(pos_local, landmark_asset_id, landmark_item_id, region_id, pos_global);
+ 
+ 	this->setVisible(true);
+ 	this->setFrontmost(true);
+diff -urN linden/indra/newview/llinventorybridge.cpp linden-patched/indra/newview/llinventorybridge.cpp
+--- linden/indra/newview/llinventorybridge.cpp	2008-10-17 17:55:32.000000000 +0200
++++ linden-patched/indra/newview/llinventorybridge.cpp	2008-10-18 10:40:39.000000000 +0200
+@@ -2560,7 +2560,7 @@
+ 			// because you'll probably arrive at a telehub instead
+ 			if( gFloaterWorldMap )
+ 			{
+-				gFloaterWorldMap->trackLandmark( item->getAssetUUID() );
++				gFloaterWorldMap->trackLandmark(item->getUUID());  // remember this must be the item UUID, not the asset UUID
+ 			}
+ 		}
+ 	}
+@@ -2605,20 +2605,19 @@
+ 
+ static void open_landmark_callback(S32 option, void* data)
+ {
+-	LLUUID* asset_idp = (LLUUID*)data;
++	LLInventoryItem* itemp = (LLInventoryItem*)data;
+ 	if (option == 0)
+ 	{
+ 		// HACK: This is to demonstrate teleport on double click for landmarks
+-		gAgent.teleportViaLandmark( *asset_idp );
++		gAgent.teleportViaLandmark( itemp->getAssetUUID() );
+ 
+ 		// we now automatically track the landmark you're teleporting to
+ 		// because you'll probably arrive at a telehub instead
+ 		if( gFloaterWorldMap )
+ 		{
+-			gFloaterWorldMap->trackLandmark( *asset_idp );
++			gFloaterWorldMap->trackLandmark( itemp->getUUID() );  // remember this is the item UUID not the asset UUID
+ 		}
+ 	}
+-	delete asset_idp;
+ }
+ 
+ void LLLandmarkBridge::openItem()
+@@ -2629,9 +2628,9 @@
+ 		// Opening (double-clicking) a landmark immediately teleports,
+ 		// but warns you the first time.
+ 		// open_landmark(item, std::string("  ") + getPrefix() + item->getName(), FALSE);
+-		LLUUID* asset_idp = new LLUUID(item->getAssetUUID());
+ 		LLAlertDialog::showXml("TeleportFromLandmark",
+-			open_landmark_callback, (void*)asset_idp);
++			// send the full inventory item so the callback can use both asset UUID and inventory item id
++			open_landmark_callback, (void*)item);
+ 	}
+ }
+ 
+diff -urN linden/indra/newview/llpanelinventory.cpp linden-patched/indra/newview/llpanelinventory.cpp
+--- linden/indra/newview/llpanelinventory.cpp	2008-10-17 17:55:32.000000000 +0200
++++ linden-patched/indra/newview/llpanelinventory.cpp	2008-10-18 10:40:39.000000000 +0200
+@@ -1079,7 +1079,11 @@
+ 
+ LLUIImagePtr LLTaskLandmarkBridge::getIcon() const
+ {
+-	return get_item_icon(LLAssetType::AT_LANDMARK, LLInventoryType::IT_LANDMARK, 0, FALSE);
++	LLInventoryItem* item = findItem();
++	BOOL visited = FALSE;
++	if(item->getFlags() & LLInventoryItem::II_FLAGS_LANDMARK_VISITED) visited=TRUE;
++	// attachment point parameter in get_item_icon is used for visited/unvisited landmark
++	return get_item_icon(LLAssetType::AT_LANDMARK, LLInventoryType::IT_LANDMARK, visited, FALSE);
+ }
+ 
+ 
+diff -urN linden/indra/newview/llpanelplace.cpp linden-patched/indra/newview/llpanelplace.cpp
+--- linden/indra/newview/llpanelplace.cpp	2008-10-17 17:55:32.000000000 +0200
++++ linden-patched/indra/newview/llpanelplace.cpp	2008-10-18 10:40:39.000000000 +0200
+@@ -333,6 +333,7 @@
+ 
+ void LLPanelPlace::displayParcelInfo(const LLVector3& pos_region,
+ 									 const LLUUID& landmark_asset_id,
++									 const LLUUID& landmark_item_id,   // item_id to be able to send map correct id
+ 									 const LLUUID& region_id,
+ 									 const LLVector3d& pos_global)
+ {
+@@ -340,6 +341,7 @@
+ 	mPosRegion = pos_region;
+ 	mPosGlobal = pos_global;
+ 	mLandmarkAssetID = landmark_asset_id;
++	mLandmarkItemID = landmark_item_id;
+ 	std::string url = gAgent.getRegion()->getCapability("RemoteParcelRequest");
+ 	if (!url.empty())
+ 	{
+@@ -379,8 +381,8 @@
+ 	if(self->mLandmarkAssetID.notNull())
+ 	{
+ 		gAgent.teleportViaLandmark(self->mLandmarkAssetID);
+-		gFloaterWorldMap->trackLandmark(self->mLandmarkAssetID);
+-
++		// remember this must be an inventory item id, not an asset UUID
++		gFloaterWorldMap->trackLandmark(self->mLandmarkItemID); 
+ 	}
+ 	else if (!self->mPosGlobal.isExactlyZero())
+ 	{
+diff -urN linden/indra/newview/llpanelplace.h linden-patched/indra/newview/llpanelplace.h
+--- linden/indra/newview/llpanelplace.h	2008-10-17 17:55:32.000000000 +0200
++++ linden-patched/indra/newview/llpanelplace.h	2008-10-18 10:40:39.000000000 +0200
+@@ -70,6 +70,7 @@
+ 	void sendParcelInfoRequest();
+ 	void displayParcelInfo(const LLVector3& pos_region,
+ 			const LLUUID& landmark_asset_id,
++			const LLUUID& landmark_item_id,   // so we can send map floater the correct inventory item id
+ 			const LLUUID& region_id,
+ 			const LLVector3d& pos_global);
+ 	static void processParcelInfoReply(LLMessageSystem* msg, void**);
+@@ -90,6 +91,7 @@
+ 	LLUUID			mRequestedID;
+ 	LLUUID			mRegionID;
+ 	LLUUID			mLandmarkAssetID;
++	LLUUID			mLandmarkItemID;
+ 	// Absolute position of the location for teleport, may not
+ 	// be available (hence zero)
+ 	LLVector3d		mPosGlobal;
+diff -urN linden/indra/newview/llpreviewlandmark.cpp linden-patched/indra/newview/llpreviewlandmark.cpp
+--- linden/indra/newview/llpreviewlandmark.cpp	2008-10-17 17:55:32.000000000 +0200
++++ linden-patched/indra/newview/llpreviewlandmark.cpp	2008-10-18 10:40:39.000000000 +0200
+@@ -179,7 +179,7 @@
+ 			LLUUID region_id;
+ 			mLandmark->getRegionID(region_id);		// might find null?
+ 			LLVector3d pos_global = getPositionGlobal();	// might be 0
+-			mPlacePanel->displayParcelInfo(pos_region, landmark_asset_id, region_id, pos_global);
++			mPlacePanel->displayParcelInfo(pos_region, landmark_asset_id, getItem()->getUUID(), region_id, pos_global);
+ 		}
+ 	}
+ 
+diff -urN linden/indra/newview/llviewermessage.cpp linden-patched/indra/newview/llviewermessage.cpp
+--- linden/indra/newview/llviewermessage.cpp	2008-10-17 17:55:32.000000000 +0200
++++ linden-patched/indra/newview/llviewermessage.cpp	2008-10-18 10:40:39.000000000 +0200
+@@ -2767,7 +2767,11 @@
+ 		LLVector3 beacon_dir(agent_pos.mV[VX] - (F32)fmod(beacon_pos.mdV[VX], 256.0), agent_pos.mV[VY] - (F32)fmod(beacon_pos.mdV[VY], 256.0), 0);
+ 		if (beacon_dir.magVecSquared() < 25.f)
+ 		{
+-			LLTracker::stopTracking(NULL);
++			// do not stop tracking landmarks here, so they can properly be marked as visited in LLTracker()
++			if(LLTracker::getTrackingStatus()!=LLTracker::TRACKING_LANDMARK)
++			{
++				LLTracker::stopTracking(NULL);
++			}
+ 		}
+ 		else if ( is_teleport )
+ 		{

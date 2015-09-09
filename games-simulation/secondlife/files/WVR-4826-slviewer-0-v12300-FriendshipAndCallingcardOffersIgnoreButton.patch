@@ -1,0 +1,36 @@
+diff -urN linden/indra/newview/skins/default/xui/en-us/notifications.xml linden-patched/indra/newview/skins/default/xui/en-us/notifications.xml
+--- linden/indra/newview/skins/default/xui/en-us/notifications.xml	2009-04-30 06:29:44.000000000 +0200
++++ linden-patched/indra/newview/skins/default/xui/en-us/notifications.xml	2009-05-01 19:24:10.000000000 +0200
+@@ -5788,6 +5788,10 @@
+        index="1"
+        name="Decline"
+        text="Decline"/>
++      <button
++       index="2"
++       name="Ignore"
++       text="Ignore"/>
+     </form>
+   </notification>
+ 
+@@ -5807,6 +5811,10 @@
+        index="1"
+        name="Decline"
+        text="Decline"/>
++      <button
++       index="2"
++       name="Ignore"
++       text="Ignore"/>
+     </form>
+   </notification>
+ 
+@@ -5839,6 +5847,10 @@
+        index="1"
+        name="Decline"
+        text="Decline"/>
++      <button
++       index="2"
++       name="Ignore"
++       text="Ignore"/>
+     </form>
+   </notification>
+ 

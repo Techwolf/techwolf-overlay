@@ -1,0 +1,12 @@
+diff -urN linden/indra/llrender/llfontgl.cpp linden-patched/indra/llrender/llfontgl.cpp
+--- linden/indra/llrender/llfontgl.cpp	2008-02-29 19:47:38.000000000 +0100
++++ linden-patched/indra/llrender/llfontgl.cpp	2008-10-18 11:20:59.000000000 +0200
+@@ -542,7 +542,7 @@
+ 					 BOOL use_ellipses) const
+ {
+ 	LLWString wstr = utf8str_to_wstring(text);
+-	return render(wstr, offset, x, y, color, halign, valign, style, max_chars, max_pixels, right_x, use_ellipses);
++	return render(wstr, offset, x, y, color, halign, valign, style, max_chars, max_pixels, right_x, FALSE, use_ellipses);
+ }
+ 
+ S32 LLFontGL::render(const LLWString &wstr, 

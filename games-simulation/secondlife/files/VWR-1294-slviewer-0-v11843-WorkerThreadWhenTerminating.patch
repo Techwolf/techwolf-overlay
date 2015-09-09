@@ -1,0 +1,12 @@
+diff -urN linden/indra/llcommon/llworkerthread.cpp linden-patched/indra/llcommon/llworkerthread.cpp
+--- linden/indra/llcommon/llworkerthread.cpp	2007-11-08 03:18:06.000000000 +0100
++++ linden-patched/indra/llcommon/llworkerthread.cpp	2007-11-11 13:32:52.000000000 +0100
+@@ -108,7 +108,7 @@
+ 		delete *iter;
+ 	}
+     // delete and aborted entries mean there's still work to do
+-	res += delete_list.size() + abort_list.size();
++	res +=  !mDeleteList.empty() + !delete_list.empty();  // deleted entries mean there's still work to do
+ 	return res;
+ }
+ 

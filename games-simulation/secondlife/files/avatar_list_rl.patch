@@ -1,0 +1,45 @@
+diff --git a/indra/newview/llchatbar.cpp b/indra/newview/llchatbar.cpp
+index 84ebf98..1678bc3 100644
+--- a/indra/newview/llchatbar.cpp
++++ b/indra/newview/llchatbar.cpp
+@@ -585,39 +585,7 @@ void LLChatBar::sendChatFromViewer(const LLWString &wtext, EChatType type, BOOL
+ 		}
+ 	}
+ //mk
+-	// Don't animate for chats people can't hear (chat to scripts)
+-	if (animate && (channel == 0))
+-	{
+-		if (type == CHAT_TYPE_WHISPER)
+-		{
+-			lldebugs << "You whisper " << utf8_text << llendl;
+-			gAgent.sendAnimationRequest(ANIM_AGENT_WHISPER, ANIM_REQUEST_START);
+-		}
+-		else if (type == CHAT_TYPE_NORMAL)
+-		{
+-			lldebugs << "You say " << utf8_text << llendl;
+-			gAgent.sendAnimationRequest(ANIM_AGENT_TALK, ANIM_REQUEST_START);
+-		}
+-		else if (type == CHAT_TYPE_SHOUT)
+-		{
+-			lldebugs << "You shout " << utf8_text << llendl;
+-			gAgent.sendAnimationRequest(ANIM_AGENT_SHOUT, ANIM_REQUEST_START);
+-		}
+-		else
+-		{
+-			llinfos << "send_chat_from_viewer() - invalid volume" << llendl;
+-			return;
+-		}
+-	}
+-	else
+-	{
+-		if (type != CHAT_TYPE_START && type != CHAT_TYPE_STOP)
+-		{
+-			lldebugs << "Channel chat: " << utf8_text << llendl;
+-		}
+-	}
+-
+-	send_chat_from_viewer(utf8_out_text, type, channel);
++	gAgent.sendChat(utf8_out_text, channel, type, animate);
+ }
+ 
+ void send_chat_from_viewer(const std::string& utf8_out_text, EChatType type, S32 channel)

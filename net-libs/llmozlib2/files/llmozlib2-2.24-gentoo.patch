@@ -1,0 +1,56 @@
+--- build-linux-llmozlib.sh.anc	2008-08-13 23:28:36.240296009 +0200
++++ llmozlib-svn-2.17/build-linux-llmozlib.sh	2008-08-13 23:30:18.256979821 +0200
+@@ -2,8 +2,8 @@
+ # This script builds llmozlib itself.  This should happen after
+ # mozilla has been built and copy_products_linux.sh has been run.
+ 
+-CXX='g++-4.1'
+-MOZARCH='i686-linux'
++CXX="`ls /usr/bin/g++-4* |tail -n1`"
++MOZARCH="`uname -m`-linux"
+ SRCS='llembeddedbrowser.cpp llembeddedbrowserwindow.cpp llmozlib2.cpp'
+ 
+ #------------------------
+diff -Naur llmozlib-svn-2.orig/build_mozilla/linux-checkout_patch_build.sh llmozlib-svn-2.13/build_mozilla/linux-checkout_patch_build.sh
+--- llmozlib-svn-2.orig/build_mozilla/linux-checkout_patch_build.sh	2008-05-06 17:01:22.000000000 -0600
++++ llmozlib-svn-2.17/build_mozilla/linux-checkout_patch_build.sh	2008-05-06 16:54:10.000000000 -0600
+@@ -6,6 +6,13 @@
+ # will also be in build-mozilla.
+ 
+ # check out the mozilla source
++cvs() {
++	# specify a password by adding another : to CVSROOT
++	export CVSROOT="${CVSROOT/@/:@}"
++	export MOZ_CVS_FLAGS="-f -Q -z3"
++	# -f: don't use ~/.cvsrc -Q: be quiet -z3:compress traffic
++	`which cvs` -f -Q -z3 $*
++}
+ export CVSROOT=':pserver:anonymous@cvs-mirror.mozilla.org:/cvsroot'
+ echo 'use the password "anonymous" if prompted'
+ cvs login
+diff -Naur llmozlib-svn-2.orig/build_mozilla/linux-libxul-bits/mozconfig llmozlib-svn-2.13/build_mozilla/linux-libxul-bits/mozconfig
+--- llmozlib-svn-2.orig/build_mozilla/linux-libxul-bits/mozconfig	2008-05-06 16:54:10.000000000 -0600
++++ llmozlib-svn-2.17/build_mozilla/linux-libxul-bits/mozconfig	2008-05-06 17:04:41.000000000 -0600
+@@ -43,12 +43,15 @@
+ if /bin/true ; then
+   TARGET_CPU=$MOZ_BUILD_APP
+ 
+-  GCC_VERSION=4.1
++  # find a gcc-4 on this system
++  # note that ls /usr/bin/gcc-4* is safe because the same command would
++  # have failed in build_mozilla/linux-checkout_patch_build.sh already
++  GCC_VERSION="`ls /usr/bin/gcc-4* | tail -n1 | sed -e 's:.*/gcc-::'`"
+   
+-  CC="gcc-$GCC_VERSION"
+-  CXX="g++-$GCC_VERSION"
+-  CC="ccache gcc-$GCC_VERSION -fno-stack-protector"
+-  CXX="ccache g++-$GCC_VERSION -fno-stack-protector"
++  CC="gcc-$GCC_VERSION -fno-stack-protector"
++  CXX="g++-$GCC_VERSION -fno-stack-protector"
++#  CC="ccache gcc-$GCC_VERSION"
++#  CXX="ccache g++-$GCC_VERSION"
+ 
+   # These must be set for cross builds, and don't hurt straight builds.
+   RANLIB=ranlib
+
+ 

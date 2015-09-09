@@ -1,0 +1,45 @@
+diff -urN linden/indra/newview/llimview.cpp linden-patched/indra/newview/llimview.cpp
+--- linden/indra/newview/llimview.cpp	2008-11-21 16:58:23.000000000 +0100
++++ linden-patched/indra/newview/llimview.cpp	2008-11-21 21:51:42.000000000 +0100
+@@ -1545,7 +1545,7 @@
+ 			std::string buffer = separator_string + saved + message.substr(message_offset);
+ 
+ 			BOOL is_this_agent = FALSE;
+-			if(from_id == gAgentID)
++			if(from_id == gAgentID || !gSavedSettings.getBOOL("IMInChatHistory"))
+ 			{
+ 				is_this_agent = TRUE;
+ 			}
+diff -urN linden/indra/newview/llviewermessage.cpp linden-patched/indra/newview/llviewermessage.cpp
+--- linden/indra/newview/llviewermessage.cpp	2008-11-21 16:58:23.000000000 +0100
++++ linden-patched/indra/newview/llviewermessage.cpp	2008-11-21 21:51:42.000000000 +0100
+@@ -1508,7 +1508,7 @@
+ 					true);
+ 				chat.mText = std::string("IM: ") + name + separator_string + saved + message.substr(message_offset);
+ 
+-				BOOL local_agent = FALSE;
++				BOOL local_agent = !gSavedSettings.getBOOL("IMInChatHistory");
+ 				LLFloaterChat::addChat( chat, TRUE, local_agent );
+ 			}
+ 			else
+@@ -1781,7 +1781,7 @@
+ 		}
+ 		buffer = separator_string + saved + message.substr(message_offset);
+ 		BOOL is_this_agent = FALSE;
+-		if(from_id == gAgentID)
++		if(from_id == gAgentID || !gSavedSettings.getBOOL("IMInChatHistory"))
+ 		{
+ 			is_this_agent = TRUE;
+ 		}
+diff -urN linden/indra/newview/skins/default/xui/en-us/panel_preferences_im.xml linden-patched/indra/newview/skins/default/xui/en-us/panel_preferences_im.xml
+--- linden/indra/newview/skins/default/xui/en-us/panel_preferences_im.xml	2008-11-21 16:58:28.000000000 +0100
++++ linden-patched/indra/newview/skins/default/xui/en-us/panel_preferences_im.xml	2008-11-21 21:52:29.000000000 +0100
+@@ -28,7 +28,7 @@
+ 	     width="350" />
+ 	<check_box bottom="-65" enabled="true" follows="left|top"
+ 	     font="SansSerifSmall" height="16" initial_value="false"
+-	     label="Include IM in Local Chat" left="148" mouse_opaque="true"
++	     label="Include IM in Local Chat and Console" left="148" mouse_opaque="true"
+ 	     name="include_im_in_chat_history" radio_style="false" width="237" />
+ 	<check_box bottom="-85" enabled="true" follows="left|top"
+ 	     font="SansSerifSmall" height="16" initial_value="false"

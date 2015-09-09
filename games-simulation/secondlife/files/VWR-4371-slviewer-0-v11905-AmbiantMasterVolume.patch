@@ -1,0 +1,12 @@
+diff -urN linden/indra/newview/llvieweraudio.cpp linden-patched/indra/newview/llvieweraudio.cpp
+--- linden/indra/newview/llvieweraudio.cpp	2008-02-29 19:47:45.000000000 +0100
++++ linden-patched/indra/newview/llvieweraudio.cpp	2008-05-07 19:38:01.000000000 +0200
+@@ -237,7 +237,7 @@
+ 		F32 ambient_volume = gSavedSettings.getF32("AudioLevelAmbient");
+ 		gAudiop->mMaxWindGain = gSavedSettings.getBOOL("MuteAmbient") 
+ 			? 0.f 
+-			: ambient_volume * ambient_volume;
++			: ambient_volume * ambient_volume * gSavedSettings.getF32("AudioLevelMaster");
+ 		
+ 		last_camera_water_height = camera_water_height;
+ 		gAudiop->updateWind(gRelativeWindVec, camera_water_height);

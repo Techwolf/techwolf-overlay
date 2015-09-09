@@ -1,0 +1,36 @@
+diff -urN linden/indra/newview/llpreviewnotecard.cpp linden-patched/indra/newview/llpreviewnotecard.cpp
+--- linden/indra/newview/llpreviewnotecard.cpp	2008-10-17 17:55:32.000000000 +0200
++++ linden-patched/indra/newview/llpreviewnotecard.cpp	2009-02-13 13:46:13.000000000 +0100
+@@ -106,7 +106,6 @@
+ 	else
+ 	{
+ 		LLUICtrlFactory::getInstance()->buildFloater(this,"floater_preview_notecard.xml");
+-		childSetAction("Save",onClickSave,this);
+ 		
+ 		if( mAssetID.isNull() )
+ 		{
+@@ -117,6 +116,7 @@
+ 			}
+ 		}
+ 	}	
++	childSetAction("Save",onClickSave,this);
+ 
+ 	// only assert shape if not hosted in a multifloater
+ 	if (!getHost())
+diff -urN linden/indra/newview/skins/default/xui/en-us/floater_preview_notecard_keep_discard.xml linden-patched/indra/newview/skins/default/xui/en-us/floater_preview_notecard_keep_discard.xml
+--- linden/indra/newview/skins/default/xui/en-us/floater_preview_notecard_keep_discard.xml	2008-10-17 17:55:33.000000000 +0200
++++ linden-patched/indra/newview/skins/default/xui/en-us/floater_preview_notecard_keep_discard.xml	2009-02-13 13:45:51.000000000 +0100
+@@ -21,9 +21,12 @@
+ 	<button bottom="-391" enabled="true" follows="left|bottom" font="SansSerif"
+ 	     halign="center" height="20" label="Keep" label_selected="Keep" left="9"
+ 	     mouse_opaque="true" name="Keep" scale_image="true" width="100" />
++	<button bottom="-391" enabled="false" follows="left|bottom" font="SansSerif"
++	     halign="center" height="20" label="Save" label_selected="Save" left="114"
++	     mouse_opaque="false" name="Save" scale_image="true" width="100" />
+ 	<button bottom="-391" enabled="true" follows="left|bottom" font="SansSerif"
+ 	     halign="center" height="20" label="Discard" label_selected="Discard"
+-	     left="114" mouse_opaque="true" name="Discard" scale_image="true"
++	     left="219" mouse_opaque="true" name="Discard" scale_image="true"
+ 	     width="100" />
+ 	<line_editor bevel_style="in" border_style="line" border_thickness="1" bottom="-38"
+ 	     enabled="true" follows="left|top|right" font="SansSerif"

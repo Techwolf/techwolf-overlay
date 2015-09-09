@@ -1,0 +1,477 @@
+diff --git a/indra/llui/llcombobox.cpp b/indra/llui/llcombobox.cpp
+index 9a2e13b..19a85ea 100644
+--- a/indra/llui/llcombobox.cpp
++++ b/indra/llui/llcombobox.cpp
+@@ -450,6 +450,14 @@ void LLComboBox::setButtonVisible(BOOL visible)
+ 	}
+ }
+ 
++void LLComboBox::setTextEntryVisible(BOOL visible)
++{
++	if (mTextEntry)
++	{
++		mTextEntry->setVisible(visible);
++	}
++}
++
+ void LLComboBox::draw()
+ {
+ 	mButton->setEnabled(getEnabled() /*&& !mList->isEmpty()*/);
+diff --git a/indra/llui/llcombobox.h b/indra/llui/llcombobox.h
+index f4cf0fb..b7d463b 100644
+--- a/indra/llui/llcombobox.h
++++ b/indra/llui/llcombobox.h
+@@ -173,6 +173,7 @@ public:
+ 	void			setTextEntryCallback( void (*cb)(LLLineEditor*, void*) ) { mTextEntryCallback = cb; }
+ 
+ 	void			setButtonVisible(BOOL visible);
++	void			setTextEntryVisible(BOOL visible);
+ 
+ 	static void		onButtonDown(void *userdata);
+ 	static void		onItemSelected(LLUICtrl* item, void *userdata);
+diff --git a/indra/newview/app_settings/settings.xml b/indra/newview/app_settings/settings.xml
+index a780382..e5ea343 100644
+--- a/indra/newview/app_settings/settings.xml
++++ b/indra/newview/app_settings/settings.xml
+@@ -4180,6 +4180,50 @@
+       <key>Value</key>
+       <integer>0</integer>
+     </map>
++    <key>LoginMRUClearPassword</key>
++    <map>
++      <key>Comment</key>
++      <string>Clear password upon changing the avatar name on the login screen</string>
++      <key>Persist</key>
++      <integer>1</integer>
++      <key>Type</key>
++      <string>Boolean</string>
++      <key>Value</key>
++      <integer>1</integer>
++    </map>
++    <key>LoginMRUEnabled</key>
++    <map>
++      <key>Comment</key>
++      <string>Allow saving a list of alternate avatar names upon login</string>
++      <key>Persist</key>
++      <integer>1</integer>
++      <key>Type</key>
++      <string>Boolean</string>
++      <key>Value</key>
++      <integer>0</integer>
++    </map>
++    <key>LoginMRUList</key>
++    <map>
++      <key>Comment</key>
++      <string>List of previous avatar names presented at login</string>
++      <key>Persist</key>
++      <integer>1</integer>
++      <key>Type</key>
++      <string>LLSD</string>
++      <key>Value</key>
++      <array/>
++    </map>
++    <key>LoginMRULength</key>
++    <map>
++      <key>Comment</key>
++      <string>Number of names to store in LoginMRUList</string>
++      <key>Persist</key>
++      <integer>1</integer>
++      <key>Type</key>
++      <string>S32</string>
++      <key>Value</key>
++      <integer>10</integer>
++    </map>
+     <key>LSLFindCaseInsensitivity</key>
+         <map>
+         <key>Comment</key>
+diff --git a/indra/newview/llpanelgeneral.cpp b/indra/newview/llpanelgeneral.cpp
+index 43b0f4c..e7be859 100644
+--- a/indra/newview/llpanelgeneral.cpp
++++ b/indra/newview/llpanelgeneral.cpp
+@@ -40,6 +40,7 @@
+ #include "lluictrlfactory.h"
+ #include "llurlsimstring.h"
+ #include "llviewercontrol.h"
++#include "llstartup.h"
+ 
+ LLPanelGeneral::LLPanelGeneral()
+ {
+@@ -70,6 +71,9 @@ BOOL LLPanelGeneral::postBuild()
+ 	childSetValue("ui_scale_slider", gSavedSettings.getF32("UIScaleFactor"));
+ 	childSetValue("ui_auto_scale", gSavedSettings.getBOOL("UIAutoScale"));
+ 
++	childSetValue("save_names_checkbox", gSavedSettings.getBOOL("LoginMRUEnabled"));
++	childSetValue("clear_password_checkbox", gSavedSettings.getBOOL("LoginMRUClearPassword"));
++
+ 	LLComboBox* crash_behavior_combobox = getChild<LLComboBox>("crash_behavior_combobox");
+ 	crash_behavior_combobox->setCurrentByIndex(gCrashSettings.getS32(CRASH_BEHAVIOR_SETTING));
+ 	
+@@ -87,7 +91,9 @@ void LLPanelGeneral::apply()
+ {
+ 	LLComboBox* fade_out_combobox = getChild<LLComboBox>("fade_out_combobox");
+ 	gSavedSettings.setS32("RenderName", fade_out_combobox->getCurrentIndex());
+-	
++
++	gSavedSettings.setBOOL("LoginMRUEnabled", childGetValue("save_names_checkbox"));
++	gSavedSettings.setBOOL("LoginMRUClearPassword", childGetValue("clear_password_checkbox"));
+ 	gSavedSettings.setBOOL("LoginLastLocation", childGetValue("default_start_location").asString() == "MyLastLocation");
+ 	gSavedSettings.setBOOL("ShowStartLocation", childGetValue("show_location_checkbox"));
+ 	gSavedSettings.setBOOL("RenderHideGroupTitleAll", childGetValue("show_all_title_checkbox"));
+diff --git a/indra/newview/llpanellogin.cpp b/indra/newview/llpanellogin.cpp
+index af85c44..260f6c6 100644
+--- a/indra/newview/llpanellogin.cpp
++++ b/indra/newview/llpanellogin.cpp
+@@ -393,6 +393,33 @@ LLPanelLogin::LLPanelLogin(const LLRect &rect,
+ 	childSetPrevalidate("first_name_edit", LLLineEditor::prevalidatePrintableNoSpace);
+ 	childSetPrevalidate("last_name_edit", LLLineEditor::prevalidatePrintableNoSpace);
+ 
++	LLComboBox* name_combo = getChild<LLComboBox>("name_combo");
++	// Only works as intended with this combination of flags,
++	// and in this order of setting them, therefore overriding xui
++	name_combo->setAllowTextEntry(TRUE);
++	name_combo->setTextEntryVisible(FALSE);
++	// Send it down the line, or the invisible text entry covers up our normal
++	// input fields if placed after them in xui
++	sendChildToBack(getChildView("name_combo"));
++
++	bool mru_enabled = gSavedSettings.getBOOL("LoginMRUEnabled");
++	if (mru_enabled)
++	{
++		LLSD name_list = gSavedSettings.getLLSD("LoginMRUList");
++		if (name_list.isArray())
++		{
++			for (LLSD::array_iterator iter = name_list.endArray() - 1; iter != name_list.beginArray()-1; --iter)
++			{
++				if (iter->isMap() && iter->has("first") && iter->has("last"))
++				{
++					name_combo->add((*iter)["first"].asString() + " " + (*iter)["last"].asString(), *iter);
++				}
++			}
++		}
++		childSetCommitCallback("name_combo", onSelectLoginMRU, this);
++	}
++	setLoginMRUEnabled(mru_enabled);
++
+ 	childSetCommitCallback("password_edit", mungePassword);
+ 	childSetKeystrokeCallback("password_edit", onPassKey, this);
+ 	childSetUserData("password_edit", this);
+@@ -1214,3 +1241,40 @@ void LLPanelLogin::onServerComboLostFocus(LLFocusableElement* fe, void*)
+ 		onSelectServer(combo, NULL);	
+ 	}
+ }
++
++// static
++void LLPanelLogin::setLoginMRUEnabled(bool enabled)
++{
++	if (!sInstance)
++	{
++		return;
++	}
++
++	LLComboBox* combo = sInstance->getChild<LLComboBox>("name_combo");
++	if (!enabled) combo->removeall();
++	combo->setButtonVisible(enabled);
++	combo->setEnabled(enabled && combo->getItemCount() != 0);
++}
++
++//static
++void LLPanelLogin::onSelectLoginMRU(LLUICtrl* caller, void* user_data)
++{
++	LLPanelLogin* panel = (LLPanelLogin*) user_data;
++	LLComboBox* name_combo = (LLComboBox*) caller;
++	LLLineEditor* first_name_edit = panel->getChild<LLLineEditor>("first_name_edit");
++	LLLineEditor* last_name_edit = panel->getChild<LLLineEditor>("last_name_edit");
++	LLLineEditor* password_edit = panel->getChild<LLLineEditor>("password_edit");
++
++	LLSD selected_name = name_combo->getValue();
++	std::string first_name = selected_name["first"].asString();
++	std::string last_name = selected_name["last"].asString();
++
++	if (gSavedSettings.getBOOL("LoginMRUClearPassword")
++		&& (first_name_edit->getText() != first_name || last_name_edit->getText() != last_name))
++	{
++		password_edit->setText(LLStringUtil::null);
++	}
++	first_name_edit->setText(first_name);
++	last_name_edit->setText(last_name);
++	password_edit->setFocus(TRUE);
++}
+diff --git a/indra/newview/llpanellogin.h b/indra/newview/llpanellogin.h
+index 539997b..c986e6f 100644
+--- a/indra/newview/llpanellogin.h
++++ b/indra/newview/llpanellogin.h
+@@ -85,6 +85,7 @@ public:
+ 	// Remember password checkbox is set via gSavedSettings "RememberPassword"
+ 	static void setFields(const std::string& firstname, const std::string& lastname, 
+ 		const std::string& password);
++	static void setLoginMRUEnabled(bool enabled);
+ 
+ 	static void addServer(const std::string& server, S32 domain_name);
+ 	static void refreshLocation( bool force_visible );
+@@ -115,6 +116,7 @@ private:
+ 	static void onPassKey(LLLineEditor* caller, void* user_data);
+ 	static void onSelectServer(LLUICtrl*, void*);
+ 	static void onServerComboLostFocus(LLFocusableElement*, void*);
++	static void onSelectLoginMRU(LLUICtrl*, void*);
+ 	
+ private:
+ 	LLPointer<LLUIImage> mLogoImage;
+diff --git a/indra/newview/llstartup.cpp b/indra/newview/llstartup.cpp
+index 67996eb..49cb874 100644
+--- a/indra/newview/llstartup.cpp
++++ b/indra/newview/llstartup.cpp
+@@ -1353,6 +1353,49 @@ bool idle_startup()
+ 			gSavedSettings.setString("FirstName", firstname);
+ 			gSavedSettings.setString("LastName", lastname);
+ 
++			if (gSavedSettings.getBOOL("LoginMRUEnabled"))
++			{
++				LLSD mru_list = gSavedSettings.getLLSD("LoginMRUList");
++				if (mru_list.isArray())
++				{
++					// Prepend the current login name to the MRU
++					LLSD login_entry(LLSD::emptyMap());
++					login_entry["first"] = firstname;
++					login_entry["last"] = lastname;
++					mru_list.insert(0, login_entry);
++
++					const S32 names_max = gSavedSettings.getS32("LoginMRULength");
++					for (S32 i = 1; i != mru_list.size(); )
++					{
++						// Trim excess entries
++						if (i >= names_max)
++						{
++							mru_list.erase(i);
++							continue;
++						}
++						// Remove any other instances of the current name
++						login_entry = mru_list[i];
++						if (login_entry.isMap() && login_entry.has("first") && login_entry.has("last"))
++						{
++							if (login_entry["first"].asString() == firstname
++								&& login_entry["last"].asString() == lastname)
++							{
++								mru_list.erase(i);
++							}
++							else
++							{
++								++i;
++							}
++						}
++					}
++					gSavedSettings.setLLSD("LoginMRUList", mru_list);
++				}
++			}
++			else
++			{
++				gSavedSettings.setLLSD("LoginMRUList", LLSD::emptyArray());
++			}
++
+ 			if (gSavedSettings.getBOOL("RememberPassword"))
+ 			{
+ 				// Successful login means the password is valid, so save it.
+diff --git a/indra/newview/llviewercontrol.cpp b/indra/newview/llviewercontrol.cpp
+index 7a30b22..e167909 100644
+--- a/indra/newview/llviewercontrol.cpp
++++ b/indra/newview/llviewercontrol.cpp
+@@ -70,6 +70,8 @@
+ #include "llvosurfacepatch.h"
+ #include "llvowlsky.h"
+ #include "llrender.h"
++#include "llstartup.h"
++#include "llpanellogin.h"
+ 
+ #ifdef TOGGLE_HACKED_GODLIKE_VIEWER
+ BOOL 				gHackGodmode = FALSE;
+@@ -429,6 +431,31 @@ bool handleVoiceClientPrefsChanged(const LLSD& newvalue)
+ 	return true;
+ }
+ 
++bool handleLoginMRUPrefsChanged(const LLSD& newvalue)
++{
++	bool enabled = newvalue.asBoolean();
++	if (enabled)
++	{
++		// Initialize the list with the current name if logged in
++		if (LLStartUp::getStartupState() >= STATE_WORLD_INIT)
++		{
++			// list was previously empty, no need to go through sorting
++			LLSD names = LLSD::emptyArray();
++			names.append(LLSD::emptyMap());
++			names[0]["first"] = gSavedSettings.getString("FirstName");
++			names[0]["last"] = gSavedSettings.getString("LastName");
++			gSavedSettings.setLLSD("LoginMRUList", names);
++		}
++	}
++	else
++	{
++		// Clear the list of avatar names when disabled
++		gSavedSettings.setLLSD("LoginMRUList", LLSD::emptyArray());
++	}
++	LLPanelLogin::setLoginMRUEnabled(enabled);
++	return true;
++}
++
+ ////////////////////////////////////////////////////////////////////////////
+ 
+ void settings_setup_listeners()
+@@ -556,6 +583,7 @@ void settings_setup_listeners()
+ 	gSavedSettings.getControl("VoiceInputAudioDevice")->getSignal()->connect(boost::bind(&handleVoiceClientPrefsChanged, _1));
+ 	gSavedSettings.getControl("VoiceOutputAudioDevice")->getSignal()->connect(boost::bind(&handleVoiceClientPrefsChanged, _1));
+ 	gSavedSettings.getControl("LipSyncEnabled")->getSignal()->connect(boost::bind(&handleVoiceClientPrefsChanged, _1));	
++	gSavedSettings.getControl("LoginMRUEnabled")->getSignal()->connect(boost::bind(&handleLoginMRUPrefsChanged, _1));	
+ }
+ 
+ template <> eControlType get_control_type<U32>(const U32& in, LLSD& out) 
+diff --git a/indra/newview/skins/default/xui/en-us/panel_login.xml b/indra/newview/skins/default/xui/en-us/panel_login.xml
+index 2122ee7..b048f94 100644
+--- a/indra/newview/skins/default/xui/en-us/panel_login.xml
++++ b/indra/newview/skins/default/xui/en-us/panel_login.xml
+@@ -11,26 +11,28 @@
+ 	<string name="forgot_password_url">
+ 		http://secondlife.com/account/request.php
+ 	</string>
++	<combo_box name="name_combo" allow_text_entry="true" follows="left|bottom"
++	     font="SansSerif" left="32" bottom="30" width="252" height="20" mouse_opaque="true"/>
+ 	<text bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
+ 	     bottom="54" drop_shadow_visible="true" follows="left|bottom"
+ 	     font="SansSerif" h_pad="0" halign="left" height="16"
+-	     left="32" mouse_opaque="true" name="first_name_text" v_pad="0" width="120">
++	     left="32" mouse_opaque="true" name="first_name_text" v_pad="0" width="114">
+ 		First Name:
+ 	</text>
+ 	<line_editor bevel_style="in" border_style="line" border_thickness="1" bottom_delta="-24"
+ 	     follows="left|bottom" font="SansSerif" handle_edit_keys_directly="true"
+ 	     height="20" left="32" max_length="31" mouse_opaque="true"
+-	     name="first_name_edit" select_all_on_focus_received="true" width="120" />
++	     name="first_name_edit" select_all_on_focus_received="true" width="118" />
+ 	<text bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
+ 	     bottom="54" drop_shadow_visible="true" follows="left|bottom"
+ 	     font="SansSerif" h_pad="0" halign="left" height="16"
+-	     left="164" mouse_opaque="true" name="last_name_text" v_pad="0" width="120">
++	     left_delta="117" mouse_opaque="true" name="last_name_text" v_pad="0" width="114">
+ 		Last Name:
+ 	</text>
+ 	<line_editor bevel_style="in" border_style="line" border_thickness="1" bottom_delta="-24"
+ 	     follows="left|bottom" font="SansSerif" handle_edit_keys_directly="true"
+-	     height="20" left="164" max_length="31" mouse_opaque="true"
+-	     name="last_name_edit" select_all_on_focus_received="true" width="120" />
++	     height="20" left_delta="0" max_length="31" mouse_opaque="true"
++	     name="last_name_edit" select_all_on_focus_received="true" width="114" />
+ 	<text bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
+ 	     bottom="54" drop_shadow_visible="true" follows="left|bottom"
+ 	     font="SansSerif" h_pad="0" halign="left" height="16"
+diff --git a/indra/newview/skins/default/xui/en-us/panel_preferences_general.xml b/indra/newview/skins/default/xui/en-us/panel_preferences_general.xml
+index f784999..87be07c 100644
+--- a/indra/newview/skins/default/xui/en-us/panel_preferences_general.xml
++++ b/indra/newview/skins/default/xui/en-us/panel_preferences_general.xml
+@@ -2,22 +2,49 @@
+ <panel border="true" bottom="-409" enabled="true" follows="left|top|right|bottom"
+      height="408" label="General" left="102" mouse_opaque="true"
+      name="general_panel" width="517">
+-  <radio_group bottom="-45" draw_border="false" follows="left|bottom" height="40" left="151"
++	<text type="string" length="1" bottom="-25" follows="left|top" font="SansSerifSmall" h_pad="0"
++	     halign="left" height="16" left="10" name="alt_avatars_textbox" v_pad="0"
++	     width="394">
++		Recent Logins:
++	</text>
++	<check_box name="save_names_checkbox" follows="left|top"
++	     left="151" bottom_delta="0" width="149" height="16"
++	     label="Save name list" initial_value="true"
++	     radio_style="false" font="SansSerifSmall"
++	     tool_tip="Save a list of recently used avatar names.\nYou may wish to turn this off if more than one person has access to this computer."/>
++	<check_box bottom_delta="0" follows="left|top"
++	     font="SansSerifSmall" height="16" initial_value="false"
++	     label="Clear password when selecting" left_delta="105" mouse_opaque="true"
++		 tool_tip="Clears the password entry box when selecting a different avatar name at login."
++	     name="clear_password_checkbox" radio_style="false" width="200" />
++	<text type="string" length="1" bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
++	     bottom_delta="-22" drop_shadow_visible="true" enabled="true" follows="left|top"
++	     font="SansSerifSmall" h_pad="0" halign="left" height="10" left="10"
++	     mouse_opaque="true" name="start_location_textbox" v_pad="0" width="394">
++		Start Location:
++	</text>
++  <radio_group bottom_delta="-22" draw_border="false" follows="left|bottom" height="40" left="151"
+ 	     name="default_start_location" width="220">
+     <radio_item bottom="-20" height="20" left="0" name="MyHome" width="50"
+ 		  tool_tip="Log into my home location by default.">
+       My Home
+     </radio_item>
+-    <radio_item bottom="-20" height="20" left="100" name="MyLastLocation" width="50"
++    <radio_item bottom="-20" height="20" left="105" name="MyLastLocation" width="50"
+ 		  tool_tip="Log into my last location by default.">
+       My Last Location
+     </radio_item>
+   </radio_group>
+-  <check_box bottom="-44" enabled="true" follows="left|top"
++	<check_box bottom_delta="0" enabled="true" follows="left|top"
+        font="SansSerifSmall" height="16" initial_value="true"
+        label="Show Start Location on Login Screen" left="151" mouse_opaque="true"
+        name="show_location_checkbox" radio_style="false" width="256" />
+-	<combo_box bottom_delta="-25" follows="left|top" height="18" left="155"
++	<text type="string" length="1" bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
++	     bottom_delta="-25" drop_shadow_visible="true" enabled="true" follows="left|top"
++	     font="SansSerifSmall" h_pad="0" halign="left" height="10" left="10"
++	     mouse_opaque="true" name="show_names_textbox" v_pad="0" width="394">
++		Show Name Tags:
++	</text>
++	<combo_box bottom_delta="-4" follows="left|top" height="18" left="155"
+ 	     mouse_opaque="true" name="fade_out_combobox" width="146">
+ 		<combo_item name="Never" value="Never">
+ 			Never
+@@ -30,13 +57,14 @@
+ 		</combo_item>
+ 	</combo_box>
+ 	<check_box bottom_delta="-25" follows="left|top"
+-	     font="SansSerifSmall" height="16" initial_value="true"
+-	     label="Small Avatar Names" left="151" name="small_avatar_names_checkbox"
+-	     width="200" />
+-	<check_box bottom_delta="-18" follows="left|top"
+ 	     font="SansSerifSmall" height="16" initial_value="false"
+ 	     label="Hide My Name On My Screen" left="151" name="show_my_name_checkbox"
++	     width="180" />
++	<check_box bottom_delta="0" follows="left|top"
++	     font="SansSerifSmall" height="16" initial_value="true"
++	     label="Small Avatar Names" left_delta="180" name="small_avatar_names_checkbox"
+ 	     width="200" />
++	     width="149" />
+ 	<text type="string" length="1" bottom_delta="-24" follows="left|top" font="SansSerifSmall" h_pad="0"
+ 	     halign="left" height="16" left="10" name="group_titles_textbox" v_pad="0"
+ 	     width="394">
+@@ -44,12 +72,12 @@
+ 	</text>
+ 	<check_box bottom_delta="0" follows="left|top"
+ 	     font="SansSerifSmall" height="16" initial_value="false"
+-	     label="Hide All Group Titles" left="151" mouse_opaque="true"
+-	     name="show_all_title_checkbox" radio_style="false" width="256" />
+-	<check_box bottom_delta="-18" follows="left|top"
+-	     font="SansSerifSmall" height="16" initial_value="false"
+ 	     label="Hide My Group Title" left="151" name="show_my_title_checkbox"
+-	     radio_style="false" width="256" />
++	     radio_style="false" width="149" />
++	<check_box bottom_delta="0" follows="left|top"
++	     font="SansSerifSmall" height="16" initial_value="false"
++	     label="Hide All Group Titles" left_delta="180" mouse_opaque="true"
++	     name="show_all_title_checkbox" radio_style="false" width="200" />
+ 	<color_swatch border_color="0.45098 0.517647 0.607843 1" bottom="-210"
+ 	     can_apply_immediately="false" color="1 1 1 1"
+ 	     enabled="true" follows="left|top" height="48" label="" left="153"
+@@ -94,18 +122,6 @@
+ 	     name="show_search_panel" radio_style="false"
+ 	     tool_tip="Display the embedded search panel." width="256" />
+ 	<text type="string" length="1" bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
+-	     bottom="-20" drop_shadow_visible="true" enabled="true" follows="left|top"
+-	     font="SansSerifSmall" h_pad="0" halign="left" height="10" left="10"
+-	     mouse_opaque="true" name="start_location_textbox" v_pad="0" width="394">
+-		Start Location:
+-	</text>
+-	<text type="string" length="1" bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
+-	     bottom="-64" drop_shadow_visible="true" enabled="true" follows="left|top"
+-	     font="SansSerifSmall" h_pad="0" halign="left" height="10" left="10"
+-	     mouse_opaque="true" name="show_names_textbox" v_pad="0" width="394">
+-		Show Names:
+-	</text>
+-	<text type="string" length="1" bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
+ 	     bottom="-184" drop_shadow_visible="true" enabled="true" follows="left|top"
+ 	     font="SansSerifSmall" h_pad="0" halign="left" height="10" left="10"
+ 	     mouse_opaque="true" name="effects_color_textbox" v_pad="0" width="394">

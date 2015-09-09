@@ -1,0 +1,115 @@
+# This patch incorperates severl snowglobe patches that have been commited.
+# SNOW-334 SNOW-47 SNOW-517 SNOW-543
+# Partcial fix from SNOW-307, still need to do full port for viewer 2.0 code base. It got badly merged.
+# http://jira.secondlife.com/browse/SNOW-543?focusedCommentId=181462&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#action_181462
+# 
+# Added missing Linux_x86_64Manifest section to viewer_manifest that somehow got removed from the internial viewer 2.0 branch.
+--- indra/newview/CMakeLists.txt	(revision 3316)
++++ indra/newview/CMakeLists.txt	(working copy)
+@@ -1652,12 +1652,12 @@
+ 
+   add_dependencies(${VIEWER_BINARY_NAME} SLPlugin media_plugin_gstreamer010 media_plugin_webkit)
+ 
+-  if (NOT INSTALL)
++  if (PACKAGE)
+     add_custom_target(package ALL DEPENDS ${product}.tar.bz2)
+     add_dependencies(package linux-crash-logger-target)
+     add_dependencies(package linux-updater-target)
+     check_message_template(package)
+-  endif (NOT INSTALL)
++  endif (PACKAGE)
+ 
+   add_custom_command(
+     OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/.${product}.copy_touched
+--- ./indra/newview/viewer_manifest.py.org	2010-04-15 04:45:10.000000000 -0400
++++ ./indra/newview/viewer_manifest.py	2010-04-15 04:54:32.000000000 -0400
+@@ -793,6 +793,29 @@
+         # Create an appropriate gridargs.dat for this package, denoting required grid.
+         self.put_in_file(self.flags_list(), 'etc/gridargs.dat')
+ 
++        self.path("secondlife-bin","bin/do-not-directly-run-secondlife-bin")
++        self.path("../linux_crash_logger/linux-crash-logger","bin/linux-crash-logger.bin")
++        self.path("../linux_updater/linux-updater", "bin/linux-updater.bin")
++        self.path("../llplugin/slplugin/SLPlugin", "bin/SLPlugin")
++        if self.prefix("res-sdl"):
++            self.path("*")
++            # recurse
++            self.end_prefix("res-sdl")
++
++        # plugins
++        if self.prefix(src="", dst="bin/llplugin"):
++            self.path("../media_plugins/webkit/libmedia_plugin_webkit.so", "libmedia_plugin_webkit.so")
++            self.path("../media_plugins/gstreamer010/libmedia_plugin_gstreamer010.so", "libmedia_plugin_gstreamer.so")
++            self.end_prefix("bin/llplugin")
++
++        try:
++            self.path("../llcommon/libllcommon.so", "lib/libllcommon.so")
++            pass
++        except:
++            print "Skipping llcommon.so (assuming llcommon was linked statically)"
++            pass
++
++        self.path("featuretable_linux.txt")
+ 
+     def package_finish(self):
+         if 'installer_name' in self.args:
+@@ -843,36 +864,15 @@
+ 
+         # install either the libllkdu we just built, or a prebuilt one, in
+         # decreasing order of preference.  for linux package, this goes to bin/
+-        for lib, destdir in ("llkdu", "bin"), ("llcommon", "lib"):
+-            libfile = "lib%s.so" % lib
+-            try:
+-                self.path(self.find_existing_file(os.path.join(os.pardir, lib, libfile),
+-                    '../../libraries/i686-linux/lib_release_client/%s' % libfile), 
+-                      dst=os.path.join(destdir, libfile))
+-                # keep this one to preserve syntax, open source mangling removes previous lines
+-                pass
+-            except RuntimeError:
+-                print "Skipping %s - not found" % libfile
+-                pass
+-
+-        self.path("secondlife-bin","bin/do-not-directly-run-secondlife-bin")
+-
+-        self.path("../linux_crash_logger/linux-crash-logger","bin/linux-crash-logger.bin")
+-        self.path("../linux_updater/linux-updater", "bin/linux-updater.bin")
+-        self.path("../llplugin/slplugin/SLPlugin", "bin/SLPlugin")
+-        if self.prefix("res-sdl"):
+-            self.path("*")
+-            # recurse
+-            self.end_prefix("res-sdl")
+-
+-        # plugins
+-        if self.prefix(src="", dst="bin/llplugin"):
+-            self.path("../media_plugins/webkit/libmedia_plugin_webkit.so", "libmedia_plugin_webkit.so")
+-            self.path("../media_plugins/gstreamer010/libmedia_plugin_gstreamer010.so", "libmedia_plugin_gstreamer.so")
+-            self.end_prefix("bin/llplugin")
+-
+-        self.path("featuretable_linux.txt")
+-        #self.path("secondlife-i686.supp")
++        try:
++            self.path(self.find_existing_file('../llkdu/libllkdu.so',
++                '../../libraries/i686-linux/lib_release_client/libllkdu.so'), 
++                  dst='bin/libllkdu.so')
++            # keep this one to preserve syntax, open source mangling removes previous lines
++            pass
++        except:
++            print "Skipping libllkdu.so - not found"
++            pass
+ 
+         if self.prefix("../../libraries/i686-linux/lib_release_client", dst="lib"):
+             self.path("libapr-1.so.0")
+@@ -918,6 +918,13 @@
+             print "* Going strip-crazy on the packaged binaries, since this is a RELEASE build"
+             self.run_command("find %(d)r/bin %(d)r/lib -type f | xargs --no-run-if-empty strip -S" % {'d': self.get_dst_prefix()} ) # makes some small assumptions about our packaged dir structure
+ 
++class Linux_x86_64Manifest(LinuxManifest):
++    def construct(self):
++        super(Linux_x86_64Manifest, self).construct()
++
++        # support file for valgrind debug tool
++        self.path("secondlife-i686.supp")
++
+ ################################################################
+ 
+ if __name__ == "__main__":

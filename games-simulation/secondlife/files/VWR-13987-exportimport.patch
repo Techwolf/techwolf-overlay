@@ -1,0 +1,905 @@
+Index: indra/newview/llviewermenufile.cpp
+===================================================================
+--- indra/newview/llviewermenufile.cpp	(revision 2)
++++ indra/newview/llviewermenufile.cpp	(revision 5)
+@@ -345,6 +345,30 @@
+ 	LLFilePicker::instance().reset();						
+ }
+ 
++extern ImportTracker gImportTracker;
++
++class ImportLinkset : public view_listener_t
++{
++	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
++	{
++		const std::string filename = upload_pick((void*)LLFilePicker::FFLOAD_XML);
++	
++		if (filename.empty())
++			return true;
++	
++		llifstream importer(filename);
++		LLSD data;
++		LLSDSerialize::fromXMLDocument(data, importer);
++	
++		if (gImportTracker.getState() != ImportTracker::IDLE)
++			gImportTracker.clear();
++	
++		gImportTracker.import(data);
++		
++		return true;
++	}
++};
++
+ class LLFileEnableCloseWindow : public view_listener_t
+ {
+ 	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
+@@ -1046,6 +1070,7 @@
+ 	(new LLFileUploadSound())->registerListener(gMenuHolder, "File.UploadSound");
+ 	(new LLFileUploadAnim())->registerListener(gMenuHolder, "File.UploadAnim");
+ 	(new LLFileUploadBulk())->registerListener(gMenuHolder, "File.UploadBulk");
++	(new ImportLinkset())->registerListener(gMenuHolder, "File.ImportLinkset");
+ 	(new LLFileCloseWindow())->registerListener(gMenuHolder, "File.CloseWindow");
+ 	(new LLFileCloseAllWindows())->registerListener(gMenuHolder, "File.CloseAllWindows");
+ 	(new LLFileEnableCloseWindow())->registerListener(gMenuHolder, "File.EnableCloseWindow");
+Index: indra/newview/llviewerobjectlist.h
+===================================================================
+--- indra/newview/llviewerobjectlist.h	(revision 2)
++++ indra/newview/llviewerobjectlist.h	(revision 5)
+@@ -42,10 +42,13 @@
+ 
+ // project includes
+ #include "llviewerobject.h"
++#include "importtracker.h"
+ 
+ class LLNetMap;
+ class LLDebugBeacon;
+ 
++extern ImportTracker gImportTracker;
++
+ const U32 CLOSE_BIN_SIZE = 10;
+ const U32 NUM_BINS = 16;
+ 
+Index: indra/newview/importtracker.h
+===================================================================
+--- indra/newview/importtracker.h	(revision 0)
++++ indra/newview/importtracker.h	(revision 5)
+@@ -0,0 +1,52 @@
++/** 
++ * @file importtracker.h
++ * @brief A utility for importing linksets from XML.
++ * Discrete wuz here
++ */
++
++#ifndef IMPORTTRACKER_H
++#define IMPORTTRACKER_H
++
++#include "llagent.h"
++
++using namespace std;
++
++class ImportTracker
++{
++	public:
++		enum ImportState { IDLE, REZZING, COPYING, LINKING, POSITIONING };			
++		
++		ImportTracker() { state = IDLE; }
++		ImportTracker(LLSD &data) { state = IDLE; linkset = data; }
++		~ImportTracker() { localids.clear(); linkset.clear(); }
++	
++		void import(LLSD &file_data);
++		void clear();
++		void get_update(S32 newid, BOOL justCreated = false);
++		
++		const int getState() { return state; }
++		
++	protected:		
++		void send_vectors(LLSD &prim);
++		void send_shape(LLSD &prim);
++		void send_image(LLSD &prim);
++		void send_extras(LLSD &prim);
++		void update_next();
++		void link();
++		void wear(LLSD &prim);
++		void position(LLSD &prim);
++		void plywood_above_head();
++	
++	private:
++		int				state;
++		S32				last;
++		LLVector3			root;
++		std::list<S32>			localids;
++		LLSD				linkset;
++};
++
++extern ImportTracker gImportTracker;
++
++extern LLAgent gAgent;
++
++#endif
+
+Property changes on: indra/newview/importtracker.h
+___________________________________________________________________
+Added: svn:eol-style
+   + native
+
+Index: indra/newview/llviewermenu.cpp
+===================================================================
+--- indra/newview/llviewermenu.cpp	(revision 2)
++++ indra/newview/llviewermenu.cpp	(revision 5)
+@@ -57,6 +57,7 @@
+ #include "message.h"
+ #include "raytrace.h"
+ #include "llsdserialize.h"
++#include "llsdutil.h"
+ #include "lltimer.h"
+ #include "llvfile.h"
+ #include "llvolumemgr.h"
+@@ -2079,6 +2080,216 @@
+ 	}
+ };
+ 
++class LLObjectVisibleExport : public view_listener_t
++{
++	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
++	{
++		LLViewerObject* object = LLSelectMgr::getInstance()->getSelection()->getPrimaryObject();
++		bool new_value = (object != NULL);
++		
++		if (new_value)
++		{
++			new_value = !object->isAvatar() && object->permYouOwner() && object->permModify() && object->permCopy() && object->permTransfer();
++			// Disable for avatars, we can only export prims
++			//LLVOAvatar* avatar = find_avatar_from_object(object); 
++			//new_value = (avatar == NULL);
++		}
++		
++		gMenuHolder->findControl(userdata["control"].asString())->setValue(new_value);
++		
++		return true;
++	}
++};
++
++class LLObjectEnableExport : public view_listener_t
++{
++	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
++	{
++		LLViewerObject* object = LLSelectMgr::getInstance()->getSelection()->getPrimaryObject();
++		bool new_value = (object != NULL);
++		
++		if (new_value)
++		{
++			new_value = !object->isAvatar() && object->permYouOwner() && object->permModify() && object->permCopy() && object->permTransfer();
++			// Disable for avatars, we can only export prims
++			//LLVOAvatar* avatar = find_avatar_from_object(object); 
++			//new_value = (avatar == NULL);
++		}
++		
++		gMenuHolder->findControl(userdata["control"].asString())->setValue(new_value);
++		
++		return true;
++	}
++};
++
++void export_object()
++{
++	LLObjectSelectionHandle selection = LLSelectMgr::getInstance()->getSelection();
++	LLViewerObject* root_object = NULL;
++	LLViewerObject* object = NULL;
++	LLSelectNode* node = selection->getFirstRootNode();
++	
++	if (!node)
++		return;
++	
++	object = root_object = node->getObject();
++	
++	if (!object)
++		return;
++	
++	// Build a list of everything that we'll actually be exporting
++	LLDynamicArray<LLViewerObject*> export_objects;
++	
++	// Add the root object to the export list
++	export_objects.put(object);
++	
++	// Iterate over all of this objects children
++	LLViewerObject::child_list_t child_list = object->getChildren();
++	
++	for (LLViewerObject::child_list_t::iterator i = child_list.begin(); i != child_list.end(); ++i)
++	{
++		LLViewerObject* child = *i;
++		// Put the child objects on the export list
++		export_objects.put(child);
++	}
++	
++	// Open the file save dialog
++	LLFilePicker& file_picker = LLFilePicker::instance();
++	
++	if (!file_picker.getSaveFile(LLFilePicker::FFSAVE_XML))
++		return; // User canceled save.
++	
++	std::string file_name = file_picker.getFirstFile();
++	
++	// Create an LLSD object that will hold the entire tree structure that can be serialized to a file
++	LLSD llsd;
++	
++	S32 object_index = 0;
++	
++	while ((object_index < export_objects.count()))
++	{
++		object = export_objects.get(object_index++);
++		LLUUID id = object->getID();
++	
++		llinfos << "Exporting prim " << object->getID().asString() << llendl;
++	
++		// Create an LLSD object that represents this prim. It will be injected in to the overall LLSD
++		// tree structure
++		LLSD prim_llsd;
++	
++		if (object_index == 1)
++		{
++			LLVOAvatar* avatar = find_avatar_from_object(object);
++			if (avatar)
++			{
++				LLViewerJointAttachment* attachment = avatar->getTargetAttachmentPoint(object);
++				U8 attachment_id = 0;
++				
++				if (attachment)
++				{
++					for (LLVOAvatar::attachment_map_t::iterator iter = avatar->mAttachmentPoints.begin();
++										iter != avatar->mAttachmentPoints.end(); ++iter)
++					{
++						if (iter->second == attachment)
++						{
++							attachment_id = iter->first;
++							break;
++						}
++					}
++				}
++				else
++				{
++					// interpret 0 as "default location"
++					attachment_id = 0;
++				}
++				
++				prim_llsd["Attachment"] = attachment_id;
++				prim_llsd["attachpos"] = object->getPosition().getValue();
++				prim_llsd["attachrot"] = ll_sd_from_quaternion(object->getRotation());
++			}
++			
++			prim_llsd["position"] = LLVector3(0, 0, 0).getValue();
++			prim_llsd["rotation"] = ll_sd_from_quaternion(LLQuaternion(0.0f, 0.0f, 0.0f, 1.0f));
++		}
++		else
++		{
++			prim_llsd["position"] = object->getPosition().getValue();
++			prim_llsd["rotation"] = ll_sd_from_quaternion(object->getRotation());
++		}
++	
++		// Transforms
++		prim_llsd["scale"] = object->getScale().getValue();
++		// Flags
++		prim_llsd["shadows"] = object->flagCastShadows();
++		prim_llsd["phantom"] = object->flagPhantom();
++		prim_llsd["physical"] = (BOOL)(object->mFlags & FLAGS_USE_PHYSICS);
++
++		// Volume params
++		LLVolumeParams params = object->getVolume()->getParams();
++		prim_llsd["volume"] = params.asLLSD();
++
++		// Extra params
++		if (object->isFlexible())
++		{
++			// Flexible
++			LLFlexibleObjectData* flex = (LLFlexibleObjectData*)object->getParameterEntry(LLNetworkData::PARAMS_FLEXIBLE);
++			prim_llsd["flexible"] = flex->asLLSD();
++		}
++		if (object->getParameterEntryInUse(LLNetworkData::PARAMS_LIGHT))
++		{
++			// Light
++			LLLightParams* light = (LLLightParams*)object->getParameterEntry(LLNetworkData::PARAMS_LIGHT);
++			prim_llsd["light"] = light->asLLSD();
++		}
++		if (object->getParameterEntryInUse(LLNetworkData::PARAMS_SCULPT))
++		{
++			// Sculpt
++			LLSculptParams* sculpt = (LLSculptParams*)object->getParameterEntry(LLNetworkData::PARAMS_SCULPT);
++			prim_llsd["sculpt"] = sculpt->asLLSD();
++		}
++
++		// Textures
++		LLSD te_llsd;
++		U8 te_count = object->getNumTEs();
++		
++		for (U8 i = 0; i < te_count; i++)
++		{
++			te_llsd.append(object->getTE(i)->asLLSD());
++		}
++		
++		prim_llsd["textures"] = te_llsd;
++
++		// Changed to use link numbers zero-indexed.
++		llsd[object_index - 1] = prim_llsd;
++	}
++
++	// Create a file stream and write to it
++	llofstream export_file(file_name);
++	LLSDSerialize::toPrettyXML(llsd, export_file);
++	export_file.close();
++}
++
++class LLObjectExport : public view_listener_t
++{
++	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
++	{
++		LLViewerObject* object = LLSelectMgr::getInstance()->getSelection()->getPrimaryObject();
++		
++		if (!object)
++			return true;
++		
++		//LLVOAvatar* avatar = find_avatar_from_object(object); 
++		if (object->isAvatar())
++			return true;
++		// Can't export avatars (at least not yet...)
++		
++		//if (!avatar)
++		export_object();
++		
++		return true;
++	}
++};
++
+ bool handle_go_to()
+ {
+ 	// JAMESDEBUG try simulator autopilot
+@@ -7539,6 +7750,8 @@
+ 	addMenu(new LLSelfEnableRemoveAllAttachments(), "Self.EnableRemoveAllAttachments");
+ 
+ 	 // Avatar pie menu
++	addMenu(new LLObjectVisibleExport(), "Object.VisibleExport");
++	addMenu(new LLObjectEnableExport(), "Object.EnableExport");
+ 	addMenu(new LLObjectMute(), "Avatar.Mute");
+ 	addMenu(new LLAvatarAddFriend(), "Avatar.AddFriend");
+ 	addMenu(new LLAvatarFreeze(), "Avatar.Freeze");
+@@ -7563,6 +7776,7 @@
+ 	addMenu(new LLObjectAttachToAvatar(), "Object.AttachToAvatar");
+ 	addMenu(new LLObjectReturn(), "Object.Return");
+ 	addMenu(new LLObjectReportAbuse(), "Object.ReportAbuse");
++	addMenu(new LLObjectExport(), "Object.Export");
+ 	addMenu(new LLObjectMute(), "Object.Mute");
+ 	addMenu(new LLObjectBuy(), "Object.Buy");
+ 	addMenu(new LLObjectEdit(), "Object.Edit");
+Index: indra/newview/llviewermenufile.h
+===================================================================
+--- indra/newview/llviewermenufile.h	(revision 2)
++++ indra/newview/llviewermenufile.h	(revision 5)
+@@ -34,9 +34,11 @@
+ 
+ #include "llassettype.h"
+ #include "llinventorytype.h"
++#include "importtracker.h"
+ 
+ class LLTransactionID;
+ 
++extern ImportTracker gImportTracker;
+ 
+ void init_menu_file();
+ 
+Index: indra/newview/importtracker.cpp
+===================================================================
+--- indra/newview/importtracker.cpp	(revision 0)
++++ indra/newview/importtracker.cpp	(revision 5)
+@@ -0,0 +1,395 @@
++/** 
++ * @file importtracker.cpp
++ * @brief A utility for importing linksets from XML.
++ * Discrete wuz here
++ */
++
++#include "llviewerprecompiledheaders.h"
++
++#include "llframetimer.h"
++#include "llprimitive.h"
++#include "llviewerregion.h"
++#include "llvolumemessage.h"
++
++#include "importtracker.h"
++
++ImportTracker gImportTracker;
++
++extern LLAgent gAgent;
++
++void ImportTracker::import(LLSD& file_data)
++{
++	linkset = file_data;
++	state = REZZING;
++	llinfos << "IMPORTED, REZZING.." << llendl;
++	plywood_above_head();
++}
++
++void ImportTracker::clear()
++{
++	localids.clear();
++	linkset.clear();
++	state = IDLE;
++}
++
++void ImportTracker::get_update(S32 newid, BOOL justCreated)
++{
++	switch (state)
++	{
++		case REZZING:
++			if (justCreated && localids.size() < linkset.size())
++			{
++				localids.push_back(newid);
++				localids.sort();
++				localids.unique();
++				
++				if (localids.size() < linkset.size())
++					//plywood_above_head();
++					return;
++				else
++				{
++					for (int i = 0; i < linkset.size(); i++)
++					{
++						linkset[i]["LocalID"] = localids.front();
++						localids.pop_front();
++					}
++					
++					llinfos << "FINISHED REZZING, UPDATING.." << llendl;
++					state = COPYING;
++					update_next();
++				}
++			}
++		break;
++		case COPYING:
++			for (LLSD::array_iterator prim = linkset.beginArray(); prim != linkset.endArray(); ++prim)
++			{
++				if ((*prim)["LocalID"].asInteger() == newid)
++					(*prim)["Received"] = true;
++			}
++			update_next();
++		break;
++		case LINKING:
++			link();
++		break;
++		case POSITIONING:
++			if (newid == linkset[0]["LocalID"].asInteger())
++			{
++				position(linkset[0]);
++				llinfos << "POSITIONED, IMPORT COMPLETED" << llendl;
++				clear();
++			}
++		break;
++	}
++}
++
++void ImportTracker::send_vectors(LLSD& prim)
++{
++	LLVector3 position = prim["position"] + root;
++	
++	LLSD rot = prim["rotation"];
++	LLQuaternion rotq;
++	rotq.mQ[VX] = (F32)(rot[0].asReal());
++	rotq.mQ[VY] = (F32)(rot[1].asReal());
++	rotq.mQ[VZ] = (F32)(rot[2].asReal());
++	rotq.mQ[VW] = (F32)(rot[3].asReal());
++	LLVector3 rotation = rotq.packToVector3();
++	LLVector3 scale = prim["scale"];
++	U8 data[256];
++	
++	LLMessageSystem* msg = gMessageSystem;
++	msg->newMessageFast(_PREHASH_MultipleObjectUpdate);
++	msg->nextBlockFast(_PREHASH_AgentData);
++	msg->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
++	msg->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
++	
++	msg->nextBlockFast(_PREHASH_ObjectData);
++	msg->addU32Fast(_PREHASH_ObjectLocalID, prim["LocalID"].asInteger());
++	msg->addU8Fast(_PREHASH_Type, U8(0x01));
++	htonmemcpy(&data[0], &(position.mV), MVT_LLVector3, 12);
++	msg->addBinaryDataFast(_PREHASH_Data, data, 12);
++	
++	msg->nextBlockFast(_PREHASH_ObjectData);
++	msg->addU32Fast(_PREHASH_ObjectLocalID, prim["LocalID"].asInteger());
++	msg->addU8Fast(_PREHASH_Type, U8(0x02));
++	htonmemcpy(&data[0], &(rotation.mV), MVT_LLQuaternion, 12); 
++	msg->addBinaryDataFast(_PREHASH_Data, data, 12);
++	
++	msg->nextBlockFast(_PREHASH_ObjectData);
++	msg->addU32Fast(_PREHASH_ObjectLocalID, prim["LocalID"].asInteger());
++	msg->addU8Fast(_PREHASH_Type, U8(0x04));
++	htonmemcpy(&data[0], &(scale.mV), MVT_LLVector3, 12); 
++	msg->addBinaryDataFast(_PREHASH_Data, data, 12);
++	
++	msg->sendReliable(gAgent.getRegion()->getHost());
++}
++
++void ImportTracker::send_shape(LLSD& prim)
++{
++	LLMessageSystem* msg = gMessageSystem;
++	msg->newMessageFast(_PREHASH_ObjectShape);
++	msg->nextBlockFast(_PREHASH_AgentData);
++	msg->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
++	msg->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
++	
++	msg->nextBlockFast(_PREHASH_ObjectData);
++	msg->addU32Fast(_PREHASH_ObjectLocalID, prim["LocalID"].asInteger());
++	
++	LLVolumeParams params;
++	params.fromLLSD(prim["volume"]);
++	LLVolumeMessage::packVolumeParams(&params, msg);
++	
++	msg->sendReliable(gAgent.getRegion()->getHost());
++}
++
++void ImportTracker::send_image(LLSD& prim)
++{
++	LLMessageSystem* msg = gMessageSystem;
++	msg->newMessageFast(_PREHASH_ObjectImage);
++	msg->nextBlockFast(_PREHASH_AgentData);
++	msg->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
++	msg->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
++	
++	msg->nextBlockFast(_PREHASH_ObjectData);
++	msg->addU32Fast(_PREHASH_ObjectLocalID, prim["LocalID"].asInteger());
++	msg->addStringFast(_PREHASH_MediaURL, NULL);
++	
++	LLPrimitive obj;
++	LLSD tes = prim["textures"];
++	obj.setNumTEs(U8(tes.size()));
++	
++	for (int i = 0; i < tes.size(); i++)
++	{
++		LLTextureEntry tex;
++		tex.fromLLSD(tes[i]);
++		obj.setTE(U8(i), tex);
++	}
++	
++	obj.packTEMessage(gMessageSystem);
++	
++	msg->sendReliable(gAgent.getRegion()->getHost());
++}
++
++void ImportTracker::send_extras(LLSD& prim)
++{	
++	LLMessageSystem* msg = gMessageSystem;
++	msg->newMessageFast(_PREHASH_ObjectExtraParams);
++	msg->nextBlockFast(_PREHASH_AgentData);
++	msg->addUUIDFast(_PREHASH_AgentID, gAgent.getID() );
++	msg->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
++	
++	LLPrimitive obj;
++	
++	if (prim.has("flexible"))
++	{
++		LLFlexibleObjectData flexi;
++		flexi.fromLLSD(prim["flexible"]);
++		U8 tmp[MAX_OBJECT_PARAMS_SIZE];
++		LLDataPackerBinaryBuffer dpb(tmp, MAX_OBJECT_PARAMS_SIZE);
++		
++		if (flexi.pack(dpb))
++		{
++			U32 datasize = (U32)dpb.getCurrentSize();
++			
++			msg->nextBlockFast(_PREHASH_ObjectData);
++			msg->addU32Fast(_PREHASH_ObjectLocalID, prim["LocalID"].asInteger());
++
++			msg->addU16Fast(_PREHASH_ParamType, 0x10);
++			msg->addBOOLFast(_PREHASH_ParamInUse, true);
++
++			msg->addU32Fast(_PREHASH_ParamSize, datasize);
++			msg->addBinaryDataFast(_PREHASH_ParamData, tmp, datasize);
++		}
++	}
++	
++	if (prim.has("light"))
++	{
++		LLLightParams light;
++		light.fromLLSD(prim["light"]);
++		
++		U8 tmp[MAX_OBJECT_PARAMS_SIZE];
++		LLDataPackerBinaryBuffer dpb(tmp, MAX_OBJECT_PARAMS_SIZE);
++		
++		if (light.pack(dpb))
++		{
++			U32 datasize = (U32)dpb.getCurrentSize();
++			
++			msg->nextBlockFast(_PREHASH_ObjectData);
++			msg->addU32Fast(_PREHASH_ObjectLocalID, prim["LocalID"].asInteger());
++
++			msg->addU16Fast(_PREHASH_ParamType, 0x20);
++			msg->addBOOLFast(_PREHASH_ParamInUse, true);
++
++			msg->addU32Fast(_PREHASH_ParamSize, datasize);
++			msg->addBinaryDataFast(_PREHASH_ParamData, tmp, datasize);
++		}
++	}
++	
++	if (prim.has("sculpt"))
++	{
++		LLSculptParams sculpt;
++		sculpt.fromLLSD(prim["sculpt"]);
++		
++		U8 tmp[MAX_OBJECT_PARAMS_SIZE];
++		LLDataPackerBinaryBuffer dpb(tmp, MAX_OBJECT_PARAMS_SIZE);
++		
++		if (sculpt.pack(dpb))
++		{
++			U32 datasize = (U32)dpb.getCurrentSize();
++			
++			msg->nextBlockFast(_PREHASH_ObjectData);
++			msg->addU32Fast(_PREHASH_ObjectLocalID, prim["LocalID"].asInteger());
++
++			msg->addU16Fast(_PREHASH_ParamType, 0x30);
++			msg->addBOOLFast(_PREHASH_ParamInUse, true);
++
++			msg->addU32Fast(_PREHASH_ParamSize, datasize);
++			msg->addBinaryDataFast(_PREHASH_ParamData, tmp, datasize);
++		}
++	}
++	
++	msg->sendReliable(gAgent.getRegion()->getHost());
++}
++
++void ImportTracker::update_next()
++{
++	int received = 0;
++	
++	for (LLSD::array_iterator prim = linkset.beginArray(); prim != linkset.endArray(); ++prim)
++	{
++		if (!(*prim).has("Updated"))
++		{
++			send_shape(*prim);
++			send_image(*prim);
++			send_extras(*prim);
++			send_vectors(*prim);
++			(*prim)["Updated"] = true;
++			return;
++		}
++		else if ((*prim).has("Received"))
++			++received;
++	}
++	
++	if (received == linkset.size())
++	{
++		llinfos << "FINISHED UPDATING, LINKING.." << llendl;
++		state = LINKING;
++		link();
++	}
++}
++
++void ImportTracker::link()
++{	
++	LLMessageSystem* msg = gMessageSystem;
++	msg->newMessageFast(_PREHASH_ObjectLink);
++	msg->nextBlockFast(_PREHASH_AgentData);
++	msg->addUUIDFast(_PREHASH_AgentID, gAgent.getID() );
++	msg->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
++	
++	for (LLSD::array_iterator prim = linkset.beginArray(); prim != linkset.endArray(); ++prim)
++	{
++		msg->nextBlockFast(_PREHASH_ObjectData);
++		msg->addU32Fast(_PREHASH_ObjectLocalID, (*prim)["LocalID"].asInteger());		
++	}
++	
++	msg->sendReliable(gAgent.getRegion()->getHost());
++	
++	llinfos << "FINISHED IMPORT" << llendl;
++	
++	if (linkset[0].has("Attachment"))
++	{
++		llinfos << "OBJECT IS ATTACHMENT, WAITING FOR POSITION PACKETS.." << llendl;
++		state = POSITIONING;
++		wear(linkset[0]);
++	}
++	else
++		clear();
++}
++
++void ImportTracker::wear(LLSD &prim)
++{
++	LLMessageSystem* msg = gMessageSystem;
++	msg->newMessageFast(_PREHASH_ObjectAttach);
++	msg->nextBlockFast(_PREHASH_AgentData);
++	msg->addUUIDFast(_PREHASH_AgentID, gAgent.getID() );
++	msg->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
++	msg->addU8Fast(_PREHASH_AttachmentPoint, U8(prim["Attachment"].asInteger()));
++	
++	msg->nextBlockFast(_PREHASH_ObjectData);
++	msg->addU32Fast(_PREHASH_ObjectLocalID, prim["LocalID"].asInteger());
++	msg->addQuatFast(_PREHASH_Rotation, LLQuaternion(0.0f, 0.0f, 0.0f, 1.0f));
++	
++	msg->sendReliable(gAgent.getRegion()->getHost());
++}
++
++void ImportTracker::position(LLSD &prim)
++{
++	LLVector3 position = prim["attachpos"];
++	
++	LLSD rot = prim["attachrot"];
++	LLQuaternion rotq;
++	rotq.mQ[VX] = (F32)(rot[0].asReal());
++	rotq.mQ[VY] = (F32)(rot[1].asReal());
++	rotq.mQ[VZ] = (F32)(rot[2].asReal());
++	rotq.mQ[VW] = (F32)(rot[3].asReal());
++	LLVector3 rotation = rotq.packToVector3();
++	U8 data[256];
++	
++	LLMessageSystem* msg = gMessageSystem;
++	msg->newMessageFast(_PREHASH_MultipleObjectUpdate);
++	msg->nextBlockFast(_PREHASH_AgentData);
++	msg->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
++	msg->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
++	
++	msg->nextBlockFast(_PREHASH_ObjectData);
++	msg->addU32Fast(_PREHASH_ObjectLocalID, prim["LocalID"].asInteger());
++	msg->addU8Fast(_PREHASH_Type, U8(0x01 | 0x08));
++	htonmemcpy(&data[0], &(position.mV), MVT_LLVector3, 12);
++	msg->addBinaryDataFast(_PREHASH_Data, data, 12);
++	
++	msg->nextBlockFast(_PREHASH_ObjectData);
++	msg->addU32Fast(_PREHASH_ObjectLocalID, prim["LocalID"].asInteger());
++	msg->addU8Fast(_PREHASH_Type, U8(0x02 | 0x08));
++	htonmemcpy(&data[0], &(rotation.mV), MVT_LLQuaternion, 12); 
++	msg->addBinaryDataFast(_PREHASH_Data, data, 12);
++	
++	msg->sendReliable(gAgent.getRegion()->getHost());
++}
++
++void ImportTracker::plywood_above_head()
++{
++	for (int i = 0; i < linkset.size(); i++)
++	{
++		LLMessageSystem* msg = gMessageSystem;
++		msg->newMessageFast(_PREHASH_ObjectAdd);
++		msg->nextBlockFast(_PREHASH_AgentData);
++		msg->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
++		msg->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
++		msg->addUUIDFast(_PREHASH_GroupID, gAgent.getGroupID());
++		msg->nextBlockFast(_PREHASH_ObjectData);
++		msg->addU8Fast(_PREHASH_Material, 3);
++		msg->addU32Fast(_PREHASH_AddFlags, 0);
++		LLVolumeParams	volume_params;
++		volume_params.setType(0x01, 0x10);
++		volume_params.setBeginAndEndS(0.f, 1.f);
++		volume_params.setBeginAndEndT(0.f, 1.f);
++		volume_params.setRatio(1, 1);
++		volume_params.setShear(0, 0);
++		LLVolumeMessage::packVolumeParams(&volume_params, msg);
++		msg->addU8Fast(_PREHASH_PCode, 9);
++		msg->addVector3Fast(_PREHASH_Scale, LLVector3(0.5f, 0.5f, 0.5f));
++		LLQuaternion rot;
++		msg->addQuatFast(_PREHASH_Rotation, rot);
++		LLViewerRegion *region = gAgent.getRegion();
++		
++		if (!localids.size())
++			root = region->getPosRegionFromGlobal(gAgent.getPositionGlobal()) + LLVector3(0.0f, 0.0f, 2.0f);
++		
++		msg->addVector3Fast(_PREHASH_RayStart, root);
++		msg->addVector3Fast(_PREHASH_RayEnd, root);
++		msg->addU8Fast(_PREHASH_BypassRaycast, (U8)TRUE );
++		msg->addU8Fast(_PREHASH_RayEndIsIntersection, (U8)FALSE );
++		msg->addU8Fast(_PREHASH_State, (U8)0);
++		msg->addUUIDFast(_PREHASH_RayTargetID, LLUUID::null);
++		msg->sendReliable(region->getHost());
++	}
++}
+
+Property changes on: indra/newview/importtracker.cpp
+___________________________________________________________________
+Added: svn:eol-style
+   + native
+
+Index: indra/newview/llviewerobjectlist.cpp
+===================================================================
+--- indra/newview/llviewerobjectlist.cpp	(revision 2)
++++ indra/newview/llviewerobjectlist.cpp	(revision 5)
+@@ -77,6 +77,8 @@
+ extern F32 gMinObjectDistance;
+ extern BOOL gAnimateTextures;
+ 
++extern ImportTracker gImportTracker;
++
+ void dialog_refresh_all();
+ 
+ #define CULL_VIS
+@@ -514,6 +516,9 @@
+ 			}
+ 			processUpdateCore(objectp, user_data, i, update_type, NULL, justCreated);
+ 		}
++		
++		if (gImportTracker.getState() != ImportTracker::IDLE && objectp && objectp->permYouOwner())
++			gImportTracker.get_update(local_id, justCreated);
+ 	}
+ 
+ 	LLVOAvatar::cullAvatarsByPixelArea();
+Index: indra/newview/skins/default/xui/en-us/menu_viewer.xml
+===================================================================
+--- indra/newview/skins/default/xui/en-us/menu_viewer.xml	(revision 2)
++++ indra/newview/skins/default/xui/en-us/menu_viewer.xml	(revision 5)
+@@ -28,6 +28,9 @@
+ 		     name="Bulk Upload" width="243">
+ 			<on_click function="File.UploadBulk" userdata="" />
+ 		</menu_item_call>
++		<menu_item_call enabled="true" label="Import Linkset" mouse_opaque="true" name="Import Linkset">
++			<on_click function="File.ImportLinkset" userdata="" />
++		</menu_item_call>
+ 		<menu_item_separator bottom="-94" enabled="true" height="8" label="-----------" left="0"
+ 		     mouse_opaque="true" name="separator" width="243" />
+ 		<menu_item_call bottom="-113" enabled="true" height="19" label="Close Window" left="0"
+Index: indra/newview/skins/default/xui/en-us/menu_pie_object.xml
+===================================================================
+--- indra/newview/skins/default/xui/en-us/menu_pie_object.xml	(revision 2)
++++ indra/newview/skins/default/xui/en-us/menu_pie_object.xml	(revision 5)
+@@ -51,8 +51,12 @@
+ 				<on_click function="Object.ReportAbuse" />
+ 				<on_enable function="Object.EnableReportAbuse" />
+ 			</menu_item_call>
++			<menu_item_call enabled="false" hidden="false" label="Export" mouse_opaque="true" name="Export">
++				<on_click function="Object.Export" />
++				<on_visible function="Object.VisibleExport" />
++				<on_enable function="Object.EnableExport" />
++			</menu_item_call>
+ 			<menu_item_separator />
+-			<menu_item_separator />
+ 			<menu_item_call enabled="false" label="Mute" mouse_opaque="true" name="Object Mute">
+ 				<on_click function="Object.Mute" />
+ 				<on_enable function="Object.EnableMute" />
+Index: indra/newview/skins/default/xui/en-us/menu_pie_avatar.xml
+===================================================================
+--- indra/newview/skins/default/xui/en-us/menu_pie_avatar.xml	(revision 2)
++++ indra/newview/skins/default/xui/en-us/menu_pie_avatar.xml	(revision 5)
+@@ -30,7 +30,11 @@
+ 		<menu_item_call enabled="true" label="Group Invite..." mouse_opaque="true" name="Invite...">
+ 			<on_click function="Avatar.InviteToGroup" />
+ 		</menu_item_call>
+-		<menu_item_separator />
++		<menu_item_call enabled="false" hidden="false" label="Export" mouse_opaque="true" name="Export">
++			<on_click function="Object.Export" />
++			<on_visible function="Object.VisibleExport" />
++			<on_enable function="Object.EnableExport" />
++		</menu_item_call>
+ 		<menu_item_call enabled="false" label="Eject..." mouse_opaque="true" name="Eject...">
+ 			<on_click function="Avatar.Eject" />
+ 			<on_enable function="Avatar.EnableFreezeEject" />
+Index: indra/newview/skins/default/xui/en-us/menu_pie_attachment.xml
+===================================================================
+--- indra/newview/skins/default/xui/en-us/menu_pie_attachment.xml	(revision 2)
++++ indra/newview/skins/default/xui/en-us/menu_pie_attachment.xml	(revision 5)
+@@ -4,11 +4,15 @@
+ 		<on_click function="Attachment.Drop" />
+ 		<on_enable function="Attachment.EnableDrop" />
+ 	</menu_item_call>
++	<menu_item_call enabled="false" hidden="false" label="Export" mouse_opaque="true" name="Export">
++		<on_click function="Object.Export" />
++		<on_visible function="Object.VisibleExport" />
++		<on_enable function="Object.EnableExport" />
++	</menu_item_call>
+ 	<menu_item_separator />
+ 	<menu_item_separator />
+ 	<menu_item_separator />
+ 	<menu_item_separator />
+-	<menu_item_separator />
+ 	<menu_item_call enabled="false" label="Detach" mouse_opaque="true" name="Detach">
+ 		<on_click function="Attachment.Detach" />
+ 		<on_enable function="Attachment.EnableDetach" />
+Index: indra/newview/CMakeLists.txt
+===================================================================
+--- indra/newview/CMakeLists.txt	(revision 2)
++++ indra/newview/CMakeLists.txt	(revision 5)
+@@ -61,6 +61,7 @@
+     )
+ 
+ set(viewer_SOURCE_FILES
++	importtracker.cpp
+     llagent.cpp
+     llagentdata.cpp
+     llagentlanguage.cpp
+@@ -454,6 +455,7 @@
+     CMakeLists.txt
+     ViewerInstall.cmake
+ 
++	importtracker.h
+     llagent.h
+     llagentdata.h
+     llagentlanguage.h

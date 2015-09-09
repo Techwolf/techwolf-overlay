@@ -1,0 +1,21 @@
+diff --git a/indra/newview/llfloaterpreference.h b/indra/newview/llfloaterpreference.h
+index bfa2499..e54b7f6 100644
+--- a/indra/newview/llfloaterpreference.h
++++ b/indra/newview/llfloaterpreference.h
+@@ -49,6 +49,7 @@ class LLPanelAudioPrefs;
+ class LLPanelDebug;
+ class LLPanelNetwork;
+ class LLPanelWeb;
++class LLPanelDatabase;
+ class LLMessageSystem;
+ class LLPrefsChat;
+ class LLPrefsVoice;
+@@ -91,6 +92,7 @@ private:
+ 	LLPanelWeb				*mWebPanel;
+ 	LLPanelMsgs				*mMsgPanel;
+ 	LLPanelLCD				*mLCDPanel;
++	LLPanelDatabase				*mDBPanel;
+ };
+ 
+ // Floater to control preferences (display, audio, bandwidth, general.
+diff --git a/indra/newview/llfloaterreporter.cpp b/indra/newview/llfloaterreporter.cpp

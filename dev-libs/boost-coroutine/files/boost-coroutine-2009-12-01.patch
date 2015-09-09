@@ -1,0 +1,162 @@
+diff -rc boost-coroutine/boost/coroutine/coroutine.hpp /Users/nat/linden/viewer-20-topush/libraries/include/boost/coroutine/coroutine.hpp
+*** boost-coroutine/boost/coroutine/coroutine.hpp	Wed Apr 29 14:41:05 2009
+--- /Users/nat/linden/viewer-20-topush/libraries/include/boost/coroutine/coroutine.hpp	Tue Dec  1 15:25:52 2009
+***************
+*** 258,265 ****
+      result_type call_impl(arg_slot_type args) {
+        BOOST_ASSERT(m_pimpl);
+        m_pimpl->bind_args(&args);
+!       result_slot_type * ptr;
+!       m_pimpl->bind_result_pointer(&ptr);
+        m_pimpl->invoke();
+  
+        return detail::fix_result<result_slot_traits>(*m_pimpl->result());
+--- 261,267 ----
+      result_type call_impl(arg_slot_type args) {
+        BOOST_ASSERT(m_pimpl);
+        m_pimpl->bind_args(&args);
+!       BOOST_DEDUCED_TYPENAME impl_type::local_result_slot_ptr ptr(m_pimpl);
+        m_pimpl->invoke();
+  
+        return detail::fix_result<result_slot_traits>(*m_pimpl->result());
+***************
+*** 270,277 ****
+      call_impl_nothrow(arg_slot_type args) {
+        BOOST_ASSERT(m_pimpl);
+        m_pimpl->bind_args(&args);
+!       result_slot_type * ptr;
+!       m_pimpl->bind_result_pointer(&ptr);
+        if(!m_pimpl->wake_up())
+  	return detail::optional_result<result_type>();
+  
+--- 272,278 ----
+      call_impl_nothrow(arg_slot_type args) {
+        BOOST_ASSERT(m_pimpl);
+        m_pimpl->bind_args(&args);
+!       BOOST_DEDUCED_TYPENAME impl_type::local_result_slot_ptr ptr(m_pimpl);
+        if(!m_pimpl->wake_up())
+  	return detail::optional_result<result_type>();
+  
+diff -rc boost-coroutine/boost/coroutine/detail/coroutine_impl.hpp /Users/nat/linden/viewer-20-topush/libraries/include/boost/coroutine/detail/coroutine_impl.hpp
+*** boost-coroutine/boost/coroutine/detail/coroutine_impl.hpp	Sun Aug 20 13:11:09 2006
+--- /Users/nat/linden/viewer-20-topush/libraries/include/boost/coroutine/detail/coroutine_impl.hpp	Tue Dec  1 16:04:48 2009
+***************
+*** 89,95 ****
+      }
+      
+      void bind_result(result_slot_type* res) {
+!       *m_result = res;
+      }
+  
+      // Another level of indirecition is needed to handle
+--- 89,98 ----
+      }
+      
+      void bind_result(result_slot_type* res) {
+!       // This used to be unconditional. But m_result isn't always valid.
+!       if (m_result) {
+!         *m_result = res;
+!       }
+      }
+  
+      // Another level of indirecition is needed to handle
+***************
+*** 102,120 ****
+        return m_result;
+      }
+  
+      // This function must be called only for void
+      // coroutines. It wakes up the coroutine.
+      // Entering the wait state does not cause this
+      // method to throw.
+      void run() {
+        arg_slot_type void_args;
+-       result_slot_type * ptr = 0;
+        
+        // This dummy binding is required because
+        // do_call expect args() and result()
+        // to return a non NULL result.
+        bind_args(&void_args);
+!       bind_result_pointer(&ptr);
+        this->wake_up();
+      }
+    protected:
+--- 105,157 ----
+        return m_result;
+      }
+  
++     /// This helper class packages data/logic originally found inline in
++     /// coroutine::call_impl() and call_impl_nothrow(), also
++     /// coroutine_impl::run().
++     class local_result_slot_ptr
++     {
++     public:
++         local_result_slot_ptr(pointer pimpl):
++             m_pimpl(pimpl),
++             m_ptr(NULL)
++         {
++             m_pimpl->bind_result_pointer(&m_ptr);
++         }
++         ~local_result_slot_ptr()
++         {
++             // In the original use case, a coroutine could only be resumed by
++             // calling coroutine::operator() again, which would rebind the
++             // result pointer to a new valid value. But with the introduction
++             // of futures, it's possible to suspend a coroutine by waiting on
++             // a future object -- thus destroying the local result_slot_type*
++             // -- then resume that coroutine by calling the future's callback,
++             // bypassing coroutine::operator(). This used to leave an old,
++             // invalid result pointer in effect. Subsequent coroutine exit
++             // wrote through that pointer, munging a word of stack. Now we
++             // make a point of setting the bound result pointer NULL when the
++             // result_slot_type* to which it pointed vanishes, so that any
++             // attempt to dereference it will at least self-identify --
++             // instead of producing arbitrary undefined behavior.
++             m_pimpl->bind_result_pointer(NULL);
++         }
++ 
++     private:
++         pointer m_pimpl;
++         result_slot_type* m_ptr;
++     };
++ 
+      // This function must be called only for void
+      // coroutines. It wakes up the coroutine.
+      // Entering the wait state does not cause this
+      // method to throw.
+      void run() {
+        arg_slot_type void_args;
+        
+        // This dummy binding is required because
+        // do_call expect args() and result()
+        // to return a non NULL result.
+        bind_args(&void_args);
+!       local_result_slot_pointer(this);
+        this->wake_up();
+      }
+    protected:
+diff -rc boost-coroutine/boost/coroutine/detail/self.hpp /Users/nat/linden/viewer-20-topush/libraries/include/boost/coroutine/detail/self.hpp
+*** boost-coroutine/boost/coroutine/detail/self.hpp	Sun Aug 20 13:11:09 2006
+--- /Users/nat/linden/viewer-20-topush/libraries/include/boost/coroutine/detail/self.hpp	Wed Aug  5 16:50:17 2009
+***************
+*** 217,222 ****
+--- 217,235 ----
+        BOOST_ASSERT(m_pimpl);
+        return m_pimpl->pending();
+      }
++ 
++     /// @c true only if this @c self object was created by the passed @a coroutine
++     template <typename SomeCoroutine>
++     bool is_from(const SomeCoroutine& coroutine) const
++     {
++       // get_impl() only accepts non-const ref... a mistake, IMO.
++       return static_cast<void*>(coroutine_accessor::get_impl(const_cast<SomeCoroutine&>(coroutine)).get()) ==
++              static_cast<void*>(m_pimpl);
++     }
++ 
++     /// opaque token used to correlate this 'self' with its corresponding coroutine
++     void* get_id() const { return m_pimpl; }
++ 
+    private:
+      coroutine_self(impl_type * pimpl, detail::init_from_impl_tag) :
+        m_pimpl(pimpl) {}

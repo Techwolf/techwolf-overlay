@@ -1,0 +1,12 @@
+diff -urN linden/indra/llmedia/llmediaimplgstreamer.cpp linden-patched/indra/llmedia/llmediaimplgstreamer.cpp
+--- linden/indra/llmedia/llmediaimplgstreamer.cpp	2009-02-05 18:15:13.000000000 +0100
++++ linden-patched/indra/llmedia/llmediaimplgstreamer.cpp	2009-02-06 00:04:33.000000000 +0100
+@@ -433,7 +433,7 @@
+ 
+ 	if (mediaData)
+ 	{
+-		delete mediaData;
++		delete [] mediaData;
+ 		mediaData = NULL;
+ 	}
+ 

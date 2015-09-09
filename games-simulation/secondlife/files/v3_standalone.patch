@@ -1,0 +1,30 @@
+diff -r 9ac70401cf0b indra/cmake/WebKitLibPlugin.cmake
+--- a/indra/cmake/WebKitLibPlugin.cmake	Fri Sep 23 14:33:32 2011 -0400
++++ b/indra/cmake/WebKitLibPlugin.cmake	Tue Sep 27 14:10:21 2011 -0400
+@@ -57,7 +57,9 @@
+         debug ${ARCH_PREBUILT_DIRS_RELEASE}/libllqtwebkit.dylib
+         )
+ elseif (LINUX)
++    if (STANDALONE)
+     set(WEBKIT_PLUGIN_LIBRARIES ${LLQTWEBKIT_LIBRARY} ${QT_LIBRARIES} ${QT_PLUGIN_LIBRARIES})
++    else (STANDALONE)
+     set(WEBKIT_PLUGIN_LIBRARIES
+         llqtwebkit
+ #        qico
+@@ -82,4 +84,5 @@
+ #        Xi
+ #        SM
+         )
++    endif (STANDALONE)
+ endif (WINDOWS)
+diff -r 9ac70401cf0b indra/llprimitive/CMakeLists.txt
+--- a/indra/llprimitive/CMakeLists.txt	Fri Sep 23 14:33:32 2011 -0400
++++ b/indra/llprimitive/CMakeLists.txt	Tue Sep 27 14:10:21 2011 -0400
+@@ -13,6 +13,7 @@
+     ${LLMATH_INCLUDE_DIRS}
+     ${LLMESSAGE_INCLUDE_DIRS}
+     ${LLXML_INCLUDE_DIRS}
++    ${LIBS_PREBUILT_DIR}/include
+     ${LIBS_PREBUILT_DIR}/include/collada
+     ${LIBS_PREBUILT_DIR}/include/collada/1.4
+     )

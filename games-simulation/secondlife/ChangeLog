@@ -1,0 +1,165 @@
+# ChangeLog for games-similation/secondlife
+# Distributed under the GPL v2
+# $Header: $
+
+2010-05-20 04:50:00
+  Added secondlife 1.23.5.136274 ebuild. Based it off coolvlviewer due to set up for 1.23.5 code.
+  Now use secondlife.eclass
+
+2009-08-09 17:58:41
+  Added Click Action Buy beacons to secondlife
+  Added to secondlife and snowglobe-trunk:
+    Audio beconds color by Aleric
+    Long audio times bugfix by Aleric
+    Drop down avatar list on login screen by Cypren
+  Reworked the install.xml file live pull and now cache with md5sum check on snowglobe-trunk. Will propergate it out to other svn builds.
+
+2009-07-03 00:08:40
+  fixed homesite URL for GreenLife
+  Screw the changelog format, the ebuilds will never get in portage.
+  Fix bug in 1.22.11.113941-r8, dos2unix was not done before crash to core option patch.
+  Stuff I did earler and never got around to updateing the changelog
+  Added sometime ago, 1.23.4.124025. Debated on masking or not due to this verison was rushed out the door. Dessided not to.
+  Remove cool and restrainedlife USE flags, going to do a seperate coolsl ebuild.
+  added GreenLife, Hippo, Imprudence, snowglobe, and snowglobe ebuilds to the overlay. Need to check for overlay changelog.
+  Remove some stale secondlife svn builds to help maintaining overlay easer. Also remove a bunch of earler ebuilds from all branches.
+  Patch tut with skip_test so snowglobe ebuilds can now build with unit tests. USE test flag change to unit_test, some systems masked test USE flag.
+
+*secondlife-1.22.11.113976 (12 03 2009)
+
+  2009-04-19; Techwolf <secondlife@trap.wereanimal.net>
+  :updated RVL patch and added bugfix patch
+
+  2009-04-08; Techwolf <secondlife@trap.wereanimal.net>
+  :Change to EAPI 2 to get use flags depends on curl.
+  
+  2009-04-05 Techwolf <secondlife@trap.wereanimal.net>
+  +avatar_list.patch,
+  +VWR-12678_add_crash_to_core_option.patch:
+  Found updated client side avatar list patch
+  from Dale Glass viewer. Added --coreoncrash option.
+
+  30 03 2009; Techwolf <secondlife@trap.wereanimal.net>
+  :removed patch that was causing crash on startup when there
+  is missing or default settings.xml file.
+
+  24 03 2009; Techwolf <secondlife@trap.wereanimal.net>
+  +secondlife-1.22.11.113976-r2.ebuild,
+  +SVC-580-slviewer-0-v11843-LpecRpecSwapped.patch,
+  +VWR-2003-slviewer-0-v11843-PossibleCrashDragAndDrop.patch,
+  +VWR-2683-slviewer-0-v11843-PossibleCrashSpeakerList.patch,
+  +VWR-1294-slviewer-0-v11843-WorkerThreadWhenTerminating.patch,
+  +VWR-1603-slviewer-0-v11843-Duckwalk.patch,
+  +VWR-4371-slviewer-0-v11905-AmbiantMasterVolume.patch,
+  +slviewer-0-v11913-DebugSettingsShortcutCtrlAltS.patch,
+  +slviewer-0-v12090-ShiftEscResetsCameraView.patch,
+  +slviewer-0-v12100-NoMultipleLocaleWarnings.patch,
+  +slviewer-0-v12100-ReinstateOldSearchTabs_v2.patch,
+  +VWR-9127-slviewer-0-v11905-EditKeysInDialogs.patch,
+  +slviewer-0-v120150-ShiftReturnWhisper.patch,
+  +VWR-8783-slviewer-0-v12160-LostConnectionOnLogin.patch,
+  +slviewer-0-v12160-ExpandedBuildTools_v2.patch,
+  +VWR-7896-slviewer-0-v12160-VisitedLandmarks.patch,
+  +VWR-9517-slviewer-0-v11905-LlfontglRenderWrongParams.patch,
+  +VWR-9620-slviewer-0-v11905-SendParcelSelectObjectsWrongReturnType.patch,
+  +VWR-9400-slviewer-0-v12160-LlhttpclientMemLeak.patch,
+  +VWR-8454-slviewer-0-v12160-MissingKeyword.patch,
+  +VWR-10837-slviewer-0-v11905-LLimageTGA_DeleteColorMapFix.patch,
+  +VWR-10759-slviewer-0-v12280-LlmediaImplGstreamerFix.patch,
+  +VWR-5575-slviewer-0-v12160-FilePickerLocaleCrash.patch,
+  +slviewer-0-v122110-MoreGridsDynamic.patch,
+  +slviewer-2-v122110-RestrainedLife_v116d.patch,
+  +slviewer-0-v122110-DefaultToFmod.patch,
+  +slviewer-0-v11843-PossibleCrashAndLeakAssetStorage.patch,
+  +VWR-12385-IncludeNextPart.patch:                 
+  clean up ebuild and fininish adding all the coolsl patches.
+  changelog format is a PITA. Not all patch files listed here.
+
+*secondlife-1.22.10_rc (12 02 2009)
+  
+  01 03 2009; Techwolf <secondlife@trap.wereanimal.net>
+  +secondlife-1.22.10_rc-r1.ebuild,
+  +cmakeInstall.patch,
+  +secondlife-cmake-llmozilla.patch:Converted src_install to use
+  viewer_manifest.py. This fixes a few install bugs and sets things
+  up for different builds.
+ 
+  26 02 2009; Techwolf <secondlife@trap.wereanimal.net>
+  +secondlife-1.22.10_rc-r0.ebuild,
+  +VWR-5530-slviewer-0-v120150-RememberMinimizedFloatersPosition.patch,
+  +VWR-8080-attachment_pie_menu.patch,
+  +VWR-7877+cut+default.patch,
+  +VWR-7827+box+dimple+3.patch,
+  +VWR-2808-slviewer-0-v12200-OldTrackingDotsInMinimap.patch,
+  +slviewer-0-v12160-NewNotecardSaveButton.patch,
+  +VWR-3093-slviewer-0-v12160-MUposeStyleAndOOCautoClose.patch,
+  +slviewer-0-v12200-MoreGrids.patch,
+  +slviewer-0-v11905-MoonBrightness.patch,
+  +slviewer-0-v120130-LargePrims.patch,
+  +VWR-3616-slviewer-0-v120130-LandmarksDiscardButton_v2.patch,
+  +VWR-1752-slviewer-0-v11905-InventoryDoubleClickActions_v2.patch,
+  +VWR-2876-slviewer-0-v11860-KeepCachedSounds.patch,
+  +slviewer-0-v120110-HideNotificationsInChat.patch,
+  +VWR-721-slviewer-0-v12270-CommonDateAndTimeFormats.patch,
+  +VWR-2290-slviewer-v117-AllowDiscardForCreator.patch,
+  +VWR-1919-slviewer-0-v12100-ReinstateShowTextureUUID.patch:
+  Bump to 1.22.10 and add coolsl patches, but not enable them yet.
+  
+*secondlife-1.22.9_rc (12 02 2009)
+
+  17 02 2009; Techwolf <secondlife@trap.wereanimal.net>
+  +secondlife-1.22.9_rc-r1.ebuild,
+  +VWR-2085-shortcutfix.patch,
+  +VWR-4137-GroupInfoDates.patcch,
+  +VWR-9257-tofu.patch,
+  +VWR-11068-spillover.patch,
+  +VWR-2085-shortcutfix.patch,
+  +VWR-6891-LoginMRUList.patch,
+  +VWR-7913-slviewer-0-v12160-TeleportHistory.patch,
+  +VWR-8008-TexturePreviewAspectRatioV2.patch,
+  +VWR-10890-graphics_pref.patch: Bugfixes and minor UI features.
+
+  12 02 2009; Techwolf <secondlife@trap.wereanimal.net>
+  +secondlife-1.22.9_rc-r0.ebuild,
+  +files/VWR-508-InventoryWornTab.patch: Added worn tab feature and bump to 1.22.9
+
+*secondlife-1.22.8_rc (10 02 2009)
+
+  11 02 2009; Techwolf <secondlife@trap.wereanimal.net>
+  +secondlife-1.22.8_rc-r1.ebuild,
+  +files/VWR-6358-JoystickOKCancel-V3.patch,
+  +files/VWR-6550-JoystickRun-For-VWR-6482.patch,
+  +files/VWR-6432-JoystickVehicles-v2.patch: More joystick fixes.
+
+  11 02 2009; Techwolf <secondlife@trap.wereanimal.net>
+  +files/VWR-6432-JoystickVehicles-v2.patch,
+  +files/VWR-11844-MiniMap-XUI.patch,
+  -files/VWR-10717-JoyFlyToggle.patch: Added addional joystick fix and mini-map
+  changes that have been merged in featurette branch. Remove broken and duped
+  joystick patch. Fix version info, bug was upgrade keep poping up. Added
+  feature patches.
+
+  10 02 2009; Techwolf <secondlife@trap.wereanimal.net> 
+  secondlife-1.22.8_rc-r0.ebuild,
+  +files/fix_keeping_dbus_stuff_together.patch,
+  +files/secondlife-llmozlib-svn.patch,
+  +files/vwr-2662-linden2.patch,
+  +files/VWR-6482-JoystickUnconstrainedv2.patch,
+  +files/VWR-8341-FlycamIndicator.patch,
+  +files/VWR-11100-FlycamAppFocus.patch,
+  +files/VWR-10001-message.patch,
+  +files/VWR-6348-VWR-7383-MoveInBuildAndClearAFK.patch,
+  +files/secondlife-llcrashloggerlinux.patch,
+  +files/VWR-3060-slviewer-0-v12200-HideIMinChatConsole.patch,
+  +files/VWR-2681-TabbedResidentChooser.patch,
+  +files/secondlife-cmake.patch,
+  +files/VWR-9557-EnableBuildWithNvidiaOrMesaHeaders_1_22_4.patch,
+  +files/VWR-5297-spacenav02-linden.patch,
+  +files/VWR-9287_Select_next_part_20081227.patch,
+  +files/VWR-9256.patch,
+  +files/VWR-11474-cmake_ndof.patch,
+  +files/VWR-7800-FlycamExitNoReset.patch,
+  +files/VWR-9540-stats_bar_persistent_pos.patch,
+  +files/VWR-4456-string_to_const.patch,
+  +metadata.xml:
+  Initial import.  Ebuild by Techwolf <secondlife@trap.wereanimal.net>.

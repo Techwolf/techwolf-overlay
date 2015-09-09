@@ -1,0 +1,16 @@
+diff -urN linden/indra/newview/llviewermessage.cpp linden-patched/indra/newview/llviewermessage.cpp
+--- linden/indra/newview/llviewermessage.cpp	2008-08-28 17:31:38.000000000 +0200
++++ linden-patched/indra/newview/llviewermessage.cpp	2008-08-29 18:28:00.000000000 +0200
+@@ -833,9 +833,9 @@
+ 		//if we are throttled, don't display them - Gigs
+ 		if (check_offer_throttle(from_name, false))
+ 		{
+-			// I'm not sure this is a good idea.  JC
+-			bool show_keep_discard = item->getPermissions().getCreator() != gAgent.getID();
+-			//bool show_keep_discard = true;
++			// I'm not sure this is a good idea.  JC  -  Definitely a bad idea.  HB
++			//bool show_keep_discard = item->getPermissions().getCreator() != gAgent.getID();
++			bool show_keep_discard = true;
+ 			switch(asset_type)
+ 			{
+ 			case LLAssetType::AT_NOTECARD:

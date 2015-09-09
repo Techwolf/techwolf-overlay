@@ -1,0 +1,40 @@
+diff -urN linden/indra/newview/app_settings/settings.xml linden-patched/indra/newview/app_settings/settings.xml
+--- linden/indra/newview/app_settings/settings.xml	2009-03-11 18:46:05.000000000 +0100
++++ linden-patched/indra/newview/app_settings/settings.xml	2009-04-14 16:09:54.000000000 +0200
+@@ -5478,6 +5478,17 @@
+         <integer>0</integer>
+       </array>
+     </map>
++    <key>SaveScriptsAsMono</key>
++    <map>
++      <key>Comment</key>
++      <string>When set to TRUE, save scripts in inventory as Mono scripts instead of LSL2</string>
++      <key>Persist</key>
++      <integer>1</integer>
++      <key>Type</key>
++      <string>Boolean</string>
++      <key>Value</key>
++      <integer>1</integer>
++    </map>
+     <key>PreviewSoundRect</key>
+     <map>
+       <key>Comment</key>
+diff -urN linden/indra/newview/llpreviewscript.cpp linden-patched/indra/newview/llpreviewscript.cpp
+--- linden/indra/newview/llpreviewscript.cpp	2009-03-11 18:46:04.000000000 +0100
++++ linden-patched/indra/newview/llpreviewscript.cpp	2009-04-14 16:09:44.000000000 +0200
+@@ -1313,7 +1313,14 @@
+ 	llinfos << "Update Agent Inventory via capability" << llendl;
+ 	LLSD body;
+ 	body["item_id"] = item_id;
+-	body["target"] = "lsl2";
++	if (gSavedSettings.getBOOL("SaveScriptsAsMono"))
++	{
++		body["target"] = "mono";
++	}
++	else
++	{
++		body["target"] = "lsl2";
++	}
+ 	LLHTTPClient::post(url, body, new LLUpdateAgentInventoryResponder(body, filename, LLAssetType::AT_LSL_TEXT));
+ }
+ 

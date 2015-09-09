@@ -1,0 +1,44 @@
+diff --git a/indra/lscript/lscript_compile/indra.l b/indra/lscript/lscript_compile/indra.l
+index 6024575..d7d591c 100644
+--- a/indra/lscript/lscript_compile/indra.l
++++ b/indra/lscript/lscript_compile/indra.l
+@@ -56,12 +56,6 @@ void parse_string();
+ 
+ #define ECHO do { } while (0)
+ 
+-#if defined(__cplusplus)
+-extern "C" { int yylex( void ); }
+-extern "C" { int yyparse( void ); }
+-extern "C" { int yyerror(const char *fmt, ...); }
+-#endif
+-
+ %}
+ 
+ %%
+diff --git a/indra/lscript/lscript_compile/indra.y b/indra/lscript/lscript_compile/indra.y
+index e4b10ff..febf5f6 100644
+--- a/indra/lscript/lscript_compile/indra.y
++++ b/indra/lscript/lscript_compile/indra.y
+@@ -2,10 +2,6 @@
+ 	#include "linden_common.h"
+ 	#include "lscript_tree.h"
+ 
+-    #ifdef __cplusplus
+-    extern "C" {
+-    #endif
+-
+ 	int yylex(void);
+ 	int yyparse( void );
+ 	int yyerror(const char *fmt, ...);
+@@ -19,10 +15,6 @@
+ 	#pragma warning (disable : 4702) // warning C4702: unreachable code
+ 	#pragma warning( disable : 4065 )	// warning: switch statement contains 'default' but no 'case' labels
+ 	#endif
+-
+-    #ifdef __cplusplus
+-    }
+-    #endif
+ %}
+ 
+ %union
+ 

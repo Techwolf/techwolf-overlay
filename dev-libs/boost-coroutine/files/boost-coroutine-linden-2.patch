@@ -1,0 +1,31 @@
+--- boost/coroutine/detail/context_windows.hpp.orig	2010-06-30 17:02:24.593750000 -0700
++++ boost/coroutine/detail/context_windows.hpp	2010-06-30 16:51:33.500000000 -0700
+@@ -35,9 +35,11 @@
+ // And no, I have no idea why this symbol isn't being set appropriately by
+ // the build environment.
+ #define WIN32_LEAN_AND_MEAN
++#ifndef _WIN32_WINNT
+ #define _WIN32_WINNT 0x0600
+ // The above #define will only affect <windows.h> if it has not yet been
+ // #included by something else!
++#endif // _WIN32_WINNT
+ #if defined(WINBASEAPI)
+ #error You must #include coroutine headers before anything that #includes <windows.h>
+ #endif
+@@ -63,12 +65,15 @@
+ 		
+     /*
+      * Return true if current thread is a fiber.
+-     * FIXME: on longhorn shoud use IsThreadAFiber
+      */
+     inline
+     bool is_fiber() {
++#if _WIN32_WINNT >= 0x0600
++      return bool(IsThreadAFiber());
++#else
+       fiber_ptr current = GetCurrentFiber();
+       return current != 0 && current != fiber_magic;
++#endif
+     }
+ 
+     /*

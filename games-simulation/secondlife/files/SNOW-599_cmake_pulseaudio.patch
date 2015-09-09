@@ -1,0 +1,52 @@
+# SNOW-599 fix
+# "Build failure on standalone linux due to missing pulseaudio. Patches to allow PulseAudio optional."
+--- linden/indra/cmake/PulseAudio.cmake.org	2010-04-05 18:20:30.000000000 -0400
++++ linden/indra/cmake/PulseAudio.cmake	2010-04-05 19:08:12.000000000 -0400
+@@ -1,28 +1,28 @@
+ # -*- cmake -*-
+ include(Prebuilt)
+ 
+-if (STANDALONE)
+-  include(FindPkgConfig)
++set(PULSEAUDIO ON CACHE BOOL "Build with PulseAudio support, if available.")
+ 
+-  pkg_check_modules(PULSEAUDIO REQUIRED libpulse-mainloop-glib)
++if (PULSEAUDIO)
++  if (STANDALONE)
++    include(FindPkgConfig)
++
++    pkg_check_modules(PULSEAUDIO libpulse)
+ 
+-elseif (LINUX)
+-  use_prebuilt_binary(pulseaudio)
+-  set(PULSEAUDIO_FOUND ON FORCE BOOL)
+-  set(PULSEAUDIO_INCLUDE_DIRS
+-      ${LIBS_PREBUILT_DIR}/include
++  elseif (LINUX)
++    use_prebuilt_binary(pulseaudio)
++    set(PULSEAUDIO_FOUND ON FORCE BOOL)
++    set(PULSEAUDIO_INCLUDE_DIRS
++        ${LIBS_PREBUILT_DIR}/include
++        )
++    # We don't need to explicitly link against pulseaudio itself, because
++    # the viewer probes for the system's copy at runtime.
++    set(PULSEAUDIO_LIBRARIES
++      # none needed!
+       )
+-  # We don't need to explicitly link against pulseaudio itself, because
+-  # the viewer probes for the system's copy at runtime.
+-  set(PULSEAUDIO_LIBRARIES
+-    # none needed!
+-    )
+-endif (STANDALONE)
++  endif (STANDALONE)
++endif (PULSEAUDIO)
+ 
+ if (PULSEAUDIO_FOUND)
+-  set(PULSEAUDIO ON CACHE BOOL "Build with PulseAudio support, if available.")
+-endif (PULSEAUDIO_FOUND)
+-
+-if (PULSEAUDIO)
+   add_definitions(-DLL_PULSEAUDIO_ENABLED=1)
+-endif (PULSEAUDIO)
++endif (PULSEAUDIO_FOUND)

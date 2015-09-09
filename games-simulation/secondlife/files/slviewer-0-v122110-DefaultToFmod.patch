@@ -1,0 +1,12 @@
+diff -urN linden/indra/newview/linux_tools/wrapper.sh linden-patched/indra/newview/linux_tools/wrapper.sh
+--- linden/indra/newview/linux_tools/wrapper.sh	2009-03-11 18:46:06.000000000 +0100
++++ linden-patched/indra/newview/linux_tools/wrapper.sh	2009-03-14 15:35:41.000000000 +0100
+@@ -5,7 +5,7 @@
+ ## testing phase; you should not usually need to touch them.
+ 
+ ## - Avoids using any OpenAL audio driver.
+-#export LL_BAD_OPENAL_DRIVER=x
++export LL_BAD_OPENAL_DRIVER=x
+ ## - Avoids using any FMOD audio driver.
+ #export LL_BAD_FMOD_DRIVER=x
+ 

@@ -1,0 +1,169 @@
+Index: indra/newview/llfolderview.h
+===================================================================
+--- indra/newview/llfolderview.h	(revision 1696)
++++ indra/newview/llfolderview.h	(working copy)
+@@ -194,6 +194,9 @@
+ 	
+ 	void setFilterSubString(const std::string& string);
+ 	const std::string getFilterSubString(BOOL trim = FALSE);
++	
++	void setFilterWorn(bool worn) { mFilterWorn = worn; }
++	bool getFilterWorn() const { return mFilterWorn; }
+ 
+ 	void setFilterPermissions(PermissionMask perms);
+ 	PermissionMask getFilterPermissions() const { return mFilterOps.mPermissions; }
+@@ -256,6 +259,7 @@
+ 	filter_ops		mDefaultFilterOps;
+ 	std::string::size_type	mSubStringMatchOffset;
+ 	std::string		mFilterSubString;
++	bool			mFilterWorn;
+ 	U32				mOrder;
+ 	const std::string	mName;
+ 	S32				mFilterGeneration;
+@@ -744,6 +748,7 @@
+ 
+ 	LLInventoryFilter* getFilter() { return &mFilter; }
+ 	const std::string getFilterSubString(BOOL trim = FALSE);
++	bool getFilterWorn() const { return mFilter.getFilterWorn(); }
+ 	U32 getFilterTypes() const { return mFilter.getFilterTypes(); }
+ 	PermissionMask getFilterPermissions() const { return mFilter.getFilterPermissions(); }
+ 	LLInventoryFilter::EFolderShow getShowFolderState() { return mFilter.getShowFolderState(); }
+Index: indra/newview/llfolderview.cpp
+===================================================================
+--- indra/newview/llfolderview.cpp	(revision 1696)
++++ indra/newview/llfolderview.cpp	(working copy)
+@@ -4491,6 +4491,7 @@
+ 
+ 	mSubStringMatchOffset = 0;
+ 	mFilterSubString.clear();
++	mFilterWorn = false;
+ 	mFilterGeneration = 0;
+ 	mMustPassGeneration = S32_MAX;
+ 	mMinRequiredGeneration = 0;
+@@ -4522,9 +4523,12 @@
+ 		earliest = 0;
+ 	}
+ 	LLFolderViewEventListener* listener = item->getListener();
++	const LLUUID& item_id = listener->getUUID();
+ 	mSubStringMatchOffset = mFilterSubString.size() ? item->getSearchableLabel().find(mFilterSubString) : std::string::npos;
+ 	BOOL passed = (0x1 << listener->getInventoryType() & mFilterOps.mFilterTypes || listener->getInventoryType() == LLInventoryType::IT_NONE)
+ 					&& (mFilterSubString.size() == 0 || mSubStringMatchOffset != std::string::npos)
++					&& (mFilterWorn == false || gAgent.isWearingItem(item_id) ||
++						gAgent.getAvatarObject() && gAgent.getAvatarObject()->isWearingAttachment(item_id))
+ 					&& ((listener->getPermissionMask() & mFilterOps.mPermissions) == mFilterOps.mPermissions)
+ 					&& (listener->getCreationDate() >= earliest && listener->getCreationDate() <= mFilterOps.mMaxDate);
+ 	return passed;
+@@ -4545,6 +4549,7 @@
+ {
+ 	return mFilterOps.mFilterTypes != mDefaultFilterOps.mFilterTypes 
+ 		|| mFilterSubString.size() 
++		|| mFilterWorn
+ 		|| mFilterOps.mPermissions != mDefaultFilterOps.mPermissions
+ 		|| mFilterOps.mMinDate != mDefaultFilterOps.mMinDate 
+ 		|| mFilterOps.mMaxDate != mDefaultFilterOps.mMaxDate
+@@ -4555,6 +4560,7 @@
+ {
+ 	return mFilterOps.mFilterTypes != 0xffffffff 
+ 		|| mFilterSubString.size() 
++		|| mFilterWorn
+ 		|| mFilterOps.mPermissions != PERM_NONE 
+ 		|| mFilterOps.mMinDate != time_min()
+ 		|| mFilterOps.mMaxDate != time_max()
+@@ -4973,6 +4979,12 @@
+ 	{
+ 		mFilterText += " - Since Logoff";
+ 	}
++	
++	if (getFilterWorn())
++	{
++		mFilterText += " - Worn";
++	}
++	
+ 	return mFilterText;
+ }
+ 
+Index: indra/newview/llinventoryview.h
+===================================================================
+--- indra/newview/llinventoryview.h	(revision 1696)
++++ indra/newview/llinventoryview.h	(working copy)
+@@ -109,6 +109,9 @@
+ 	U32 getFilterPermMask() const { return mFolders->getFilterPermissions(); }
+ 	void setFilterSubString(const std::string& string);
+ 	const std::string getFilterSubString() { return mFolders->getFilterSubString(); }
++	void setFilterWorn(bool worn);
++	bool getFilterWorn() const { return mFolders->getFilterWorn(); }
++	
+ 	void setSortOrder(U32 order);
+ 	U32 getSortOrder() { return mFolders->getSortOrder(); }
+ 	void setSinceLogoff(BOOL sl);
+Index: indra/newview/llinventoryview.cpp
+===================================================================
+--- indra/newview/llinventoryview.cpp	(revision 1696)
++++ indra/newview/llinventoryview.cpp	(working copy)
+@@ -517,6 +517,15 @@
+ 		recent_items_panel->getFilter()->markDefault();
+ 		recent_items_panel->setSelectCallback(onSelectionChange, recent_items_panel);
+ 	}
++	LLInventoryPanel* worn_items_panel = getChild<LLInventoryPanel>("Worn Items");
++	if (worn_items_panel)
++	{
++		worn_items_panel->setSortOrder(gSavedSettings.getU32("InventorySortOrder"));
++		worn_items_panel->setShowFolderState(LLInventoryFilter::SHOW_NON_EMPTY_FOLDERS);
++		worn_items_panel->getFilter()->markDefault();
++		worn_items_panel->setFilterWorn(true);
++		worn_items_panel->setSelectCallback(onSelectionChange, worn_items_panel);
++	}
+ 
+ 	// Now load the stored settings from disk, if available.
+ 	std::ostringstream filterSaveName;
+@@ -559,6 +568,7 @@
+ {
+ 	childSetTabChangeCallback("inventory filter tabs", "All Items", onFilterSelected, this);
+ 	childSetTabChangeCallback("inventory filter tabs", "Recent Items", onFilterSelected, this);
++	childSetTabChangeCallback("inventory filter tabs", "Worn Items", onFilterSelected, this);
+ 	//panel->getFilter()->markDefault();
+ 	return TRUE;
+ }
+@@ -585,6 +595,15 @@
+ 		filter->toLLSD(filterState);
+ 		filterRoot[filter->getName()] = filterState;
+ 	}
++	
++	LLInventoryPanel* worn_items_panel = getChild<LLInventoryPanel>("Worn Items");
++	if (worn_items_panel)
++	{
++		LLInventoryFilter* filter = worn_items_panel->getFilter();
++		LLSD filterState;
++		filter->toLLSD(filterState);
++		filterRoot[filter->getName()] = filterState;
++	}
+ 
+ 	std::ostringstream filterSaveName;
+ 	filterSaveName << gDirUtilp->getExpandedFilename(LL_PATH_PER_SL_ACCOUNT, "filters.xml");
+@@ -1355,6 +1374,11 @@
+ 	mFolders->getFilter()->setFilterSubString(string);
+ }
+ 
++void LLInventoryPanel::setFilterWorn(bool worn)
++{
++	mFolders->getFilter()->setFilterWorn(worn);
++}
++
+ void LLInventoryPanel::setSortOrder(U32 order)
+ {
+ 	mFolders->getFilter()->setSortOrder(order);
+Index: indra/newview/skins/default/xui/en-us/floater_inventory.xml
+===================================================================
+--- indra/newview/skins/default/xui/en-us/floater_inventory.xml	(revision 1696)
++++ indra/newview/skins/default/xui/en-us/floater_inventory.xml	(working copy)
+@@ -16,6 +16,10 @@
+ 		     follows="left|top|right|bottom" height="491" label="Recent Items"
+ 		     left_delta="0" mouse_opaque="true" name="Recent Items"
+ 		     sort_order="RecentItemsSortOrder" width="461" />
++		<inventory_panel allow_multi_select="true" border="true" bottom_delta="0"
++		     follows="left|top|right|bottom" height="491" label="Worn Items"
++		     left_delta="0" mouse_opaque="true" name="Worn Items"
++		     sort_order="InventorySortOrder" width="461" />
+ 	</tab_container>
+ 	<menu_bar bottom="-34" drop_shadow="false" follows="left|top|right" height="18" left="2"
+ 	     mouse_opaque="false" name="Inventory Menu" opaque="false" width="461">

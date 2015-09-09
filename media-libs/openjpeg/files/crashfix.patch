@@ -1,0 +1,10 @@
+--- ./libopenjpeg/image.c.org	2010-04-15 22:35:11.000000000 -0400
++++ ./libopenjpeg/image.c	2010-04-15 22:36:21.000000000 -0400
+@@ -28,6 +28,7 @@
+ 
+ opj_image_t* opj_image_create0(void) {
+ 	opj_image_t *image = (opj_image_t*)opj_calloc(1, sizeof(opj_image_t));
++	image->comps=NULL;
+ 	return image;
+ }
+ 

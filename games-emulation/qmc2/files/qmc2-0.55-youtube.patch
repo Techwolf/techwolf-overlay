@@ -1,0 +1,16 @@
+--- youtubevideoplayer.cpp.org	2015-07-03 12:09:01.126334034 -0400
++++ youtubevideoplayer.cpp	2015-09-04 23:09:27.015741647 -0400
+@@ -1954,7 +1954,6 @@
+ 
+ 	return false;
+ }
+-#endif
+ 
+ bool VideoEventFilter::eventFilter(QObject *object, QEvent *event)
+ {
+@@ -1974,3 +1973,5 @@
+ 	}
+ 	return QObject::eventFilter(object, event);
+ }
++
++#endif

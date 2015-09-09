@@ -1,0 +1,9 @@
+# ChangeLog for net-libs/llmozlib2
+# Copyright 1999-2008 Gentoo Foundation; Distributed under the GPL v2
+# $Header: $
+
+  19 Sep 2008; Ycarus <ycarus@zugaina.org>
+  +files/llmozlib2-2.18-gentoo.patch, +llmozlib2-2.18.ebuild,
+  llmozlib2-9999.ebuild:
+  Add llmozlib2-2.18
+

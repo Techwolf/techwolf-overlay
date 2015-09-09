@@ -1,0 +1,119 @@
++++ linden/indra/newview/llviewerjoystick.cpp	2008-04-17 04:15:41.000000000 +0100
+@@ -625,68 +625,64 @@
+ 	sDelta[RX_I] += (cur_delta[RX_I] - sDelta[RX_I]) * time * feather;
+ 	sDelta[RY_I] += (cur_delta[RY_I] - sDelta[RY_I]) * time * feather;
+ 	
+-    switch (dom_axis)
++	// Allow forward/backward movement some priority
++    if (dom_axis == Z_I)
+     {
+-        case X_I:                                         // move sideways
+-			agentSlide(sDelta[X_I]);
+-            break;
+-        
+-        case Z_I:                                         // forward/back
+-		{
+-            agentPush(sDelta[Z_I]);
+-            
+-            if (fabs(sDelta[Y_I])  > .1f)
+-			{
+-				agentFly(sDelta[Y_I]);
+-			}
++		agentPush(sDelta[Z_I]);			// forward/back
+ 		
+-			// too many rotations during walking can be confusing, so apply
+-			// the deadzones one more time (quick & dirty), at 50%|30% power
+-			F32 eff_rx = .3f * dead_zone[RX_I];
+-			F32 eff_ry = .3f * dead_zone[RY_I];
++		if (fabs(sDelta[X_I])  > .1f)
++		{
++			agentSlide(sDelta[X_I]);	// move sideways
++		}
+ 		
+-			if (sDelta[RX_I] > 0)
+-			{
+-				eff_rx = llmax(sDelta[RX_I] - eff_rx, 0.f);
+-			}
+-			else
+-			{
+-				eff_rx = llmin(sDelta[RX_I] + eff_rx, 0.f);
+-			}
++		if (fabs(sDelta[Y_I])  > .1f)
++		{
++			agentFly(sDelta[Y_I]);		// up/down & crouch
++		}
++	
++		// too many rotations during walking can be confusing, so apply
++		// the deadzones one more time (quick & dirty), at 50%|30% power
++		F32 eff_rx = .3f * dead_zone[RX_I];
++		F32 eff_ry = .3f * dead_zone[RY_I];
++	
++		if (sDelta[RX_I] > 0)
++		{
++			eff_rx = llmax(sDelta[RX_I] - eff_rx, 0.f);
++		}
++		else
++		{
++			eff_rx = llmin(sDelta[RX_I] + eff_rx, 0.f);
++		}
+ 
+-			if (sDelta[RY_I] > 0)
++		if (sDelta[RY_I] > 0)
++		{
++			eff_ry = llmax(sDelta[RY_I] - eff_ry, 0.f);
++		}
++		else
++		{
++			eff_ry = llmin(sDelta[RY_I] + eff_ry, 0.f);
++		}
++		
++		
++		if (fabs(eff_rx) > 0.f || fabs(eff_ry) > 0.f)
++		{
++			if (gAgent.getFlying())
+ 			{
+-				eff_ry = llmax(sDelta[RY_I] - eff_ry, 0.f);
++				agentRotate(eff_rx, eff_ry);
+ 			}
+ 			else
+ 			{
+-				eff_ry = llmin(sDelta[RY_I] + eff_ry, 0.f);
+-			}
+-			
+-			
+-			if (fabs(eff_rx) > 0.f || fabs(eff_ry) > 0.f)
+-			{
+-				if (gAgent.getFlying())
+-				{
+-					agentRotate(eff_rx, eff_ry);
+-				}
+-				else
+-				{
+-					agentRotate(eff_rx, 2.f * eff_ry);
+-				}
++				agentRotate(eff_rx, 2.f * eff_ry);
+ 			}
+-            break;
+-		}   
+-        case Y_I:                                          // up/crouch
+-            agentFly(sDelta[Y_I]);
+-            break;
+-            
+-        case RX_I:                                         // pitch
+-        case RY_I:                                         // turn
+-			agentRotate(sDelta[RX_I], sDelta[RY_I]);
+-            break;
+-        // case RZ_I: roll is unused in avatar mode
+-    }// switch
++		}
++	}
++	else
++	{
++		agentSlide(sDelta[X_I]);		// move sideways
++		agentFly(sDelta[Y_I]);			// up/down & crouch
++		agentPush(sDelta[Z_I]);			// forward/back
++		agentRotate(sDelta[RX_I], sDelta[RY_I]);	// pitch & turn
++	}
+ }
+ 
+ // -----------------------------------------------------------------------------

@@ -1,0 +1,37 @@
+diff -urN linden/indra/newview/llfloaterteleporthistory.cpp linden-patched/indra/newview/llfloaterteleporthistory.cpp
+--- linden/indra/newview/llfloaterteleporthistory.cpp	2009-02-11 12:11:52.000000000 +0100
++++ linden-patched/indra/newview/llfloaterteleporthistory.cpp	2009-02-11 12:13:35.000000000 +0100
+@@ -34,6 +34,9 @@
+ 
+ #include "linden_common.h"
+ 
++#include "llworld.h"
++#include "lleventpoll.h"
++#include "llagent.h"
+ #include "llfloaterteleporthistory.h"
+ #include "llfloaterworldmap.h"
+ #include "lltimer.h"
+@@ -46,6 +49,10 @@
+ 
+ #include "apr_time.h"
+ 
++//MK
++extern BOOL RRenabled;
++//mk
++
+ // globals
+ LLFloaterTeleportHistory* gFloaterTeleportHistory;
+ 
+@@ -99,6 +106,12 @@
+ 
+ void LLFloaterTeleportHistory::addEntry(std::string regionName, S16 x, S16 y, S16 z)
+ {
++//MK
++	if (RRenabled && gAgent.mRRInterface.mContainsShowloc)
++	{
++		return;
++	}
++//mk
+ 	// only if the cached scroll list pointer is valid
+ 	if(mPlacesList)
+ 	{

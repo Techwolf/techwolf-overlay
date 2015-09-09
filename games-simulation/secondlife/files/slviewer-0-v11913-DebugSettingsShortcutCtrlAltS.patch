@@ -1,0 +1,12 @@
+diff -urN linden/indra/newview/llviewermenu.cpp linden-patched/indra/newview/llviewermenu.cpp
+--- linden/indra/newview/llviewermenu.cpp	2008-03-26 17:15:43.000000000 +0100
++++ linden-patched/indra/newview/llviewermenu.cpp	2008-03-27 01:06:37.000000000 +0100
+@@ -1114,7 +1114,7 @@
+ 												NULL,
+ 												NULL));
+ 
+-	menu->append(new LLMenuItemCallGL("Debug Settings...", LLFloaterSettingsDebug::show, NULL, NULL));
++	menu->append(new LLMenuItemCallGL("Debug Settings...", LLFloaterSettingsDebug::show, NULL, NULL, 'S', MASK_ALT | MASK_CONTROL));
+ 	menu->append(new LLMenuItemCheckGL("View Admin Options", &handle_admin_override_toggle, NULL, &check_admin_override, NULL, 'V', MASK_CONTROL | MASK_ALT));
+ 
+ 	menu->append(new LLMenuItemCallGL("Request Admin Status", 

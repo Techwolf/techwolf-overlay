@@ -1,0 +1,24 @@
+--- ./indra/media_plugins/webkit/CMakeLists.txt.org	2010-05-11 02:07:13.000000000 -0400
++++ ./indra/media_plugins/webkit/CMakeLists.txt	2010-05-11 02:31:55.000000000 -0400
+@@ -58,7 +58,7 @@
+ )
+ 
+ # Select which VolumeCatcher implementation to use
+-if (LINUX AND PULSEAUDIO)
++if (LINUX AND PULSEAUDIO_FOUND)
+   list(APPEND media_plugin_webkit_SOURCE_FILES linux_volume_catcher.cpp)
+   list(APPEND media_plugin_webkit_LINK_LIBRARIES
+        ${UI_LIBRARIES}     # for glib/GTK
+@@ -73,10 +73,10 @@
+        )
+ elseif (WINDOWS)
+   list(APPEND media_plugin_webkit_SOURCE_FILES windows_volume_catcher.cpp)
+-else (LINUX AND PULSEAUDIO)
++else (LINUX AND PULSEAUDIO_FOUND)
+   # All other platforms use the dummy volume catcher for now.
+   list(APPEND media_plugin_webkit_SOURCE_FILES dummy_volume_catcher.cpp)
+-endif (LINUX AND PULSEAUDIO)
++endif (LINUX AND PULSEAUDIO_FOUND)
+ 
+ set_source_files_properties(${media_plugin_webkit_HEADER_FILES}
+                             PROPERTIES HEADER_FILE_ONLY TRUE)

@@ -1,0 +1,75 @@
+From: Robin Cornelius <robin.cornelius@gmail.com>
+Subject: [PATCH] topic/fixes/jira-sent/VWR-9557-EnableBuildWithNvidiaOrMesaHeaders
+
+Enable the build to succeed with either the mesa gl.h or the nvidia gl.h headers
+
+Signed-off-by: Robin Cornelius <robin.cornelius@gmail.com>
+
+---
+ indra/llrender/llgl.cpp      |   17 ++++++++++++++---
+ indra/llrender/llglheaders.h |    9 +++++++++
+ 2 files changed, 23 insertions(+), 3 deletions(-)
+
+diff --git a/indra/llrender/llgl.cpp b/indra/llrender/llgl.cpp
+index 67d258e..f74b13d 100644
+--- a/indra/llrender/llgl.cpp
++++ b/indra/llrender/llgl.cpp
+@@ -252,6 +252,12 @@ PFNWGLSWAPINTERVALEXTPROC			wglSwapIntervalEXT = NULL;
+ PFNGLCOLORTABLEEXTPROC glColorTableEXT = NULL;
+ #endif // LL_LINUX
+ 
++#if LL_LINUX && defined(WINGDIAPI)
++PFNGLACTIVETEXTUREARBPROC	glActiveTextureARB=NULL;
++PFNGLCLIENTACTIVETEXTUREARBPROC	glClientActiveTextureARB=NULL;
++PFNGLDRAWRANGEELEMENTSPROC 	glDrawRangeElements=NULL;
++#endif
++
+ #endif
+ 
+ LLGLManager gGLManager;
+@@ -762,15 +768,20 @@ void LLGLManager::initExtensions()
+ 		glGetFramebufferAttachmentParameterivEXT = (PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVEXTPROC) GLH_EXT_GET_PROC_ADDRESS("glGetFramebufferAttachmentParameterivEXT");
+ 		glGenerateMipmapEXT = (PFNGLGENERATEMIPMAPEXTPROC) GLH_EXT_GET_PROC_ADDRESS("glGenerateMipmapEXT");
+ 	}
+-#if !LL_LINUX
+-	// This is expected to be a static symbol on Linux GL implementations
++#if !LL_LINUX || (LL_LINUX && defined(WINGDIAPI))
++	// This is expected to be a static symbol on Linux GL implementations, except if we use the nvidia headers
+ 	glDrawRangeElements = (PFNGLDRAWRANGEELEMENTSPROC)GLH_EXT_GET_PROC_ADDRESS("glDrawRangeElements");
+ 	if (!glDrawRangeElements)
+ 	{
+ 		mGLMaxVertexRange = 0;
+ 		mGLMaxIndexRange = 0;
+ 	}
+-#endif // !LL_LINUX
++#endif //!LL_LINUX
++
++#if LL_LINUX && defined(WINGDIAPI)
++	glActiveTextureARB = (PFNGLACTIVETEXTUREARBPROC)GLH_EXT_GET_PROC_ADDRESS("glActiveTextureARB");
++	glClientActiveTextureARB = (PFNGLCLIENTACTIVETEXTUREARBPROC)GLH_EXT_GET_PROC_ADDRESS("glClientActiveTextureARB");
++#endif
+ 
+ 	if (mHasOcclusionQuery)
+ 	{
+diff --git a/indra/llrender/llglheaders.h b/indra/llrender/llglheaders.h
+index f047262..9d04f1c 100644
+--- a/indra/llrender/llglheaders.h
++++ b/indra/llrender/llglheaders.h
+@@ -76,6 +76,15 @@
+ #undef Status
+ #endif // LL_LINUX && !LL_MESA_HEADLESS
+ 
++#if LL_LINUX && defined(WINGDIAPI)
++// WINGDIAPI gets set if we are using the linux nvidia gl.h header which needs the 
++// functions below setting up
++// Missing functions when using nvidia header
++extern PFNGLACTIVETEXTUREARBPROC	glActiveTextureARB;
++extern PFNGLCLIENTACTIVETEXTUREARBPROC	glClientActiveTextureARB;
++extern PFNGLDRAWRANGEELEMENTSPROC 	glDrawRangeElements;
++
++#endif
+ 
+ // GL_ARB_vertex_buffer_object
+ extern PFNGLBINDBUFFERARBPROC		glBindBufferARB;
+-- 
+tg: (424b1d3..) topic/fixes/jira-sent/VWR-9557-EnableBuildWithNvidiaOrMesaHeaders (depends on: upstream)

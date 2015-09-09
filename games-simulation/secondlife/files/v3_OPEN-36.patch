@@ -1,0 +1,39 @@
+diff -r 9ac70401cf0b indra/cmake/LLSharedLibs.cmake
+--- a/indra/cmake/LLSharedLibs.cmake	Fri Sep 23 14:33:32 2011 -0400
++++ b/indra/cmake/LLSharedLibs.cmake	Sun Oct 02 19:43:50 2011 -0400
+@@ -38,7 +38,6 @@
+ # ll_stage_sharedlib
+ # Performs config and adds a copy command for a sharedlib target.
+ macro(ll_stage_sharedlib DSO_TARGET)
+-  if(SHARED_LIB_STAGING_DIR)
+     # target gets written to the DLL staging directory.
+     # Also this directory is shared with RunBuildTest.cmake, y'know, for the tests.
+     set_target_properties(${DSO_TARGET} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${SHARED_LIB_STAGING_DIR})
+@@ -63,7 +62,6 @@
+           COMMENT "Copying llcommon to the staging folder."
+         )
+     endif(NOT WINDOWS)
+-  endif(SHARED_LIB_STAGING_DIR)
+ 
+   if (DARWIN)
+     set_target_properties(${DSO_TARGET} PROPERTIES
+diff -r 9ac70401cf0b indra/cmake/Linking.cmake
+--- a/indra/cmake/Linking.cmake	Fri Sep 23 14:33:32 2011 -0400
++++ b/indra/cmake/Linking.cmake	Sun Oct 02 19:43:50 2011 -0400
+@@ -2,8 +2,6 @@
+ 
+ include(Variables)
+ 
+-
+-if (NOT STANDALONE)
+   set(ARCH_PREBUILT_DIRS ${AUTOBUILD_INSTALL_DIR}/lib)
+   set(ARCH_PREBUILT_DIRS_RELEASE ${AUTOBUILD_INSTALL_DIR}/lib/release)
+   set(ARCH_PREBUILT_DIRS_DEBUG ${AUTOBUILD_INSTALL_DIR}/lib/debug)
+@@ -17,7 +15,6 @@
+     set(SHARED_LIB_STAGING_DIR ${CMAKE_BINARY_DIR}/sharedlibs)
+     set(EXE_STAGING_DIR "${CMAKE_BINARY_DIR}/sharedlibs/\$(CONFIGURATION)")
+   endif (WINDOWS)
+-endif (NOT STANDALONE)
+ 
+ # Autobuild packages must provide 'release' versions of libraries, but may provide versions for
+ # specific build types.  AUTOBUILD_LIBS_INSTALL_DIRS lists first the build type directory and then

@@ -1,0 +1,493 @@
+diff -urN linden/indra/newview/CMakeLists.txt linden-patched/indra/newview/CMakeLists.txt
+--- linden/indra/newview/CMakeLists.txt	2009-01-07 18:12:08.000000000 +0100
++++ linden-patched/indra/newview/CMakeLists.txt	2009-01-08 10:38:08.000000000 +0100
+@@ -289,6 +289,7 @@
+     llpolymesh.cpp
+     llpolymorph.cpp
+     llprefschat.cpp
++    hbprefscool.cpp
+     llprefsim.cpp
+     llprefsvoice.cpp
+     llpreviewanim.cpp
+@@ -684,6 +685,7 @@
+     llpolymesh.h
+     llpolymorph.h
+     llprefschat.h
++    hbprefscool.h
+     llprefsim.h
+     llprefsvoice.h
+     llpreview.h
+@@ -1165,6 +1167,7 @@
+     skins/default/xui/en-us/panel_place.xml
+     skins/default/xui/en-us/panel_preferences_audio.xml
+     skins/default/xui/en-us/panel_preferences_chat.xml
++    skins/default/xui/en-us/panel_preferences_cool.xml
+     skins/default/xui/en-us/panel_preferences_general.xml
+     skins/default/xui/en-us/panel_preferences_graphics1.xml
+     skins/default/xui/en-us/panel_preferences_im.xml
+diff -urN linden/indra/newview/hbprefscool.cpp linden-patched/indra/newview/hbprefscool.cpp
+--- linden/indra/newview/hbprefscool.cpp	1970-01-01 01:00:00.000000000 +0100
++++ linden-patched/indra/newview/hbprefscool.cpp	2009-01-08 10:39:49.000000000 +0100
+@@ -0,0 +1,225 @@
++/** 
++ * @file hbprefscool.cpp
++ * @author Henri Beauchamp
++ * @brief Cool SL Viewer preferences panel
++ *
++ * $LicenseInfo:firstyear=2008&license=viewergpl$
++ * 
++ * Copyright (c) 2008, Henri Beauchamp.
++ * 
++ * Second Life Viewer Source Code
++ * The source code in this file ("Source Code") is provided by Linden Lab
++ * to you under the terms of the GNU General Public License, version 2.0
++ * ("GPL"), unless you have obtained a separate licensing agreement
++ * ("Other License"), formally executed by you and Linden Lab.  Terms of
++ * the GPL can be found in doc/GPL-license.txt in this distribution, or
++ * online at http://secondlifegrid.net/programs/open_source/licensing/gplv2
++ * 
++ * There are special exceptions to the terms and conditions of the GPL as
++ * it is applied to this Source Code. View the full text of the exception
++ * in the file doc/FLOSS-exception.txt in this software distribution, or
++ * online at http://secondlifegrid.net/programs/open_source/licensing/flossexception
++ * 
++ * By copying, modifying or distributing this software, you acknowledge
++ * that you have read and understood your obligations described above,
++ * and agree to abide by those obligations.
++ * 
++ * ALL LINDEN LAB SOURCE CODE IS PROVIDED "AS IS." LINDEN LAB MAKES NO
++ * WARRANTIES, EXPRESS, IMPLIED OR OTHERWISE, REGARDING ITS ACCURACY,
++ * COMPLETENESS OR PERFORMANCE.
++ * $/LicenseInfo$
++ */
++
++#include "llviewerprecompiledheaders.h"
++
++#include "hbprefscool.h"
++
++#include "llstartup.h"
++#include "llviewercontrol.h"
++#include "lluictrlfactory.h"
++#include "llcombobox.h"
++
++class LLPrefsCoolImpl : public LLPanel
++{
++public:
++	LLPrefsCoolImpl();
++	/*virtual*/ ~LLPrefsCoolImpl() { };
++
++	virtual void refresh();
++
++	void apply();
++	void cancel();
++
++protected:
++	BOOL mShowGrids;
++	BOOL mHideNotificationsInChat;
++	BOOL mDisableMessagesSpacing;
++	BOOL mHideMasterRemote;
++	BOOL mShowGroupsButton;
++	BOOL mUseOldChatHistory;
++	BOOL mUseOldStatusBarIcons;
++	BOOL mUseOldTrackingDots;
++	BOOL mAllowMUpose;
++	BOOL mAutoCloseOOC;
++	BOOL mRestrainedLife;
++	U32 mTimeFormat;
++	U32 mDateFormat;
++};
++
++
++LLPrefsCoolImpl::LLPrefsCoolImpl()
++ : LLPanel("Cool Prefs Panel")
++{
++	LLUICtrlFactory::getInstance()->buildPanel(this, "panel_preferences_cool.xml");
++	refresh();
++}
++
++void LLPrefsCoolImpl::refresh()
++{
++	mShowGrids					= gSavedSettings.getBOOL("ForceShowGrid");
++	mHideNotificationsInChat	= gSavedSettings.getBOOL("HideNotificationsInChat");
++	mDisableMessagesSpacing		= gSavedSettings.getBOOL("DisableMessagesSpacing");
++	mHideMasterRemote			= gSavedSettings.getBOOL("HideMasterRemote");
++	mShowGroupsButton			= gSavedSettings.getBOOL("ShowGroupsButton");
++	mUseOldChatHistory			= gSavedSettings.getBOOL("UseOldChatHistory");
++	mUseOldStatusBarIcons		= gSavedSettings.getBOOL("UseOldStatusBarIcons");
++	mUseOldTrackingDots			= gSavedSettings.getBOOL("UseOldTrackingDots");
++	mAllowMUpose				= gSavedSettings.getBOOL("AllowMUpose");
++	mAutoCloseOOC				= gSavedSettings.getBOOL("AutoCloseOOC");
++	mRestrainedLife				= gSavedSettings.getBOOL("RestrainedLife");
++	if (LLStartUp::getStartupState() != STATE_STARTED)
++	{
++		childDisable("restrained_life_check");
++	}
++
++	std::string format = gSavedSettings.getString("TimeFormat");
++	if (format.find("%p") == -1)
++	{
++		mTimeFormat = 0;
++	}
++	else
++	{
++		mTimeFormat = 1;
++	}
++
++	format = gSavedSettings.getString("ShortDateFormat");
++	if (format.find("%m/%d/%") != -1)
++	{
++		mDateFormat = 2;
++	}
++	else if (format.find("%d/%m/%") != -1)
++	{
++		mDateFormat = 1;
++	}
++	else
++	{
++		mDateFormat = 0;
++	}
++
++	// time format combobox
++	LLComboBox* combo = getChild<LLComboBox>("time_format_combobox");
++	if (combo)
++	{
++		combo->setCurrentByIndex(mTimeFormat);
++	}
++
++	// date format combobox
++	combo = getChild<LLComboBox>("date_format_combobox");
++	if (combo)
++	{
++		combo->setCurrentByIndex(mDateFormat);
++	}
++}
++
++void LLPrefsCoolImpl::cancel()
++{
++	gSavedSettings.setBOOL("ForceShowGrid",				mShowGrids);
++	gSavedSettings.setBOOL("HideNotificationsInChat",	mHideNotificationsInChat);
++	gSavedSettings.setBOOL("DisableMessagesSpacing",	mDisableMessagesSpacing);
++	gSavedSettings.setBOOL("HideMasterRemote",			mHideMasterRemote);
++	gSavedSettings.setBOOL("ShowGroupsButton",			mShowGroupsButton);
++	gSavedSettings.setBOOL("UseOldChatHistory",			mUseOldChatHistory);
++	gSavedSettings.setBOOL("UseOldStatusBarIcons",		mUseOldStatusBarIcons);
++	gSavedSettings.setBOOL("UseOldTrackingDots",		mUseOldTrackingDots);
++	gSavedSettings.setBOOL("AllowMUpose",				mAllowMUpose);
++	gSavedSettings.setBOOL("AutoCloseOOC",				mAutoCloseOOC);
++	gSavedSettings.setBOOL("RestrainedLife",			mRestrainedLife);
++}
++
++void LLPrefsCoolImpl::apply()
++{
++	std::string short_date, long_date, time, timestamp;	
++
++	LLComboBox* combo = getChild<LLComboBox>("time_format_combobox");
++	if (combo) {
++		mTimeFormat = combo->getCurrentIndex();
++	}
++
++	combo = getChild<LLComboBox>("date_format_combobox");
++	if (combo)
++	{
++		mDateFormat = combo->getCurrentIndex();
++	}
++
++	if (mTimeFormat == 0)
++	{
++		time = "%H:%M";
++		timestamp = " %H:%M:%S";
++	}
++	else
++	{
++		time = "%I:%M %p";
++		timestamp = " %I:%M %p";
++	}
++
++	if (mDateFormat == 0)
++	{
++		short_date = "%Y-%m-%d";
++		long_date = "%A %d %B %Y";
++		timestamp = "%a %d %b %Y" + timestamp;
++	}
++	else if (mDateFormat == 1)
++	{
++		short_date = "%d/%m/%Y";
++		long_date = "%A %d %B %Y";
++		timestamp = "%a %d %b %Y" + timestamp;
++	}
++	else
++	{
++		short_date = "%m/%d/%Y";
++		long_date = "%A, %B %d %Y";
++		timestamp = "%a %b %d %Y" + timestamp;
++	}
++
++	gSavedSettings.setString("ShortDateFormat",	short_date);
++	gSavedSettings.setString("LongDateFormat",	long_date);
++	gSavedSettings.setString("TimeFormat",		time);
++	gSavedSettings.setString("TimestampFormat",	timestamp);
++}
++
++//---------------------------------------------------------------------------
++
++LLPrefsCool::LLPrefsCool()
++:	impl(* new LLPrefsCoolImpl())
++{
++}
++
++LLPrefsCool::~LLPrefsCool()
++{
++	delete &impl;
++}
++
++void LLPrefsCool::apply()
++{
++	impl.apply();
++}
++
++void LLPrefsCool::cancel()
++{
++	impl.cancel();
++}
++
++LLPanel* LLPrefsCool::getPanel()
++{
++	return &impl;
++}
+diff -urN linden/indra/newview/hbprefscool.h linden-patched/indra/newview/hbprefscool.h
+--- linden/indra/newview/hbprefscool.h	1970-01-01 01:00:00.000000000 +0100
++++ linden-patched/indra/newview/hbprefscool.h	2009-01-08 10:38:08.000000000 +0100
+@@ -0,0 +1,53 @@
++/** 
++ * @file hbprefscool.h
++ * @brief  Cool SL Viewer preferences panel
++ *
++ * $LicenseInfo:firstyear=2008&license=viewergpl$
++ * 
++ * Copyright (c) 2008, Henri Beauchamp.
++ * 
++ * Second Life Viewer Source Code
++ * The source code in this file ("Source Code") is provided by Linden Lab
++ * to you under the terms of the GNU General Public License, version 2.0
++ * ("GPL"), unless you have obtained a separate licensing agreement
++ * ("Other License"), formally executed by you and Linden Lab.  Terms of
++ * the GPL can be found in doc/GPL-license.txt in this distribution, or
++ * online at http://secondlifegrid.net/programs/open_source/licensing/gplv2
++ * 
++ * There are special exceptions to the terms and conditions of the GPL as
++ * it is applied to this Source Code. View the full text of the exception
++ * in the file doc/FLOSS-exception.txt in this software distribution, or
++ * online at http://secondlifegrid.net/programs/open_source/licensing/flossexception
++ * 
++ * By copying, modifying or distributing this software, you acknowledge
++ * that you have read and understood your obligations described above,
++ * and agree to abide by those obligations.
++ * 
++ * ALL LINDEN LAB SOURCE CODE IS PROVIDED "AS IS." LINDEN LAB MAKES NO
++ * WARRANTIES, EXPRESS, IMPLIED OR OTHERWISE, REGARDING ITS ACCURACY,
++ * COMPLETENESS OR PERFORMANCE.
++ * $/LicenseInfo$
++ */
++
++#ifndef HBPREFSCOOL_H
++#define HBPREFSCOOL_H
++
++class LLPanel;
++class LLPrefsCoolImpl;
++
++class LLPrefsCool
++{
++public:
++	LLPrefsCool();
++	~LLPrefsCool();
++
++	void apply();
++	void cancel();
++
++	LLPanel* getPanel();
++
++protected:
++	LLPrefsCoolImpl& impl;
++};
++
++#endif
+diff -urN linden/indra/newview/llfloaterpreference.cpp linden-patched/indra/newview/llfloaterpreference.cpp
+--- linden/indra/newview/llfloaterpreference.cpp	2009-01-07 18:12:09.000000000 +0100
++++ linden-patched/indra/newview/llfloaterpreference.cpp	2009-01-08 10:38:08.000000000 +0100
+@@ -64,6 +64,7 @@
+ #include "llprefschat.h"
+ #include "llprefsvoice.h"
+ #include "llprefsim.h"
++#include "hbprefscool.h"
+ #include "llresizehandle.h"
+ #include "llresmgr.h"
+ #include "llassetstorage.h"
+@@ -130,7 +131,8 @@
+ 	mAudioPanel(NULL),
+ 	mMsgPanel(NULL),
+ 	mSkinsPanel(NULL),
+-	mLCDPanel(NULL)
++	mLCDPanel(NULL),
++	mPrefsCool(NULL)
+ {
+ 	mGeneralPanel = new LLPanelGeneral();
+ 	mTabContainer->addTabPanel(mGeneralPanel, mGeneralPanel->getLabel(), FALSE, onTabChanged, mTabContainer);
+@@ -190,6 +192,10 @@
+ 	mTabContainer->addTabPanel(mSkinsPanel, mSkinsPanel->getLabel(), FALSE, onTabChanged, mTabContainer);
+ 	mSkinsPanel->setDefaultBtn(default_btn);
+ 
++	mPrefsCool = new LLPrefsCool();
++	mTabContainer->addTabPanel(mPrefsCool->getPanel(), mPrefsCool->getPanel()->getLabel(), FALSE, onTabChanged, mTabContainer);
++	mPrefsCool->getPanel()->setDefaultBtn(default_btn);
++
+ 	if (!mTabContainer->selectTab(gSavedSettings.getS32("LastPrefTab")))
+ 	{
+ 		mTabContainer->selectFirstTab();
+@@ -249,6 +255,11 @@
+ 		delete mSkinsPanel;
+ 		mSkinsPanel = NULL;
+ 	}
++	if (mPrefsCool)
++	{
++		delete mPrefsCool;
++		mPrefsCool = NULL;
++	}
+ 
+ }
+ 
+@@ -264,6 +275,7 @@
+ 	mPrefsIM->apply();
+ 	mMsgPanel->apply();
+ 	mSkinsPanel->apply();
++	mPrefsCool->apply();
+ 
+ 	// hardware menu apply
+ 	LLFloaterHardwareSettings::instance()->apply();
+@@ -292,6 +304,7 @@
+ 	mPrefsIM->cancel();
+ 	mMsgPanel->cancel();
+ 	mSkinsPanel->cancel();
++	mPrefsCool->cancel();
+ 
+ 	// cancel hardware menu
+ 	LLFloaterHardwareSettings::instance()->cancel();
+diff -urN linden/indra/newview/llfloaterpreference.h linden-patched/indra/newview/llfloaterpreference.h
+--- linden/indra/newview/llfloaterpreference.h	2009-01-07 18:12:09.000000000 +0100
++++ linden-patched/indra/newview/llfloaterpreference.h	2009-01-08 10:38:08.000000000 +0100
+@@ -56,6 +56,7 @@
+ class LLPanelMsgs;
+ class LLPanelSkins;
+ class LLScrollListCtrl;
++class LLPrefsCool;
+ 
+ class LLPreferenceCore
+ {
+@@ -91,6 +92,7 @@
+ 	LLPanelWeb				*mWebPanel;
+ 	LLPanelMsgs				*mMsgPanel;
+ 	LLPanelLCD				*mLCDPanel;
++	LLPrefsCool				*mPrefsCool;
+ };
+ 
+ // Floater to control preferences (display, audio, bandwidth, general.
+diff -urN linden/indra/newview/skins/default/xui/en-us/panel_preferences_cool.xml linden-patched/indra/newview/skins/default/xui/en-us/panel_preferences_cool.xml
+--- linden/indra/newview/skins/default/xui/en-us/panel_preferences_cool.xml	1970-01-01 01:00:00.000000000 +0100
++++ linden-patched/indra/newview/skins/default/xui/en-us/panel_preferences_cool.xml	2009-01-08 10:41:02.000000000 +0100
+@@ -0,0 +1,97 @@
++<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
++<panel border="true" top="20" enabled="true" follows="left|top|right|bottom"
++     height="400" label="Cool features" left="10" mouse_opaque="true" name="cool"
++     width="517">
++	<check_box bottom_delta="-20" control_name="ForceShowGrid" enabled="true"
++	     follows="left|top" font="SansSerifSmall" height="16" initial_value="false"
++	     label="Show the grid selection combo on the login screen" left="10"
++	     mouse_opaque="true" name="force_show_grid_check" radio_style="false"
++	     width="400" />
++	<check_box bottom_delta="-20" control_name="HideNotificationsInChat" enabled="true"
++	     follows="left|top" font="SansSerifSmall" height="16" initial_value="false"
++	     label="Do not echo/log notifications in chat" left="10"
++	     mouse_opaque="true" name="hide_notifications_in_chat_check" radio_style="false"
++	     width="400" />
++	<check_box bottom_delta="-20" control_name="DisableMessagesSpacing" enabled="true"
++	     follows="left|top" font="SansSerifSmall" height="16" initial_value="false"
++	     label="Disable extra messages spacing in chat console" left="10"
++	     mouse_opaque="true" name="disable_messages_spacing_check" radio_style="false"
++	     width="400" />
++	<check_box bottom_delta="-20" control_name="AllowMUpose" enabled="true"
++	     follows="left|top" font="SansSerifSmall" height="16" initial_value="true"
++	     label="Allow MU* pose style in chat and IM (with ':' as a synonymous to '/me ')" left="10"
++	     mouse_opaque="true" name="allow_mu_pose_check" radio_style="false"
++	     width="400" />
++	<check_box bottom_delta="-20" control_name="AutoCloseOOC" enabled="true"
++	     follows="left|top" font="SansSerifSmall" height="16" initial_value="true"
++	     label="Auto-close OOC chat (i.e. add '))' if not found and '((' was used)" left="10"
++	     mouse_opaque="true" name="auto_close_ooc_check" radio_style="false"
++	     width="400" />
++	<check_box bottom_delta="-20" control_name="HideMasterRemote" enabled="true"
++	     follows="left|top" font="SansSerifSmall" height="16" initial_value="true"
++	     label="Hide the Master Remote volume control when useless" left="10"
++	     mouse_opaque="true" name="hide_master_remote_check" radio_style="false"
++	     width="400" />
++	<check_box bottom_delta="-20" control_name="ShowGroupsButton" enabled="true"
++	     follows="left|top" font="SansSerifSmall" height="16" initial_value="true"
++	     label="Show the Groups button in the toolbar (requires a restart)" left="10"
++	     mouse_opaque="true" name="show_group_button_check" radio_style="false"
++	     width="400" />
++	<check_box bottom_delta="-20" control_name="UseOldChatHistory" enabled="true"
++	     follows="left|top" font="SansSerifSmall" height="16" initial_value="true"
++	     label="Use the old style 'Chat history' window (requires a restart)" left="10"
++	     mouse_opaque="true" name="use_old_chat_history_check" radio_style="false"
++	     width="400" />
++	<check_box bottom_delta="-20" control_name="UseOldStatusBarIcons" enabled="true"
++	     follows="left|top" font="SansSerifSmall" height="16" initial_value="true"
++	     label="Use the old, more readable, status bar icons (requires a restart)" left="10"
++	     mouse_opaque="true" name="use_old_statusbar_icons_check" radio_style="false"
++	     width="400" />
++	<check_box bottom_delta="-20" control_name="UseOldTrackingDots" enabled="true"
++	     follows="left|top" font="SansSerifSmall" height="16" initial_value="true"
++	     label="Use the old T-like tracking dots in mini-map (requires a restart)" left="10"
++	     mouse_opaque="true" name="use_old_tracking_dots_check" radio_style="false"
++	     width="400" />
++	<check_box bottom_delta="-20" control_name="RestrainedLife" enabled="true"
++	     follows="left|top" font="SansSerifSmall" height="16" initial_value="false"
++	     label="RestrainedLife (BDSM toys support) mode (requires a restart)" left="10"
++	     mouse_opaque="true" name="restrained_life_check" radio_style="false"
++	     width="400" />
++	<text type="string" length="1" bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
++	     bottom_delta="-30" drop_shadow_visible="true" enabled="true" follows="left|top"
++	     font="SansSerifSmall" h_pad="0" halign="left" height="10" hidden="false"
++	     left="10" mouse_opaque="true" name="time_format_text_box" v_pad="0"
++	     width="100">
++		Time format:
++	</text>
++	<combo_box allow_text_entry="false" bottom_delta="-5" enabled="true" follows="left|top"
++	     height="18" hidden="false" left="150" max_chars="20" mouse_opaque="true"
++	     name="time_format_combobox" width="150">
++		<combo_item type="string" length="1" enabled="true" name="24hours" value="default">
++			24 hours clock
++		</combo_item>
++		<combo_item type="string" length="1" enabled="true" name="12hours" value="default">
++			12 hours clock
++		</combo_item>
++	</combo_box>
++	<text type="string" length="1" bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
++	     bottom_delta="-25" drop_shadow_visible="true" enabled="true" follows="left|top"
++	     font="SansSerifSmall" h_pad="0" halign="left" height="10" hidden="false"
++	     left="10" mouse_opaque="true" name="date_format_text_box" v_pad="0"
++	     width="100">
++		Date format:
++	</text>
++	<combo_box allow_text_entry="false" bottom_delta="-5" enabled="true" follows="left|top"
++	     height="18" hidden="false" left="150" max_chars="20" mouse_opaque="true"
++	     name="date_format_combobox" width="150">
++		<combo_item type="string" length="1" enabled="true" name="year_first" value="default">
++			YYYY-MM-DD
++		</combo_item>
++		<combo_item type="string" length="1" enabled="true" name="day_first" value="default">
++			DD/MM/YYYY
++		</combo_item>
++		<combo_item type="string" length="1" enabled="true" name="month_first" value="default">
++			MM/DD/YYYY
++		</combo_item>
++	</combo_box>
++</panel>

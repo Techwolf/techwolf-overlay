@@ -1,0 +1,377 @@
+Index: snowglobe-svn/indra/llaudio/audioengine_openal.cpp
+===================================================================
+--- snowglobe-svn.orig/indra/llaudio/audioengine_openal.cpp	2009-08-07 20:50:30.000000000 +0200
++++ snowglobe-svn/indra/llaudio/audioengine_openal.cpp	2009-08-07 23:51:13.000000000 +0200
+@@ -164,8 +164,13 @@
+ 
+ void LLAudioEngine_OpenAL::setInternalGain(F32 gain)
+ {
+-	//llinfos << "LLAudioEngine_OpenAL::setInternalGain() Gain: " << gain << llendl;
+-	alListenerf(AL_GAIN, gain);
++  	static F32 last_gain = 0.0;
++	if (last_gain != gain)
++	{
++	  llinfos << "LLAudioEngine_OpenAL::setInternalGain() Gain: " << gain << llendl;
++	  alListenerf(AL_GAIN, gain);
++	  last_gain = gain;
++	}
+ }
+ 
+ LLAudioChannelOpenAL::LLAudioChannelOpenAL()
+Index: snowglobe-svn/indra/llaudio/audioengine.cpp
+===================================================================
+--- snowglobe-svn.orig/indra/llaudio/audioengine.cpp	2009-08-07 20:50:30.000000000 +0200
++++ snowglobe-svn/indra/llaudio/audioengine.cpp	2009-08-08 00:58:52.000000000 +0200
+@@ -357,6 +357,12 @@
+ 			continue;
+ 		}
+ 
++		if (sourcep->isMuted())
++		{
++			++iter;
++		  	continue;
++		}
++
+ 		if (!sourcep->getChannel() && sourcep->getCurrentBuffer())
+ 		{
+ 			// We could potentially play this sound if its priority is high enough.
+@@ -409,9 +415,9 @@
+ 		// attached to each channel, since only those with active channels
+ 		// can have anything interesting happen with their queue? (Maybe not true)
+ 		LLAudioSource *sourcep = iter->second;
+-		if (!sourcep->mQueuedDatap)
++		if (!sourcep->mQueuedDatap || sourcep->isMuted())
+ 		{
+-			// Nothing queued, so we don't care.
++			// Muted, or nothing queued, so we don't care.
+ 			continue;
+ 		}
+ 
+@@ -491,6 +497,10 @@
+ 	for (iter = mAllSources.begin(); iter != mAllSources.end(); ++iter)
+ 	{
+ 		LLAudioSource *sourcep = iter->second;
++		if (sourcep->isMuted())
++		{
++			continue;
++		}
+ 		if (sourcep->isSyncMaster())
+ 		{
+ 			if (sourcep->getPriority() > max_sm_priority)
+@@ -773,7 +783,14 @@
+ void LLAudioEngine::setMasterGain(const F32 gain)
+ {
+ 	mMasterGain = gain;
+-	setInternalGain(gain);
++	if (getMuted())
++	{
++		setInternalGain(0.f);
++	}
++	else
++	{
++		setInternalGain(gain);
++	}
+ }
+ 
+ F32 LLAudioEngine::getMasterGain()
+@@ -1336,13 +1353,14 @@
+ 	mOwnerID(owner_id),
+ 	mPriority(0.f),
+ 	mGain(gain),
+-	mType(type),
++	mSourceMuted(false),
+ 	mAmbient(false),
+ 	mLoop(false),
+ 	mSyncMaster(false),
+ 	mSyncSlave(false),
+ 	mQueueSounds(false),
+ 	mPlayedOnce(false),
++	mType(type),
+ 	mChannelp(NULL),
+ 	mCurrentDatap(NULL),
+ 	mQueuedDatap(NULL)
+@@ -1394,6 +1412,10 @@
+ 	{
+ 		mPriority = 1.f;
+ 	}
++	else if (isMuted())
++	{
++		mPriority = 0.f;
++	}
+ 	else
+ 	{
+ 		// Priority is based on distance
+@@ -1442,25 +1464,33 @@
+ 
+ bool LLAudioSource::play(const LLUUID &audio_uuid)
+ {
++	// Special abuse of play(); don't play a sound, but kill it.
+ 	if (audio_uuid.isNull())
+ 	{
+ 		if (getChannel())
+ 		{
+ 			getChannel()->setSource(NULL);
+ 			setChannel(NULL);
+-			addAudioData(NULL, true);
++			if (!isMuted())
++			{
++				mCurrentDatap = NULL;
++			}
+ 		}
++		return false;
+ 	}
++
+ 	// Reset our age timeout if someone attempts to play the source.
+ 	mAgeTimer.reset();
+ 
+ 	LLAudioData *adp = gAudiop->getAudioData(audio_uuid);
+-
+-	bool has_buffer = gAudiop->updateBufferForData(adp, audio_uuid);
+-
+-
+ 	addAudioData(adp);
+ 
++	if (isMuted())
++	{
++		return false;
++	}
++
++	bool has_buffer = gAudiop->updateBufferForData(adp, audio_uuid);
+ 	if (!has_buffer)
+ 	{
+ 		// Don't bother trying to set up a channel or anything, we don't have an audio buffer.
+@@ -1485,10 +1515,11 @@
+ }
+ 
+ 
+-bool LLAudioSource::isDone()
++bool LLAudioSource::isDone() const
+ {
+ 	const F32 MAX_AGE = 60.f;
+ 	const F32 MAX_UNPLAYED_AGE = 15.f;
++	const F32 MAX_MUTED_AGE = 11.f;
+ 
+ 	if (isLoop())
+ 	{
+@@ -1496,7 +1527,6 @@
+ 		return false;
+ 	}
+ 
+-
+ 	if (hasPendingPreloads())
+ 	{
+ 		return false;
+@@ -1513,10 +1543,10 @@
+ 	// This is a single-play source
+ 	if (!mChannelp)
+ 	{
+-		if ((elapsed > MAX_UNPLAYED_AGE) || mPlayedOnce)
++		if ((elapsed > (mSourceMuted ? MAX_MUTED_AGE : MAX_UNPLAYED_AGE)) || mPlayedOnce)
+ 		{
+ 			// We don't have a channel assigned, and it's been
+-			// over 5 seconds since we tried to play it.  Don't bother.
++			// over 15 seconds since we tried to play it.  Don't bother.
+ 			//llinfos << "No channel assigned, source is done" << llendl;
+ 			return true;
+ 		}
+@@ -1542,7 +1572,7 @@
+ 
+ 	if ((elapsed > MAX_UNPLAYED_AGE) || mPlayedOnce)
+ 	{
+-		// The sound isn't playing back after 5 seconds or we're already done playing it, kill it.
++		// The sound isn't playing back after 15 seconds or we're already done playing it, kill it.
+ 		return true;
+ 	}
+ 
+Index: snowglobe-svn/indra/llaudio/audioengine.h
+===================================================================
+--- snowglobe-svn.orig/indra/llaudio/audioengine.h	2009-08-07 20:50:30.000000000 +0200
++++ snowglobe-svn/indra/llaudio/audioengine.h	2009-08-08 01:01:51.000000000 +0200
+@@ -305,7 +305,8 @@
+ 	virtual void setGain(const F32 gain)							{ mGain = llclamp(gain, 0.f, 1.f); }
+ 
+ 	const LLUUID &getID() const		{ return mID; }
+-	bool isDone();
++	bool isDone() const;
++	bool isMuted() const { return mSourceMuted; }
+ 
+ 	LLAudioData *getCurrentData();
+ 	LLAudioData *getQueuedData();
+@@ -327,6 +328,7 @@
+ 	LLUUID			mOwnerID;	// owner of the object playing the sound
+ 	F32				mPriority;
+ 	F32				mGain;
++	bool			mSourceMuted;
+ 	bool			mAmbient;
+ 	bool			mLoop;
+ 	bool			mSyncMaster;
+Index: snowglobe-svn/indra/newview/llaudiosourcevo.cpp
+===================================================================
+--- snowglobe-svn.orig/indra/newview/llaudiosourcevo.cpp	2009-08-07 20:50:30.000000000 +0200
++++ snowglobe-svn/indra/newview/llaudiosourcevo.cpp	2009-08-07 23:51:13.000000000 +0200
+@@ -41,11 +41,8 @@
+ 
+ LLAudioSourceVO::LLAudioSourceVO(const LLUUID &sound_id, const LLUUID& owner_id, const F32 gain, LLViewerObject *objectp)
+ 	:	LLAudioSource(sound_id, owner_id, gain, LLAudioEngine::AUDIO_TYPE_SFX), 
+-	mObjectp(objectp), 
+-	mActualGain(gain)
++	mObjectp(objectp)
+ {
+-	setAmbient(FALSE);
+-	updateGain();
+ 	update();
+ }
+ 
+@@ -60,14 +57,14 @@
+ 
+ void LLAudioSourceVO::setGain(const F32 gain)
+ {
+-	mActualGain = llclamp(gain, 0.f, 1.f);
+-	updateGain();
++	mGain = llclamp(gain, 0.f, 1.f);
+ }
+ 
+-void LLAudioSourceVO::updateGain()
++void LLAudioSourceVO::updateMute()
+ {
+-	if (!mObjectp)
++	if (!mObjectp || mObjectp->isDead())
+ 	{
++	  	mSourceMuted = TRUE;
+ 		return;
+ 	}
+ 
+@@ -90,7 +87,7 @@
+ 	{
+ 		pos_global = mObjectp->getPositionGlobal();
+ 	}
+-	
++
+ 	if (!LLViewerParcelMgr::getInstance()->canHearSound(pos_global))
+ 	{
+ 		mute = TRUE;
+@@ -121,19 +118,33 @@
+ 		}
+ 	}
+ 
+-	if (!mute)
++	if (mute != mSourceMuted)
+ 	{
+-		mGain = mActualGain;
+-	}
+-	else
+-	{
+-		mGain = 0.f;
++		mSourceMuted = mute;
++		if (mSourceMuted)
++		{
++		  	// Stop the sound.
++			this->play(LLUUID::null);
++		}
++		else
++		{
++		  	// Muted sounds keep there data at all times, because
++			// it's the place where the audio UUID is stored.
++			// However, it's possible that mCurrentDatap is
++			// NULL when this source did only preload sounds.
++			if (mCurrentDatap)
++			{
++		  		// Restart the sound.
++				this->play(mCurrentDatap->getID());
++			}
++		}
+ 	}
+ }
+ 
+-
+ void LLAudioSourceVO::update()
+ {
++	updateMute();
++
+ 	if (!mObjectp)
+ 	{
+ 		return;
+@@ -145,7 +156,11 @@
+ 		return;
+ 	}
+ 
+-	updateGain();
++	if (mSourceMuted)
++	{
++	  	return;
++	}
++
+ 	if (mObjectp->isHUDAttachment())
+ 	{
+ 		mPositionGlobal = gAgent.getCameraPositionGlobal();
+Index: snowglobe-svn/indra/newview/llaudiosourcevo.h
+===================================================================
+--- snowglobe-svn.orig/indra/newview/llaudiosourcevo.h	2009-08-07 20:50:30.000000000 +0200
++++ snowglobe-svn/indra/newview/llaudiosourcevo.h	2009-08-07 21:35:17.000000000 +0200
+@@ -48,11 +48,10 @@
+ 	/*virtual*/ void setGain(const F32 gain);
+ 
+ private:
+-	void updateGain();
++	void updateMute();
+ 
+ private:
+ 	LLPointer<LLViewerObject>	mObjectp;
+-	F32							mActualGain; // The "real" gain, when not off due to parcel effects
+ };
+ 
+ #endif // LL_LLAUDIOSOURCEVO_H
+Index: snowglobe-svn/indra/newview/llviewerobject.cpp
+===================================================================
+--- snowglobe-svn.orig/indra/newview/llviewerobject.cpp	2009-08-07 20:50:30.000000000 +0200
++++ snowglobe-svn/indra/newview/llviewerobject.cpp	2009-08-07 21:35:17.000000000 +0200
+@@ -4359,6 +4359,13 @@
+ 		mAudioSourcep = NULL;
+ 	}
+ 
++	if (mAudioSourcep && mAudioSourcep->isMuted() &&
++	    mAudioSourcep->getCurrentData() && mAudioSourcep->getCurrentData()->getID() == audio_uuid)
++	{
++		//llinfos << "Already having this sound as muted sound, ignoring" << llendl;
++		return;
++	}
++
+ 	getAudioSource(owner_id);
+ 
+ 	if (mAudioSourcep)
+Index: snowglobe-svn/indra/newview/llvieweraudio.cpp
+===================================================================
+--- snowglobe-svn.orig/indra/newview/llvieweraudio.cpp	2009-08-07 20:50:30.000000000 +0200
++++ snowglobe-svn/indra/newview/llvieweraudio.cpp	2009-08-07 21:35:17.000000000 +0200
+@@ -130,10 +130,6 @@
+ 		gAudiop->setDopplerFactor(gSavedSettings.getF32("AudioLevelDoppler"));
+ 		gAudiop->setDistanceFactor(gSavedSettings.getF32("AudioLevelDistance")); 
+ 		gAudiop->setRolloffFactor(gSavedSettings.getF32("AudioLevelRolloff"));
+-#ifdef kAUDIO_ENABLE_WIND
+-		gAudiop->enableWind(!mute_audio);
+-#endif
+-
+ 		gAudiop->setMuted(mute_audio);
+ 		
+ 		if (force_update)
+Index: snowglobe-svn/indra/newview/llviewermessage.cpp
+===================================================================
+--- snowglobe-svn.orig/indra/newview/llviewermessage.cpp	2009-08-07 20:50:30.000000000 +0200
++++ snowglobe-svn/indra/newview/llviewermessage.cpp	2009-08-07 21:35:17.000000000 +0200
+@@ -3427,13 +3427,11 @@
+ 
+ 	// Don't play sounds from a region with maturity above current agent maturity
+ 	LLVector3d pos_global = objectp->getPositionGlobal();
+-	if( !gAgent.canAccessMaturityAtGlobal( pos_global ) )
++	if (gAgent.canAccessMaturityAtGlobal(pos_global))
+ 	{
+-		return;
++		// Add audioData starts a transfer internally.
++		sourcep->addAudioData(datap, FALSE);
+ 	}
+-	
+-	// Add audioData starts a transfer internally.
+-	sourcep->addAudioData(datap, FALSE);
+ }
+ 
+ void process_attached_sound(LLMessageSystem *msg, void **user_data)

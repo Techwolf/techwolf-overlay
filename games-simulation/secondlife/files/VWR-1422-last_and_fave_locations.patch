@@ -1,0 +1,2874 @@
+Index: indra/llui/llmenugl.cpp
+===================================================================
+--- indra/llui/llmenugl.cpp	(revision 1)
++++ indra/llui/llmenugl.cpp	(working copy)
+@@ -2440,6 +2440,14 @@
+ 	return TRUE;
+ }
+ 
++BOOL LLMenuGL::removeLast()
++{
++	removeChild(mItems.back(), TRUE);
++	mItems.pop_back();
++	arrange();
++	return TRUE;
++}
++
+ // add a separator to this menu
+ BOOL LLMenuGL::appendSeparator( const LLString &separator_name )
+ {
+Index: indra/llui/llmenugl.h
+===================================================================
+--- indra/llui/llmenugl.h	(revision 1)
++++ indra/llui/llmenugl.h	(working copy)
+@@ -437,6 +437,9 @@
+ 	// Add the menu item to this menu.
+ 	virtual BOOL append( LLMenuItemGL* item );
+ 
++	// Remove item from menu
++	virtual BOOL removeLast();
++
+ 	// add a separator to this menu
+ 	virtual BOOL appendSeparator( const LLString &separator_name = "separator" );
+ 
+Index: indra/newview/app_settings/landmarks.xml
+===================================================================
+--- indra/newview/app_settings/landmarks.xml	(revision 0)
++++ indra/newview/app_settings/landmarks.xml	(revision 0)
+@@ -0,0 +1,52 @@
++<llsd>
++    <array>
++        <map>
++        <key>location</key>
++            <array>
++                <real>255235.39429759979</real>
++                <real>256515.54875016212</real>
++                <real>40.053054809570313</real>
++            </array>
++        <key>parcel</key>
++            <string>Ahern Welcome Area</string>
++        <key>region</key>
++            <string>Ahern/3/4/40</string>
++        <key>screenshot</key>
++            <string/>
++        <key>timestamp</key>
++            <date/>
++        </map>
++        <map>
++        <key>location</key>
++            <array>
++                <real>262015.95696258545</real>
++                <real>257919.21200561523</real>
++                <real>26.504133224487305</real>
++            </array>
++        <key>parcel</key>
++            <string>Help Island Public</string>
++        <key>region</key>
++            <string>Help Island Public/128/127/27</string>
++        <key>screenshot</key>
++            <string/>
++        <key>timestamp</key>
++            <date/>
++        </map>
++        <map>
++        <key>location</key>
++            <array>
++                <real>254523.88790130615</real>
++                <real>256059.21120071411</real>
++                <real>28.017248153686523</real>
++            </array>
++        <key>parcel</key>
++            <string>Luna Oaks Galleria</string>
++        <key>region</key>
++            <string>Luna/60/59/28</string>
++        <key>screenshot</key>
++            <string/>
++        <key>timestamp</key>
++            <date/>
++        </map>
++    </array>
++</llsd>
+Index: indra/newview/app_settings/settings.xml
+===================================================================
+--- indra/newview/app_settings/settings.xml	(revision 4)
++++ indra/newview/app_settings/settings.xml	(working copy)
+@@ -3984,16 +3984,16 @@
+         <key>Value</key>
+             <integer>0</integer>
+         </map>
+-    <key>LoginLastLocation</key>
++    <key>LoginLocationPreset</key>
+         <map>
+         <key>Comment</key>
+-            <string>Login at same location you last logged out</string>
++            <string>Login location preset (home|last|fave|specify)</string>
+         <key>Persist</key>
+             <integer>1</integer>
+         <key>Type</key>
+-            <string>Boolean</string>
++            <string>String</string>
+         <key>Value</key>
+-            <integer>1</integer>
++            <string>home</string>
+         </map>
+     <key>LoginPage</key>
+         <map>
+@@ -7025,6 +7025,28 @@
+         <key>Value</key>
+             <integer>0</integer>
+         </map>
++    <key>TeleportHistoryEntries</key>
++        <map>
++        <key>Comment</key>
++            <string>Number of locations to keep in teleport history</string>
++        <key>Persist</key>
++            <integer>1</integer>
++        <key>Type</key>
++            <string>S32</string>
++        <key>Value</key>
++            <integer>10</integer>
++        </map>
++    <key>TeleportHistoryScreenshots</key>
++        <map>
++        <key>Comment</key>
++            <string>Whether or not to take screenshots for teleport history</string>
++        <key>Persist</key>
++            <integer>1</integer>
++        <key>Type</key>
++            <string>Boolean</string>
++        <key>Value</key>
++            <integer>1</integer>
++        </map>
+     <key>TerrainColorHeightRange</key>
+         <map>
+         <key>Comment</key>
+Index: indra/newview/llagent.cpp
+===================================================================
+--- indra/newview/llagent.cpp	(revision 1)
++++ indra/newview/llagent.cpp	(working copy)
+@@ -76,6 +76,7 @@
+ #include "llfloatergroups.h"
+ #include "llfloatermap.h"
+ #include "llfloatermute.h"
++#include "llfloaterofflinelandmarks.h"
+ #include "llfloatersnapshot.h"
+ #include "llfloatertools.h"
+ #include "llfloaterworldmap.h"
+@@ -294,6 +295,7 @@
+ 	mNumPendingQueries(0),
+ 	mForceMouselook(FALSE),
+ 	mTeleportState( TELEPORT_NONE ),
++	mHasJustTeleported(false),
+ 	mRegionp(NULL),
+ 
+ 	mAgentOriginGlobal(),
+@@ -583,6 +585,7 @@
+ //-----------------------------------------------------------------------------
+ void LLAgent::moveAt(S32 direction, bool reset)
+ {
++	hasJustTeleported(false);
+ 	// age chat timer so it fades more quickly when you are intentionally moving
+ 	ageChat();
+ 
+@@ -608,6 +611,7 @@
+ //-----------------------------------------------------------------------------
+ void LLAgent::moveAtNudge(S32 direction)
+ {
++	hasJustTeleported(false);
+ 	// age chat timer so it fades more quickly when you are intentionally moving
+ 	ageChat();
+ 
+@@ -630,6 +634,7 @@
+ //-----------------------------------------------------------------------------
+ void LLAgent::moveLeft(S32 direction)
+ {
++	hasJustTeleported(false);
+ 	// age chat timer so it fades more quickly when you are intentionally moving
+ 	ageChat();
+ 
+@@ -652,6 +657,7 @@
+ //-----------------------------------------------------------------------------
+ void LLAgent::moveLeftNudge(S32 direction)
+ {
++	hasJustTeleported(false);
+ 	// age chat timer so it fades more quickly when you are intentionally moving
+ 	ageChat();
+ 
+@@ -674,6 +680,7 @@
+ //-----------------------------------------------------------------------------
+ void LLAgent::moveUp(S32 direction)
+ {
++	hasJustTeleported(false);
+ 	// age chat timer so it fades more quickly when you are intentionally moving
+ 	ageChat();
+ 
+@@ -696,6 +703,7 @@
+ //-----------------------------------------------------------------------------
+ void LLAgent::moveYaw(F32 mag, bool reset_view)
+ {
++	hasJustTeleported(false);
+ 	mYawKey = mag;
+ 
+ 	if (mag > 0)
+@@ -718,6 +726,7 @@
+ //-----------------------------------------------------------------------------
+ void LLAgent::movePitch(S32 direction)
+ {
++	hasJustTeleported(false);
+ 	setKey(direction, mPitchKey);
+ 
+ 	if (direction > 0)
+@@ -771,9 +780,13 @@
+ 		}
+ 	}
+ 
++	BOOL was_flying = getFlying();
++	if (fly != was_flying)
++	{
++		hasJustTeleported(false);
++	}
+ 	if (fly)
+ 	{
+-		BOOL was_flying = getFlying();
+ 		if (!canFly() && !was_flying)
+ 		{
+ 			// parcel doesn't let you start fly
+@@ -5752,6 +5765,9 @@
+ 		//release geometry from old location
+ 		gPipeline.resetVertexBuffers();
+ 	}
++
++	hasJustTeleported(false); // save locations and update menu in case we're teleporting several times in a row without moving
++
+ 	make_ui_sound("UISndTeleportOut");
+ 	
+ 	// MBW -- Let the voice client know a teleport has begun so it can leave the existing channel.
+@@ -5832,6 +5848,7 @@
+ // James Cook, July 28, 2005
+ void LLAgent::teleportCancel()
+ {
++	hasJustTeleported(false, true);
+ 	LLViewerRegion* regionp = getRegion();
+ 	if(regionp)
+ 	{
+@@ -5904,6 +5921,103 @@
+ 	}
+ }
+ 
++void LLAgent::hasJustTeleported(bool flag, bool cancelled)
++{
++	if (cancelled)
++	{	// user cancelled or tp failed
++		mHasJustTeleported = false;
++		return;
++	}
++
++	if (!mHasJustTeleported && flag)
++	{	// prepare for a new entry
++		gScreenshotTime = gRenderStartTime.getElapsedTimeF32() + 2.0f;
++		mHasJustTeleported = true;
++		return;
++	}
++
++	if (mHasJustTeleported && !flag)
++	{	// commit entry, unless we're home or been there already lately
++		LLVector3d here = (LLVector3d) getPositionGlobal();
++		LLVector3d there;
++		std::string temp_screenshot = gDirUtilp->getExpandedFilename(LL_PATH_PER_SL_ACCOUNT, LLOfflineLandmarks::sTempScreenshotFilename);
++
++		if (getHomePosGlobal(&there))
++		{
++			if ((here - there).magVec() < 2.5) // 1.0 m didn't seem quite enough
++			{
++				mHasJustTeleported = false;
++				return;
++			}
++		}
++
++		S32 n = gTeleportHistory.getLandmarks()->size();
++		for (S32 i = 1; i < n; i++)
++		{
++			there = gTeleportHistory.getLocation(i);
++			if ((here - there).magVec() < 2.5)
++			{	// let's not bother to delete the temp screenshot, just consumes time
++				mHasJustTeleported = false;
++				break;
++			}
++		}
++
++		LLViewerRegion *regionp = getRegion();
++		if (mHasJustTeleported && regionp)
++		{
++			S32 x = llround( (F32)fmod( here.mdV[VX], (F64)REGION_WIDTH_METERS ) );
++			S32 y = llround( (F32)fmod( here.mdV[VY], (F64)REGION_WIDTH_METERS ) );
++			S32 z = llround( (F32)here.mdV[VZ] );
++			std::string region_str = regionp->getName() + llformat("/%d/%d/%d", x, y, z);
++			std::string parcel_name = LLViewerParcelMgr::getInstance()->getAgentParcelName();
++			gTeleportHistory.prepend(region_str, parcel_name, here);
++			llinfos << "Saved location \"" << parcel_name << "\" in " << region_str << " (" << here.mdV[VX] << ", " << here.mdV[VY] << ", " << here.mdV[VZ] << ")" << llendl;
++			if (gSavedSettings.getBOOL("TeleportHistoryScreenshots"))
++			{
++				std::string screenshot = gDirUtilp->getExpandedFilename(LL_PATH_PER_SL_ACCOUNT, gTeleportHistory.getScreenshot(0, true));
++				if (LLFile::rename(temp_screenshot.c_str(), screenshot.c_str()) == 0)
++				{
++					llinfos << "Saved screenshot to " << screenshot << llendl;
++				}
++				else
++				{
++					llwarns << "Could not save screenshot to " << screenshot << " - errorcode: " << errno << llendl;
++				}
++			}
++		}
++
++		if (gTeleportHistory.isDirty())
++		{	// saving is done in the idle loop
++			update_world_last_locations_menu();
++		}
++
++		// now update timestamp in favourites
++		n = gFavouriteLocations.getLandmarks()->size();
++		for (S32 i = 0; i < n; i++)
++		{
++			there = gFavouriteLocations.getLocation(i);
++			if ((here - there).magVec() < 1.0)
++			{
++				gFavouriteLocations.setTimestamp(i);
++			}
++		}
++
++		if (gFavouriteLocations.isDirty())
++		{
++			update_world_fave_locations_menu();
++			LLFloaterOfflineLandmarks::refresh();
++			gFavouriteLocations.save();
++		}
++
++		mHasJustTeleported = false;
++	}
++}
++
++bool LLAgent::hasJustTeleported()
++{
++	return mHasJustTeleported;
++}
++
+ void LLAgent::fidget()
+ {
+ 	if (!getAFK())
+Index: indra/newview/llagent.h
+===================================================================
+--- indra/newview/llagent.h	(revision 1)
++++ indra/newview/llagent.h	(working copy)
+@@ -62,6 +62,7 @@
+ #include "llinventory.h"
+ #include "llviewerinventory.h"
+ #include "llagentdata.h"
++#include "llofflinelandmarks.h"
+ 
+ // Ventrella
+ #include "llfollowcam.h"
+@@ -569,6 +570,9 @@
+ 		mTeleportMessage = message;
+ 	}
+ 
++	void			hasJustTeleported(bool flag, bool cancelled = false);
++	bool			hasJustTeleported();
++
+ 	// trigger random fidget animations
+ 	void			fidget();
+ 
+@@ -737,6 +741,7 @@
+ 	U8				mAccess;	// SIM_ACCESS_MATURE or SIM_ACCESS_PG
+ 	ETeleportState	mTeleportState;
+ 	LLString		mTeleportMessage;
++	bool			mHasJustTeleported;
+ 
+ 	S32				mControlsTakenCount[TOTAL_CONTROLS];
+ 	S32				mControlsTakenPassedOnCount[TOTAL_CONTROLS];
+Index: indra/newview/llappviewer.cpp
+===================================================================
+--- indra/newview/llappviewer.cpp	(revision 1)
++++ indra/newview/llappviewer.cpp	(working copy)
+@@ -251,6 +251,7 @@
+ F32		gFPSClamped = 10.f;						// Pretend we start at target rate.
+ F32		gFrameDTClamped = 0.f;					// Time between adjacent checks to network for packets
+ U64	gStartTime = 0; // gStartTime is "private", used only to calculate gFrameTimeSeconds
++F32		gScreenshotTime = 0.f;
+ 
+ LLTimer gRenderStartTime;
+ LLFrameTimer gForegroundTime;
+@@ -3382,6 +3383,23 @@
+ 			gAudiop->idle(max_audio_decode_time);
+ 		}
+ 	}
++
++	if (gAgent.hasJustTeleported())
++	{
++		if (gSavedSettings.getBOOL("TeleportHistoryScreenshots") && gRenderStartTime.getElapsedTimeF32() >= gScreenshotTime)
++		{
++			// take screenshot every 2 seconds until agent starts to move
++			// another algorithm would be better, like % of downloaded textures/objects; don't know how to do that yet
++			gViewerWindow->saveSnapshot(
++				gDirUtilp->getExpandedFilename(LL_PATH_PER_SL_ACCOUNT, LLOfflineLandmarks::sTempScreenshotFilename),
++				gViewerWindow->getWindowDisplayWidth(), gViewerWindow->getWindowDisplayHeight(), FALSE, FALSE);
++			gScreenshotTime = gRenderStartTime.getElapsedTimeF32() + 2.0f;
++		}
++	}
++	else
++	{
++		gTeleportHistory.save();
++	}
+ 	
+ 	// Handle shutdown process, for example, 
+ 	// wait for floaters to close, send quit message,
+@@ -3396,6 +3414,9 @@
+ 
+ void LLAppViewer::idleShutdown()
+ {
++	gAgent.hasJustTeleported(false);
++	gTeleportHistory.save();
++
+ 	// Wait for all modal alerts to get resolved
+ 	if (LLModalDialog::activeCount() > 0)
+ 	{
+Index: indra/newview/llappviewer.h
+===================================================================
+--- indra/newview/llappviewer.h	(revision 1)
++++ indra/newview/llappviewer.h	(working copy)
+@@ -257,6 +257,7 @@
+ extern F32		gFPSClamped;						// Frames per second, smoothed, weighted toward last frame
+ extern F32		gFrameDTClamped;
+ extern U64		gStartTime;
++extern F32		gScreenshotTime;
+ 
+ extern LLTimer gRenderStartTime;
+ extern LLFrameTimer gForegroundTime;
+Index: indra/newview/llfloaterofflinelandmarks.cpp
+===================================================================
+--- indra/newview/llfloaterofflinelandmarks.cpp	(revision 0)
++++ indra/newview/llfloaterofflinelandmarks.cpp	(revision 0)
+@@ -0,0 +1,299 @@
++/** 
++ * @file llfloaterofflinelandmarks.cpp
++ * @author Felix Duesenburg
++ * @brief Favourite locations editor floater class implementation
++ *
++ * $LicenseInfo:firstyear=2002&license=viewergpl$
++ * 
++ * Copyright (c) 2002-2008, Linden Research, Inc.
++ * 
++ * Second Life Viewer Source Code
++ * The source code in this file ("Source Code") is provided by Linden Lab
++ * to you under the terms of the GNU General Public License, version 2.0
++ * ("GPL"), unless you have obtained a separate licensing agreement
++ * ("Other License"), formally executed by you and Linden Lab.  Terms of
++ * the GPL can be found in doc/GPL-license.txt in this distribution, or
++ * online at http://secondlifegrid.net/programs/open_source/licensing/gplv2
++ * 
++ * There are special exceptions to the terms and conditions of the GPL as
++ * it is applied to this Source Code. View the full text of the exception
++ * in the file doc/FLOSS-exception.txt in this software distribution, or
++ * online at http://secondlifegrid.net/programs/open_source/licensing/flossexception
++ * 
++ * By copying, modifying or distributing this software, you acknowledge
++ * that you have read and understood your obligations described above,
++ * and agree to abide by those obligations.
++ * 
++ * ALL LINDEN LAB SOURCE CODE IS PROVIDED "AS IS." LINDEN LAB MAKES NO
++ * WARRANTIES, EXPRESS, IMPLIED OR OTHERWISE, REGARDING ITS ACCURACY,
++ * COMPLETENESS OR PERFORMANCE.
++ * $/LicenseInfo$
++ */
++
++#include "llviewerprecompiledheaders.h"
++
++#include "llfloaterofflinelandmarks.h"
++
++#include "lluictrlfactory.h"
++#include "llscrolllistctrl.h"
++#include "llofflinelandmarks.h"
++#include "llfloaterworldmap.h"
++#include "llagent.h"
++#include "llviewermenu.h"
++#include "llviewerwindow.h"
++#include "llviewerregion.h"
++#include "llviewerparcelmgr.h"
++
++
++// Statics
++LLFloaterOfflineLandmarks* LLFloaterOfflineLandmarks::sInstance = NULL;
++
++// public
++LLFloaterOfflineLandmarks::LLFloaterOfflineLandmarks()
++:   LLFloater("offlinelandmarks"),
++	mOfflineLandmarksView(NULL)
++{
++	LLUICtrlFactory::getInstance()->buildFloater(this, "floater_offline_landmarks.xml");
++}
++
++// public
++LLFloaterOfflineLandmarks::~LLFloaterOfflineLandmarks()
++{
++	if (gFavouriteLocations.isDirty())
++	{	// revert changes when closing without saving
++		gFavouriteLocations.load();
++	}
++	update_world_fave_locations_menu();
++	sInstance = NULL;
++}
++
++// public
++BOOL LLFloaterOfflineLandmarks::postBuild()
++{
++	mOfflineLandmarksView = getChild<LLScrollListCtrl>("offline_landmarks_list");
++	if (mOfflineLandmarksView)
++	{
++		mOfflineLandmarksView->setCommitOnSelectionChange(TRUE);
++		mOfflineLandmarksView->setSortChangedCallback(onSortChanged);
++		childSetCommitCallback("offline_landmarks_list", onListSelect, this);
++		childSetCommitCallback("parcel_edit", onCommitDescription, this);
++		childSetAction("show_map_btn", onClickShowMap, this);
++		childSetAction("screenshot_btn", onClickScreenshot, this);
++		childSetAction("move_down_btn", onClickMoveDown, this);
++		childSetAction("move_up_btn", onClickMoveUp, this);
++		childSetAction("trash_btn", onClickDelete, this);
++		childSetAction("add_btn", onClickAdd, this);
++		childSetAction("save_btn", onClickSave, this);
++		childSetAction("cancel_btn", onClickCancel, this);
++		setDefaultBtn("save_btn");
++		buildList();
++		return TRUE;
++	}
++	return FALSE;
++}
++
++// private
++BOOL LLFloaterOfflineLandmarks::buildList()
++{
++	if (mOfflineLandmarksView)
++	{
++		mOfflineLandmarksView->clearRows();
++		LLSD* lms = gFavouriteLocations.getLandmarks();
++		LLSD::array_iterator it;
++		S32 id;
++		for (id = 0, it = lms->beginArray(); it != lms->endArray(); id++, it++)
++		{
++			LLSD row;
++			row["id"] = id;
++
++			row["columns"][0]["column"] = LLOfflineLandmarks::sKeyParcel;
++			row["columns"][0]["value"] = (*it)[LLOfflineLandmarks::sKeyParcel].asString();
++
++			row["columns"][1]["column"] = LLOfflineLandmarks::sKeyRegion;
++			row["columns"][1]["value"] = (*it)[LLOfflineLandmarks::sKeyRegion].asString();
++
++			row["columns"][2]["column"] = LLOfflineLandmarks::sKeyTimestamp;
++			LLString last_visited = LLFloaterOfflineLandmarks::getString("never");
++			if ((*it).has(LLOfflineLandmarks::sKeyTimestamp))
++			{
++				LLDate timestamp = (*it)[LLOfflineLandmarks::sKeyTimestamp].asDate();
++				if (timestamp.secondsSinceEpoch() > 0)
++				{
++					time_t t = (time_t) timestamp.secondsSinceEpoch();
++					char time_str[32];	/* Flawfinder: ignore */
++					strftime(time_str, 32, "%Y-%m-%d %H:%M:%S", localtime(&t));
++					last_visited = time_str;
++				}
++			}
++			row["columns"][2]["value"] = last_visited;
++
++			row["columns"][3]["column"] = LLOfflineLandmarks::sKeyScreenshot;
++			row["columns"][3]["type"] = "icon";
++			LLString icon = "";
++			if ((*it).has(LLOfflineLandmarks::sKeyScreenshot))
++			{
++				LLString screenshot = (*it)[LLOfflineLandmarks::sKeyScreenshot].asString();
++				if (!screenshot.empty() && gDirUtilp->fileExists(gDirUtilp->getExpandedFilename(LL_PATH_PER_SL_ACCOUNT, screenshot)))
++				{
++					icon = "inv_item_snapshot.tga";
++				}
++			}
++			row["columns"][3]["value"] = icon;
++			row["columns"][3]["width"] = 20;
++
++			mOfflineLandmarksView->addElement(row, ADD_BOTTOM, &(*it));
++		}
++		return TRUE;
++	}
++	return FALSE;
++}
++
++// public static
++void LLFloaterOfflineLandmarks::show(void*)
++{
++	if (!sInstance)
++	{
++		sInstance = new LLFloaterOfflineLandmarks();
++	}
++	sInstance->open();
++}
++
++// public static
++BOOL LLFloaterOfflineLandmarks::refresh()
++{
++	if (sInstance)
++	{
++		return sInstance->buildList();
++	}
++	return FALSE;
++}
++
++// private static
++void LLFloaterOfflineLandmarks::onListSelect(LLUICtrl* ctrl, void* userdata)
++{
++	LLFloaterOfflineLandmarks* self = (LLFloaterOfflineLandmarks*) userdata;
++	S32 id = self->mOfflineLandmarksView->getSelectedValue().asInteger();
++	self->childSetValue("parcel_edit", gFavouriteLocations.getParcel(id));
++}
++
++// private static
++void LLFloaterOfflineLandmarks::onSortChanged(void* userdata)
++{
++	LLFloaterOfflineLandmarks* self = (LLFloaterOfflineLandmarks*) userdata;
++	S32 id = self->mOfflineLandmarksView->getSelectedValue().asInteger();
++	std::string column = self->mOfflineLandmarksView->getSortColumnName();
++	bool ascending = self->mOfflineLandmarksView->getSortAscending() == TRUE;
++	gFavouriteLocations.sort(column, ascending);
++	if (gFavouriteLocations.isDirty())
++	{
++		self->buildList();
++	}
++	self->mOfflineLandmarksView->selectNthItem(id); // to do: this selecting after sort doesn't work properly with the timestamp and screenshot column, but it's fine with the others.. why? no idea
++}
++
++// private static
++void LLFloaterOfflineLandmarks::onCommitDescription(LLUICtrl* ctrl, void* userdata)
++{
++	LLFloaterOfflineLandmarks* self = (LLFloaterOfflineLandmarks*) userdata;
++	S32 id = self->mOfflineLandmarksView->getSelectedValue().asInteger();
++	gFavouriteLocations.setParcel(id, self->childGetValue("parcel_edit"));
++	if (gFavouriteLocations.isDirty())
++	{
++		self->buildList();
++	}
++}
++
++// private static
++void LLFloaterOfflineLandmarks::onClickShowMap(void* userdata)
++{
++	LLFloaterOfflineLandmarks* self = (LLFloaterOfflineLandmarks*) userdata;
++	S32 id = self->mOfflineLandmarksView->getSelectedValue().asInteger();
++	gFloaterWorldMap->trackLocation(gFavouriteLocations.getLocation(id));
++	LLFloaterWorldMap::show(NULL, TRUE);
++}
++
++// private static
++void LLFloaterOfflineLandmarks::onClickScreenshot(void* userdata)
++{
++	LLFloaterOfflineLandmarks* self = (LLFloaterOfflineLandmarks*) userdata;
++	S32 id = self->mOfflineLandmarksView->getSelectedValue().asInteger();
++	std::string snap_filename = gDirUtilp->getExpandedFilename(LL_PATH_PER_SL_ACCOUNT, gFavouriteLocations.getScreenshot(id));
++	gViewerWindow->saveSnapshot(snap_filename, gViewerWindow->getWindowDisplayWidth(), gViewerWindow->getWindowDisplayHeight(), FALSE, FALSE);
++	gViewerWindow->playSnapshotAnimAndSound();
++	// to do: use snapshot widget
++	self->buildList();
++}
++
++// private static
++void LLFloaterOfflineLandmarks::onClickMoveDown(void* userdata)
++{
++	LLFloaterOfflineLandmarks* self = (LLFloaterOfflineLandmarks*) userdata;
++	S32 id = self->mOfflineLandmarksView->getSelectedValue().asInteger();
++	id = gFavouriteLocations.move(id, 1);
++	if (gFavouriteLocations.isDirty())
++	{
++		self->buildList();
++	}
++	self->mOfflineLandmarksView->selectNthItem(id);
++}
++
++// private static
++void LLFloaterOfflineLandmarks::onClickMoveUp(void* userdata)
++{
++	LLFloaterOfflineLandmarks* self = (LLFloaterOfflineLandmarks*) userdata;
++	S32 id = self->mOfflineLandmarksView->getSelectedValue().asInteger();
++	id = gFavouriteLocations.move(id, -1);
++	if (gFavouriteLocations.isDirty())
++	{
++		self->buildList();
++	}
++	self->mOfflineLandmarksView->selectNthItem(id);
++	// to do: this would be nicer to do by dragging the list row instead of having buttons
++}
++
++// private static
++void LLFloaterOfflineLandmarks::onClickDelete(void* userdata)
++{
++	LLFloaterOfflineLandmarks* self = (LLFloaterOfflineLandmarks*) userdata;
++	S32 id = self->mOfflineLandmarksView->getSelectedValue().asInteger();
++	gFavouriteLocations.remove(id); // to do: if you cancel without saving, the screenshot is gone anyway
++	if (gFavouriteLocations.isDirty())
++	{
++		self->buildList();
++	}
++}
++
++// private static
++void LLFloaterOfflineLandmarks::onClickAdd(void* userdata)
++{
++	LLFloaterOfflineLandmarks* self = (LLFloaterOfflineLandmarks*) userdata;
++	LLViewerRegion *regionp = gAgent.getRegion();
++	if (regionp)
++	{
++		LLVector3d agentPos = gAgent.getPositionGlobal();
++		S32 x = llround( (F32)fmod( agentPos.mdV[VX], (F64)REGION_WIDTH_METERS ) );
++		S32 y = llround( (F32)fmod( agentPos.mdV[VY], (F64)REGION_WIDTH_METERS ) );
++		S32 z = llround( (F32)agentPos.mdV[VZ] );
++		std::string region_str = regionp->getName() + llformat("/%d/%d/%d", x, y, z);
++		std::string parcel_name = LLViewerParcelMgr::getInstance()->getAgentParcelName();
++		gFavouriteLocations.append(region_str, parcel_name, agentPos);
++	}
++	if (gFavouriteLocations.isDirty())
++	{
++		self->buildList();
++	}
++	// to do: drag & drop landmarks from inventory
++}
++
++// private static
++void LLFloaterOfflineLandmarks::onClickSave(void* userdata)
++{
++	gFavouriteLocations.save();
++	sInstance->close();
++}
++
++// private static
++void LLFloaterOfflineLandmarks::onClickCancel(void* userdata)
++{
++	sInstance->close();
++}
+Index: indra/newview/llfloaterofflinelandmarks.h
+===================================================================
+--- indra/newview/llfloaterofflinelandmarks.h	(revision 0)
++++ indra/newview/llfloaterofflinelandmarks.h	(revision 0)
+@@ -0,0 +1,75 @@
++/** 
++ * @file llfloaterofflinelandmarks.h
++ * @author Felix Duesenburg
++ * @brief Favourite locations editor floater header file
++ *
++ * $LicenseInfo:firstyear=2002&license=viewergpl$
++ * 
++ * Copyright (c) 2002-2008, Linden Research, Inc.
++ * 
++ * Second Life Viewer Source Code
++ * The source code in this file ("Source Code") is provided by Linden Lab
++ * to you under the terms of the GNU General Public License, version 2.0
++ * ("GPL"), unless you have obtained a separate licensing agreement
++ * ("Other License"), formally executed by you and Linden Lab.  Terms of
++ * the GPL can be found in doc/GPL-license.txt in this distribution, or
++ * online at http://secondlifegrid.net/programs/open_source/licensing/gplv2
++ * 
++ * There are special exceptions to the terms and conditions of the GPL as
++ * it is applied to this Source Code. View the full text of the exception
++ * in the file doc/FLOSS-exception.txt in this software distribution, or
++ * online at http://secondlifegrid.net/programs/open_source/licensing/flossexception
++ * 
++ * By copying, modifying or distributing this software, you acknowledge
++ * that you have read and understood your obligations described above,
++ * and agree to abide by those obligations.
++ * 
++ * ALL LINDEN LAB SOURCE CODE IS PROVIDED "AS IS." LINDEN LAB MAKES NO
++ * WARRANTIES, EXPRESS, IMPLIED OR OTHERWISE, REGARDING ITS ACCURACY,
++ * COMPLETENESS OR PERFORMANCE.
++ * $/LicenseInfo$
++ */
++
++/**
++ * (Also has legacy gesture editor for testing.)
++ */
++
++#ifndef LL_LLFLOATEROFFLINELANDMARKS_H
++#define LL_LLFLOATEROFFLINELANDMARKS_H
++
++#include "llfloater.h"
++
++class LLScrollListCtrl;
++
++class LLFloaterOfflineLandmarks : public LLFloater
++{
++public:
++	LLFloaterOfflineLandmarks();
++	~LLFloaterOfflineLandmarks();
++
++	BOOL postBuild();
++
++	static void show(void*);
++	static BOOL refresh();
++
++private:
++	BOOL buildList();
++
++	static void onListSelect		(LLUICtrl* ctrl, void* userdata);
++	static void onSortChanged		(void* userdata);
++	static void onCommitDescription (LLUICtrl* ctrl, void *userdata);
++	static void onClickShowMap		(void* userdata);
++	static void onClickScreenshot	(void* userdata);
++	static void onClickMoveDown		(void* userdata);
++	static void onClickMoveUp		(void* userdata);
++	static void onClickDelete		(void* userdata);
++	static void onClickAdd			(void* userdata);
++	static void onClickSave			(void* userdata);
++	static void onClickCancel		(void* userdata);
++
++	static LLFloaterOfflineLandmarks* sInstance;
++
++	LLScrollListCtrl* mOfflineLandmarksView;
++};
++
++#endif
+Index: indra/newview/llofflinelandmarks.cpp
+===================================================================
+--- indra/newview/llofflinelandmarks.cpp	(revision 0)
++++ indra/newview/llofflinelandmarks.cpp	(revision 0)
+@@ -0,0 +1,458 @@
++/** 
++ * @file llofflinelandmarks.cpp
++ * @brief LLOfflineLandmarks class implementation
++ * @author Felix Duesenburg
++ *
++ * $LicenseInfo:firstyear=2001&license=viewergpl$
++ * 
++ * Copyright (c) 2001-2008, Linden Research, Inc.
++ * 
++ * Second Life Viewer Source Code
++ * The source code in this file ("Source Code") is provided by Linden Lab
++ * to you under the terms of the GNU General Public License, version 2.0
++ * ("GPL"), unless you have obtained a separate licensing agreement
++ * ("Other License"), formally executed by you and Linden Lab.  Terms of
++ * the GPL can be found in doc/GPL-license.txt in this distribution, or
++ * online at http://secondlifegrid.net/programs/open_source/licensing/gplv2
++ * 
++ * There are special exceptions to the terms and conditions of the GPL as
++ * it is applied to this Source Code. View the full text of the exception
++ * in the file doc/FLOSS-exception.txt in this software distribution, or
++ * online at http://secondlifegrid.net/programs/open_source/licensing/flossexception
++ * 
++ * By copying, modifying or distributing this software, you acknowledge
++ * that you have read and understood your obligations described above,
++ * and agree to abide by those obligations.
++ * 
++ * ALL LINDEN LAB SOURCE CODE IS PROVIDED "AS IS." LINDEN LAB MAKES NO
++ * WARRANTIES, EXPRESS, IMPLIED OR OTHERWISE, REGARDING ITS ACCURACY,
++ * COMPLETENESS OR PERFORMANCE.
++ * $/LicenseInfo$
++ */
++
++#include "llofflinelandmarks.h" 
++
++#include "llviewerprecompiledheaders.h"
++#include "llagent.h"
++#include "llsdserialize.h"
++#include "llviewercontrol.h"
++#include "llregionhandle.h"
++
++
++LLOfflineLandmarks gTeleportHistory("locations.xml", "screen_last_%02d.bmp", 99);
++LLOfflineLandmarks gFavouriteLocations("landmarks.xml", "screen_fave_%02d.bmp", 99);
++
++const std::string LLOfflineLandmarks::sKeyRegion     = "region";
++const std::string LLOfflineLandmarks::sKeyParcel     = "parcel";
++const std::string LLOfflineLandmarks::sKeyLocation   = "location";
++const std::string LLOfflineLandmarks::sKeyScreenshot = "screenshot";
++const std::string LLOfflineLandmarks::sKeyTimestamp  = "timestamp";
++const std::string LLOfflineLandmarks::sTempScreenshotFilename  = "screen_temp.bmp";
++
++
++LLOfflineLandmarks::LLOfflineLandmarks(const std::string& filename, const char* scr_format, const S32 max_num)
++{
++	mFilename				= filename;
++	mScreenshotFilenameFormat = scr_format;
++	mMaxNum					= max_num;
++	mLandmarks				= LLSD::emptyArray();
++	mDirty					= false;
++	mScreenshotFilenames	= LLSD::emptyMap();
++	mIndex					= 0;
++}
++
++LLOfflineLandmarks::~LLOfflineLandmarks()
++{
++}
++
++// public
++void LLOfflineLandmarks::setMaxNum(const S32 max_num)
++{
++	mMaxNum = max_num;
++	truncate(mMaxNum);
++}
++
++// public
++void LLOfflineLandmarks::prepend(const std::string& region, const std::string& parcel, const LLVector3d& pos_global, const bool cap)
++{
++	if (cap)
++	{
++		truncate(mMaxNum - 1);
++	}
++	mLandmarks.insert(0, newLandmark(region, parcel, pos_global));
++	mDirty = true;
++}
++
++// public
++void LLOfflineLandmarks::append(const std::string& region, const std::string& parcel, const LLVector3d& pos_global)
++{
++	if (mLandmarks.size() < mMaxNum)
++	{
++		mLandmarks.append(newLandmark(region, parcel, pos_global));
++		mDirty = true;
++	}
++}
++
++// public
++void LLOfflineLandmarks::insert(const S32 position, const std::string& region, const std::string& parcel, const LLVector3d& pos_global)
++{
++	if (position >= 0 && position <= mLandmarks.size())
++	{
++		mLandmarks.insert(position, newLandmark(region, parcel, pos_global));
++		mDirty = true;
++	}
++}
++
++// public
++void LLOfflineLandmarks::remove(const S32 position)
++{
++	if (position >= 0 && position < mLandmarks.size())
++	{
++		if (mLandmarks[position].has(sKeyScreenshot))
++		{
++			std::string filename = mLandmarks[position][sKeyScreenshot].asString();
++			if (!filename.empty())
++			{
++				std::string fullpath = gDirUtilp->getExpandedFilename(LL_PATH_PER_SL_ACCOUNT, filename);
++				if (LLFile::remove(fullpath.c_str()) == 0)
++				{
++					llinfos << "Removed " << fullpath << llendl;
++				}
++				else
++				{
++					llwarns << "Could not remove " << fullpath << " - errorcode: " << errno << llendl;
++				}
++				mScreenshotFilenames.erase(filename);
++			}
++		}
++		mLandmarks.erase(position);
++		mDirty = true;
++	}
++}
++
++// public
++void LLOfflineLandmarks::truncate(const S32 length)
++{
++	while (mLandmarks.size() > length)
++	{
++		remove(mLandmarks.size() - 1);
++	}
++}
++
++// public
++void LLOfflineLandmarks::truncate()
++{
++	truncate(mMaxNum);
++}
++
++// public
++S32 LLOfflineLandmarks::move(const S32 position, const S32 direction)
++{
++	S32 dest = position + direction;
++	if (dest >= 0 && dest < mLandmarks.size())
++	{
++		LLSD lm = mLandmarks[position];
++		mLandmarks[position] = mLandmarks[dest];
++		mLandmarks[dest] = lm;
++		mDirty = true;
++		return dest;
++	}
++	return position;
++}
++
++// public
++void LLOfflineLandmarks::sort(const std::string& key, const bool ascending)
++{
++	// we don't have huge amounts of data, so bubblesort is fine
++	LLSD::array_iterator i, j;
++	bool swap;
++	for (i = mLandmarks.beginArray(); i != mLandmarks.endArray() - 1; i++)
++	{
++		for (j = i + 1; j != mLandmarks.endArray(); j++)
++		{
++			if (key != sKeyTimestamp)
++			{
++				swap = ascending
++					? (*i)[key].asString() > (*j)[key].asString()
++					: (*i)[key].asString() < (*j)[key].asString();
++			}
++			else
++			{
++				swap = ascending
++					? (*i)[key].asDate().secondsSinceEpoch() > (*j)[key].asDate().secondsSinceEpoch()
++					: (*i)[key].asDate().secondsSinceEpoch() < (*j)[key].asDate().secondsSinceEpoch();
++			}
++			if (swap)
++			{
++				LLSD lm = *i;
++				*i = *j;
++				*j = lm;
++				mDirty = true;
++			}
++		}
++	}
++}
++
++// public
++bool LLOfflineLandmarks::load()
++{
++	mDirty = false;
++	std::string path = gDirUtilp->getExpandedFilename(LL_PATH_PER_SL_ACCOUNT, mFilename);
++	if (!gDirUtilp->fileExists(path))
++	{
++		llwarns << "Cannot find file " << path << " to load, see if we have a default." << llendl;
++		path = gDirUtilp->getExpandedFilename(LL_PATH_APP_SETTINGS, mFilename);
++		mDirty = true;
++	}
++	if (gDirUtilp->fileExists(path))
++	{
++		llifstream infile;
++		infile.open(path.c_str());
++		if (infile.is_open())
++		{
++			if (LLSDSerialize::fromXML(mLandmarks, infile) > 0 && mLandmarks.isArray())
++			{
++				llinfos << "Loaded from " << path << llendl;
++			}
++			else
++			{
++				llwarns << "File " << path << " contains invalid data." << llendl;
++				mLandmarks = LLSD::emptyArray();
++				mDirty = true;
++			}
++			infile.close();
++		}
++		// else // well we checked fileExists already
++	}
++	else
++	{
++		mLandmarks = LLSD::emptyArray();
++		mDirty = true;
++		llwarns << "Cannot find file " << path << " to load." << llendl;
++	}
++	mScreenshotFilenames = LLSD::emptyMap();
++	if (mDirty)
++	{	// save default to user dir
++		save();
++	}
++	else
++	{	// cache screenshot filenames so that we know which ones are taken; this is more performant than having to search every time a new one is created
++		for (LLSD::array_iterator it = mLandmarks.beginArray(); it != mLandmarks.endArray(); it++)
++		{
++			if ((*it).isMap() && (*it).has(sKeyScreenshot))
++			{
++				mScreenshotFilenames[(*it)[sKeyScreenshot].asString()] = LLSD::Boolean(true);
++			}
++		}
++		mIndex = 0;
++	}
++	return !mDirty;
++}
++
++// public
++bool LLOfflineLandmarks::save()
++{
++	if (mDirty)
++	{
++		std::string path = gDirUtilp->getExpandedFilename(LL_PATH_PER_SL_ACCOUNT, mFilename);
++		llofstream outfile;
++		outfile.open(path.c_str());
++		if (outfile.is_open())
++		{
++			LLSDSerialize::toPrettyXML(mLandmarks, outfile);
++			outfile.close();
++			llinfos << "Saved to " << path << llendl;
++			mDirty = false;
++		}
++		else
++		{
++			llwarns << "Unable to write file " << path << " - errorcode: " << errno << llendl;
++		}
++	}
++	return !mDirty;
++}
++
++// public
++bool LLOfflineLandmarks::isDirty()
++{
++	return mDirty;
++}
++
++// public
++LLSD* LLOfflineLandmarks::getLandmarks()
++{
++	return &mLandmarks;
++}
++
++// public
++std::string LLOfflineLandmarks::getRegion(const S32 index)
++{
++	if (mLandmarks.size() > index)
++	{
++		return mLandmarks[index][sKeyRegion].asString();
++	}
++	else
++	{
++		return NULL;
++	}
++}
++
++// public
++std::string LLOfflineLandmarks::getParcel(const S32 index)
++{
++	if (mLandmarks.size() > index)
++	{
++		return mLandmarks[index][sKeyParcel].asString();
++	}
++	else
++	{
++		return NULL;
++	}
++}
++
++// public
++LLVector3d LLOfflineLandmarks::getLocation(const S32 index)
++{
++	if (mLandmarks.size() > index)
++	{
++		return LLVector3d(mLandmarks[index][sKeyLocation]);
++	}
++	else
++	{
++		return NULL;
++	}
++}
++
++// public
++std::string LLOfflineLandmarks::getScreenshot(const S32 index, const bool create)
++{
++	if (mLandmarks.size() > index)
++	{
++		if (mLandmarks[index].has(sKeyScreenshot) && !mLandmarks[index][sKeyScreenshot].asString().empty())
++		{
++			return mLandmarks[index][sKeyScreenshot].asString();
++		}
++		else if (create)
++		{
++			mLandmarks[index][sKeyScreenshot] = newScreenshot();
++			return mLandmarks[index][sKeyScreenshot];
++		}
++		else
++		{
++			return NULL;
++		}
++	}
++	else
++	{
++		return NULL;
++	}
++}
++
++// public
++LLDate LLOfflineLandmarks::getTimestamp(const S32 index)
++{
++	if (mLandmarks.size() > index)
++	{
++		return mLandmarks[index][sKeyTimestamp].asDate();
++	}
++	else
++	{
++		return LLDate(NULL);
++	}
++}
++
++// public
++bool LLOfflineLandmarks::setRegion(const S32 index, const std::string& region)
++{
++	if (mLandmarks.size() > index && mLandmarks[index][sKeyRegion].asString() != region)
++	{
++		mLandmarks[index][sKeyRegion] = region;
++		mDirty = true;
++		return true;
++	}
++	return false;
++}
++
++// public
++bool LLOfflineLandmarks::setParcel(const S32 index, const std::string& parcel)
++{
++	if (mLandmarks.size() > index && mLandmarks[index][sKeyParcel].asString() != parcel)
++	{
++		mLandmarks[index][sKeyParcel] = parcel;
++		mDirty = true;
++		return true;
++	}
++	return false;
++}
++
++// public
++bool LLOfflineLandmarks::setLocation(const S32 index, const LLVector3d& pos_global)
++{
++	if (mLandmarks.size() > index)
++	{
++		LLSD vec = mLandmarks[index][sKeyLocation];
++		LLSD vec2 = pos_global.getValue();
++		if (vec.isArray() && (vec[0].asReal() != vec2[0].asReal() || vec[1].asReal() != vec2[1].asReal() || vec[2].asReal() != vec2[2].asReal()))
++		{	// do the check because saving, updating of the GUI depends on the dirty flag; we don't want to do it more often than necessary
++			mLandmarks[index][sKeyLocation] = vec2;
++			mDirty = true;
++			return true;
++		}
++	}
++	return false;
++}
++
++// public
++bool LLOfflineLandmarks::setTimestamp(const S32 index, const LLDate& timestamp)
++{
++	if (mLandmarks.size() > index && mLandmarks[index][sKeyTimestamp].asDate().secondsSinceEpoch() != timestamp.secondsSinceEpoch())
++	{
++		mLandmarks[index][sKeyTimestamp] = timestamp;
++		mDirty = true;
++		return true;
++	}
++	return false;
++}
++
++// public
++bool LLOfflineLandmarks::setTimestamp(const S32 index)
++{
++	return setTimestamp(index, LLDate(time(NULL)));
++}
++
++// private
++LLSD LLOfflineLandmarks::newLandmark(const std::string& region, const std::string& parcel, const LLVector3d& pos_global)
++{
++	LLSD lm = LLSD::emptyMap();
++	lm[sKeyRegion] = region;
++	lm[sKeyParcel] = parcel;
++	lm[sKeyLocation] = pos_global.getValue();
++	lm[sKeyTimestamp] = LLDate(time(NULL));
++	return lm;
++}
++
++// private
++std::string LLOfflineLandmarks::newScreenshot()
++{
++	std::string screenshot;
++	for (S32 i = 0; i < mMaxNum; i++)
++	{
++		screenshot = llformat(mScreenshotFilenameFormat, (mIndex + i) % mMaxNum + 1);
++		if (!mScreenshotFilenames.has(screenshot))
++		{
++			mIndex = i;  // storing this helps saving iteration steps
++			mScreenshotFilenames[screenshot] = LLSD::Boolean(true);
++			return screenshot;
++		}
++	}
++	// we should never get past here, just in case
++	for (S32 i = mMaxNum; ; i++)
++	{
++		screenshot = llformat(mScreenshotFilenameFormat, i);
++		if (!mScreenshotFilenames.has(screenshot))
++		{
++			mScreenshotFilenames[screenshot] = LLSD::Boolean(true);
++			return screenshot;
++		}
++	}
++}
+Index: indra/newview/llofflinelandmarks.h
+===================================================================
+--- indra/newview/llofflinelandmarks.h	(revision 0)
++++ indra/newview/llofflinelandmarks.h	(revision 0)
+@@ -0,0 +1,98 @@
++/** 
++ * @file llofflinelandmarks.h
++ * @brief LLOfflineLandmarks class header file
++ * @author Felix Duesenburg
++ *
++ * $LicenseInfo:firstyear=2000&license=viewergpl$
++ * 
++ * Copyright (c) 2000-2008, Linden Research, Inc.
++ * 
++ * Second Life Viewer Source Code
++ * The source code in this file ("Source Code") is provided by Linden Lab
++ * to you under the terms of the GNU General Public License, version 2.0
++ * ("GPL"), unless you have obtained a separate licensing agreement
++ * ("Other License"), formally executed by you and Linden Lab.  Terms of
++ * the GPL can be found in doc/GPL-license.txt in this distribution, or
++ * online at http://secondlifegrid.net/programs/open_source/licensing/gplv2
++ * 
++ * There are special exceptions to the terms and conditions of the GPL as
++ * it is applied to this Source Code. View the full text of the exception
++ * in the file doc/FLOSS-exception.txt in this software distribution, or
++ * online at http://secondlifegrid.net/programs/open_source/licensing/flossexception
++ * 
++ * By copying, modifying or distributing this software, you acknowledge
++ * that you have read and understood your obligations described above,
++ * and agree to abide by those obligations.
++ * 
++ * ALL LINDEN LAB SOURCE CODE IS PROVIDED "AS IS." LINDEN LAB MAKES NO
++ * WARRANTIES, EXPRESS, IMPLIED OR OTHERWISE, REGARDING ITS ACCURACY,
++ * COMPLETENESS OR PERFORMANCE.
++ * $/LicenseInfo$
++ */
++
++#ifndef LL_LLOFFLINELANDMARKS_H
++#define LL_LLOFFLINELANDMARKS_H
++
++#include "llerror.h"
++#include "llsd.h"
++
++
++class LLOfflineLandmarks
++{
++	LOG_CLASS(LLOfflineLandmarks);
++
++	public:
++		LLOfflineLandmarks(const std::string& filename, const char* scr_format, S32 max_num);
++		~LLOfflineLandmarks();
++
++		void setMaxNum(const S32 max_num);
++		void prepend(const std::string& region, const std::string& parcel, const LLVector3d& pos_global, const bool cap = true);
++		void append(const std::string& region, const std::string& parcel, const LLVector3d& pos_global);
++		void insert(const S32 position, const std::string& region, const std::string& parcel, const LLVector3d& pos_global);
++		void remove(const S32 position);
++		void truncate(const S32 length);
++		void truncate();
++
++		S32  move(const S32 position, const S32 direction);
++		void sort(const std::string& field, const bool ascending = true);
++
++		bool load();
++		bool save();
++		bool isDirty();
++
++		LLSD* getLandmarks();
++
++		std::string getRegion(const S32 index = 0);
++		std::string getParcel(const S32 index = 0);
++		LLVector3d  getLocation(const S32 index = 0);
++		std::string getScreenshot(const S32 index = 0, const bool create = true);
++		LLDate      getTimestamp(const S32 index = 0);
++
++		bool		setRegion(const S32 index, const std::string& region);
++		bool		setParcel(const S32 index, const std::string& parcel);
++		bool		setLocation(const S32 index, const LLVector3d& pos_global);
++		bool		setTimestamp(const S32 index, const LLDate& timestamp);
++		bool		setTimestamp(const S32 index);
++
++		static const std::string sKeyRegion, sKeyParcel, sKeyLocation, sKeyScreenshot, sKeyTimestamp, sTempScreenshotFilename;
++
++	private:
++		LLSD		mLandmarks;
++		S32			mMaxNum;
++		std::string	mFilename;
++		std::string	mPath;
++		std::string	mFullPath;
++		const char*	mScreenshotFilenameFormat;
++		LLSD		mScreenshotFilenames;
++		bool		mDirty;
++		S32			mIndex;
++
++		LLSD		newLandmark(const std::string& region, const std::string& parcel, const LLVector3d& pos_global);
++		std::string	newScreenshot();
++};
++
++
++extern LLOfflineLandmarks gTeleportHistory;
++extern LLOfflineLandmarks gFavouriteLocations;
++
++#endif
+Index: indra/newview/llpanelgeneral.cpp
+===================================================================
+--- indra/newview/llpanelgeneral.cpp	(revision 4)
++++ indra/newview/llpanelgeneral.cpp	(working copy)
+@@ -59,6 +59,7 @@
+ #include "llurlsimstring.h"
+ #include "llappviewer.h"
+ #include "llstartup.h"
++#include "llviewermenu.h"
+ 
+ #include "llcheckboxctrl.h"
+ #include "llradiogroup.h"
+@@ -67,7 +68,6 @@
+ //
+ 
+ void set_crash_behavior(LLUICtrl* ctrl, void* data);
+-void set_start_location(LLUICtrl* ctrl, void* data);
+ 
+ 
+ //
+@@ -94,16 +94,6 @@
+     gSavedSettings.setString("Language", ctrl->getValue().asString());
+ }
+ 
+-void LLPanelGeneral::set_start_location(LLUICtrl* ctrl, void* data)
+-{
+-    LLURLSimString::setString(ctrl->getValue().asString());
+-}
+-
+-void LLPanelGeneral::set_specific_start_location(LLLineEditor* line_editor, void* data)
+-{
+-    LLURLSimString::setString(line_editor->getValue().asString());
+-}
+-
+ LLPanelGeneral::LLPanelGeneral()
+ {
+ 	LLUICtrlFactory::getInstance()->buildPanel(this, "panel_preferences_general.xml");
+@@ -115,38 +105,13 @@
+ 
+ 	LLString region_name_prompt = getString("region_name_prompt");
+ 
+-
+-	// location combobox
+-	LLComboBox* combo = getChild<LLComboBox>( "location_combobox");
+-	if (combo)
+-	{
+-		if (!LLURLSimString::sInstance.mSimString.empty())
+-		{
+-			combo->setTextEntry(LLURLSimString::sInstance.mSimString);
+-		}
+-	
+-		BOOL login_last = gSavedSettings.getBOOL("LoginLastLocation");
+-		if (!LLURLSimString::sInstance.mSimString.empty())
+-		{
+-			combo->add( LLURLSimString::sInstance.mSimString );
+-			combo->setCurrentByIndex( 2 );
+-		}
+-		else
+-		{
+-			combo->add( region_name_prompt );
+-			combo->setCurrentByIndex( login_last ? 1 : 0 );
+-		}
+-		combo->setCommitCallback( &set_start_location );
+-		combo->setTextEntryCallback( &set_specific_start_location );
+-	}
+-	
+ 	// Show location on login screen
+ 	childSetCommitCallback("show_location_checkbox", &LLPanelGeneral::clickShowStartLocation);
+ 
+ 	// Act immediately upon state change to either have this alt available at the next login, or wipe out your traces
+ 	childSetCommitCallback("allow_saving_alts", onCommitAllowSavingAlts, this);
+ 
+-	combo = getChild<LLComboBox>( "crash_behavior_combobox");
++	LLComboBox* combo = getChild<LLComboBox>( "crash_behavior_combobox");
+ 	if (combo)
+ 	{
+ 		combo->setCurrentByIndex( LLAppViewer::instance()->getCrashBehavior() );
+@@ -169,24 +134,12 @@
+ void LLPanelGeneral::refresh()
+ {
+ 	LLPanel::refresh();
+-	BOOL login_last = gSavedSettings.getBOOL("LoginLastLocation");
+-	LLComboBox* combo = getChild<LLComboBox>( "location_combobox");
+-	if (combo)
+-	{
+-		if (!LLURLSimString::sInstance.mSimString.empty())
+-		{
+-			combo->setCurrentByIndex( 2 );
+-		}
+-		else
+-		{
+-			combo->setCurrentByIndex( login_last ? 1 : 0 );
+-		}
+-		//save current settings in case cancel is clicked
+-		mLoginLocation = combo->getValue().asString();
+-	}
++
++	mTeleportHistoryEntries = gSavedSettings.getS32("TeleportHistoryEntries");
++	mTeleportHistoryScreenshots = gSavedSettings.getBOOL("TeleportHistoryScreenshots");
+ 	
+ 	mCrashBehavior = LLAppViewer::instance()->getCrashBehavior();
+-	combo = getChild<LLComboBox>( "crash_behavior_combobox");
++	LLComboBox* combo = getChild<LLComboBox>( "crash_behavior_combobox");
+ 	if (combo)
+ 	{
+ 		combo->setCurrentByIndex( LLAppViewer::instance()->getCrashBehavior() );
+@@ -219,6 +172,19 @@
+ 
+ void LLPanelGeneral::apply()
+ {
++	gTeleportHistory.setMaxNum(mTeleportHistoryEntries);
++	if (gTeleportHistory.isDirty())
++	{
++		if (gLastLocationsMenu)
++		{
++			update_world_last_locations_menu();
++		}
++		else
++		{
++			LLPanelLogin::refreshLocation(false);
++		}
++	}
++	gTeleportHistory.save();
+ }
+ 
+ void LLPanelGeneral::cancel()
+@@ -238,8 +204,8 @@
+ 	gSavedSettings.setF32("UIScaleFactor", mUIScaleFactor);
+ 	gSavedSettings.setBOOL("UIAutoScale", mUIAutoScale);
+ 	gSavedSettings.setString("Language", mLanguage);
+-	
+-	LLURLSimString::setString(mLoginLocation);
++	gSavedSettings.setS32("TeleportHistoryEntries", mTeleportHistoryEntries);  // I don't understand why all this is in cancel() and not in apply()?
++	gSavedSettings.setBOOL("TeleportHistoryScreenshots", mTeleportHistoryScreenshots);
+ 
+ 	LLAppViewer::instance()->setCrashBehavior(mCrashBehavior);
+ }
+Index: indra/newview/llpanelgeneral.h
+===================================================================
+--- indra/newview/llpanelgeneral.h	(revision 4)
++++ indra/newview/llpanelgeneral.h	(working copy)
+@@ -54,8 +54,6 @@
+ 	void cancel();
+ 
+ 	static void clickShowStartLocation(LLUICtrl*, void* user_data);
+-	static void set_start_location(LLUICtrl* ctrl, void* data);
+-	static void set_specific_start_location(LLLineEditor* line_editor, void* data);
+ 	static void onCommitAllowSavingAlts(LLUICtrl* ctrl, void*);
+ 
+ protected:
+@@ -74,7 +72,8 @@
+ 	BOOL mUIAutoScale;
+ 	BOOL mMiniMapRotate;
+ 	S32 mCrashBehavior;
+-	LLString mLoginLocation;
++	S32 mTeleportHistoryEntries;
++	BOOL mTeleportHistoryScreenshots;
+ 	LLString mLanguage;
+ };
+ 
+Index: indra/newview/llpanellogin.cpp
+===================================================================
+--- indra/newview/llpanellogin.cpp	(revision 3)
++++ indra/newview/llpanellogin.cpp	(working copy)
+@@ -32,7 +32,6 @@
+ #include "llviewerprecompiledheaders.h"
+ 
+ #include "llpanellogin.h"
+-#include "llpanelgeneral.h"
+ 
+ #include "indra_constants.h"		// for key and mask constants
+ #include "llfontgl.h"
+@@ -69,6 +68,7 @@
+ #include "llhttpclient.h"
+ #include "llweb.h"
+ #include "llwebbrowserctrl.h"
++#include "llofflinelandmarks.h"
+ 
+ #include "llfloaterhtml.h"
+ 
+@@ -210,22 +210,24 @@
+  	    LLAppViewer::instance()->resetURIs();
+  	}	    
+ 	
+-	LLString startLocation = queryMap["location"].asString();
+-
+-	if (startLocation == "specify")
++	LLSD sdata = queryMap["location"];
++	if (sdata.isMap() && sdata.has(LLOfflineLandmarks::sKeyRegion))
+ 	{
+-		LLURLSimString::setString(queryMap["region"].asString());
++		LLURLSimString::setString(sdata[LLOfflineLandmarks::sKeyRegion].asString());
+ 	}
+-	else if (startLocation == "home")
++	else
+ 	{
+-		gSavedSettings.setBOOL("LoginLastLocation", FALSE);
+-		LLURLSimString::setString("");
++		LLString startLocation = sdata.asString();
++		gSavedSettings.setString("LoginLocationPreset", startLocation);
++		if (startLocation == LLURLSimString::sLocationStringSpecify)
++		{
++			LLURLSimString::setString(queryMap["region"].asString());
++		}
++		else
++		{
++			LLURLSimString::setString(startLocation);
++		}
+ 	}
+-	else if (startLocation == "last")
+-	{
+-		gSavedSettings.setBOOL("LoginLastLocation", TRUE);
+-		LLURLSimString::setString("");
+-	}
+ }
+ 
+ bool LLLoginHandler::handle(const LLSD& tokens,
+@@ -362,6 +364,8 @@
+ #if !USE_VIEWER_AUTH
+ 	childSetPrevalidate("first_name_edit", LLLineEditor::prevalidatePrintableNoSpace);
+ 	childSetPrevalidate("last_name_edit", LLLineEditor::prevalidatePrintableNoSpace);
++	childSetFocusChangedCallback("first_name_edit", onNameFocusChanged);
++	childSetFocusChangedCallback("last_name_edit", onNameFocusChanged);
+ 
+ 	LLSD alt_avatars = gSavedSettings.getLLSD("AltAvatars");
+ 	LLComboBox* alt_combo = getChild<LLComboBox>("alt_avatar_combo");
+@@ -394,33 +398,11 @@
+ 
+ 	LLComboBox* combo = getChild<LLComboBox>("start_location_combo");
+ 	combo->setAllowTextEntry(TRUE, 128, FALSE);
++	mFirstName = "";
++	mLastName = "";
++	load_locations();
++	childSetCommitCallback("start_location_combo", onSelectStartLocation, this);
+ 
+-	// The XML file loads the combo with the following labels:
+-	// 0 - "My Home"
+-	// 1 - "My Last Location"
+-	// 2 - "<Type region name>"
+-
+-	BOOL login_last = gSavedSettings.getBOOL("LoginLastLocation");
+-	LLString sim_string = LLURLSimString::sInstance.mSimString;
+-	if (!sim_string.empty())
+-	{
+-		// Replace "<Type region name>" with this region name
+-		combo->remove(2);
+-		combo->add( sim_string );
+-		combo->setTextEntry(sim_string);
+-		combo->setCurrentByIndex( 2 );
+-	}
+-	else if (login_last)
+-	{
+-		combo->setCurrentByIndex( 1 );
+-	}
+-	else
+-	{
+-		combo->setCurrentByIndex( 0 );
+-	}
+-
+-	combo->setCommitCallback( &LLPanelGeneral::set_start_location );
+-
+ 	childSetCommitCallback("server_combo", onSelectServer, this);
+ 
+ 	childSetAction("connect_btn", onClickConnect, this);
+@@ -547,6 +529,10 @@
+ 
+ LLPanelLogin::~LLPanelLogin()
+ {
++	// remove callbacks; we're getting another focus event when the login panel is closed upon connect => crash
++	childSetFocusChangedCallback("first_name_edit", NULL);
++	childSetFocusChangedCallback("last_name_edit", NULL);
++
+ 	LLPanelLogin::sInstance = NULL;
+ 
+ 	// tell the responder we're not here anymore
+@@ -729,6 +715,7 @@
+ 
+ 	sInstance->childSetText("first_name_edit", firstname);
+ 	sInstance->childSetText("last_name_edit", lastname);
++	load_locations();
+ 
+ 	// Max "actual" password length is 16 characters.
+ 	// Hex digests are always 32 characters.
+@@ -836,10 +823,42 @@
+ 	}
+ 	
+ 	LLComboBox* combo = sInstance->getChild<LLComboBox>("start_location_combo");
+-	location = combo->getValue().asString();
++	LLSD entry = combo->getValue();
++	if (entry.has(LLOfflineLandmarks::sKeyRegion))
++	{
++		location = entry[LLOfflineLandmarks::sKeyRegion].asString();
++	}
++	else
++	{
++		location = entry.asString();
++	}
+ }
+ 
+ // static
++void LLPanelLogin::getStartImageFilename(LLString &filename)
++{
++	if (!sInstance)
++	{
++		llwarns << "Attempted getStartImageFilename with no login view shown" << llendl;
++		return;
++	}
++	LLComboBox* combo = sInstance->getChild<LLComboBox>("start_location_combo");
++	LLSD entry = combo->getValue();
++	if (entry.has(LLOfflineLandmarks::sKeyScreenshot))
++	{
++		filename = entry[LLOfflineLandmarks::sKeyScreenshot].asString();
++	}
++	else if (entry.asString() == LLURLSimString::sLocationStringFave)
++	{
++		filename = gFavouriteLocations.getScreenshot(0);
++	}
++	else
++	{
++		filename = NULL;
++	}
++}
++
++// static
+ void LLPanelLogin::refreshLocation( bool force_visible )
+ {
+ 	if (!sInstance) return;
+@@ -847,19 +866,8 @@
+ #if USE_VIEWER_AUTH
+ 	loadLoginPage();
+ #else
+-	LLComboBox* combo = sInstance->getChild<LLComboBox>("start_location_combo");
++	load_locations();
+ 
+-	if (LLURLSimString::parse())
+-	{
+-		combo->setCurrentByIndex( 3 );		// BUG?  Maybe 2?
+-		combo->setTextEntry(LLURLSimString::sInstance.mSimString);
+-	}
+-	else
+-	{
+-		BOOL login_last = gSavedSettings.getBOOL("LoginLastLocation");
+-		combo->setCurrentByIndex( login_last ? 1 : 0 );
+-	}
+-
+ 	BOOL show_start = TRUE;
+ 
+ 	if ( ! force_visible )
+@@ -987,7 +995,7 @@
+ 	if (LLURLSimString::parse())
+ 	{
+ 		std::ostringstream oRegionStr;
+-		location = "specify";
++		location = LLURLSimString::sLocationStringSpecify;
+ 		oRegionStr << LLURLSimString::sInstance.mSimName << "/" << LLURLSimString::sInstance.mX << "/"
+ 			 << LLURLSimString::sInstance.mY << "/"
+ 			 << LLURLSimString::sInstance.mZ;
+@@ -995,14 +1003,7 @@
+ 	}
+ 	else
+ 	{
+-		if (gSavedSettings.getBOOL("LoginLastLocation"))
+-		{
+-			location = "last";
+-		}
+-		else
+-		{
+-			location = "home";
+-		}
++		location = gSavedSettings.getString("LoginLocationPreset");
+ 	}
+ 	
+ 	LLString firstname, lastname;
+@@ -1200,6 +1201,31 @@
+ 	loadLoginPage();
+ }
+ 
++// private static
++void LLPanelLogin::onSelectStartLocation(LLUICtrl* caller, void* user_data)
++{	// remember for next time
++	LLPanelLogin* panel = (LLPanelLogin*) user_data;
++	LLComboBox* combo = (LLComboBox*) caller;
++	S32 i = combo->getCurrentIndex();
++	if (i == panel->mI3)
++	{
++		gSavedSettings.setString("LoginLocationPreset", LLURLSimString::sLocationStringSpecify);
++	}
++	else if (i < panel->mI3 && i >= panel->mI2)
++	{
++		gSavedSettings.setString("LoginLocationPreset", LLURLSimString::sLocationStringFave);
++	}
++	else if (i < panel->mI2 && i >= panel->mI1)
++	{
++		gSavedSettings.setString("LoginLocationPreset", LLURLSimString::sLocationStringLast);
++	}
++	else
++	{
++		gSavedSettings.setString("LoginLocationPreset", LLURLSimString::sLocationStringHome);
++	}
++}
++
++// private static
+ void LLPanelLogin::onSelectAltAvatar(LLUICtrl* caller, void* user_data)
+ {
+ 	LLPanelLogin* panel = (LLPanelLogin*) user_data;
+@@ -1216,5 +1242,143 @@
+ 	}
+ 	first_name_edit->setText(frst);
+ 	last_name_edit->setText(lst);
++	load_locations();
+ 	password_edit->setFocus(TRUE);
+ }
++
++// private static
++void LLPanelLogin::onNameFocusChanged(LLFocusableElement* caller, void*)
++{	// reload locations combo when name field loses focus
++	if (gSavedSettings.getBOOL("ShowStartLocation") && !caller->hasFocus())
++	{
++		load_locations();
++	}
++}
++
++// private static
++void LLPanelLogin::load_locations()
++{
++	LLString first_name = sInstance->getChild<LLLineEditor>("first_name_edit")->getText();
++	LLString last_name = sInstance->getChild<LLLineEditor>("last_name_edit")->getText();
++	LLString::trim(first_name);
++	LLString::trim(last_name);
++	if (!first_name.empty() && !last_name.empty() && (first_name != sInstance->mFirstName || last_name != sInstance->mLastName))
++	{	
++		sInstance->mFirstName = first_name;
++		sInstance->mLastName = last_name;
++		gDirUtilp->setLindenUserDir(first_name, last_name);
++		gTeleportHistory.load();
++		gFavouriteLocations.load();
++		LLComboBox* combo = sInstance->getChild<LLComboBox>("start_location_combo");
++		// could have left the original version with defaults filled from XUI, but then this code would be much more complicated
++		combo->removeall();
++		combo->add(sInstance->getString("MyHome"), LLURLSimString::sLocationStringHome);
++		sInstance->mI0 = combo->getItemCount() - 1;
++		combo->addSeparator();
++		combo->add(sInstance->getString("MyLastLocation"), LLURLSimString::sLocationStringLast);
++		sInstance->mI1 = combo->getItemCount() - 1;
++		populate_locations(combo, gTeleportHistory.getLandmarks());
++		combo->addSeparator();
++		combo->add(sInstance->getString("MyFavouriteLocation"), LLURLSimString::sLocationStringFave);
++		sInstance->mI2 = combo->getItemCount() - 1;
++		populate_locations(combo, gFavouriteLocations.getLandmarks());
++		combo->addSeparator();
++		combo->add(sInstance->getString("TypeRegionName"), LLURLSimString::sLocationStringSpecify);
++		sInstance->mI3 = combo->getItemCount() - 1;
++		LLString preset = gSavedSettings.getString("LoginLocationPreset");
++		if (preset == LLURLSimString::sLocationStringLast)
++		{
++			combo->setCurrentByIndex(sInstance->mI1);
++		}
++		else if (preset == LLURLSimString::sLocationStringFave)
++		{
++			combo->setCurrentByIndex(sInstance->mI2);
++		}
++		else if (preset == LLURLSimString::sLocationStringSpecify)
++		{
++			combo->setCurrentByIndex(sInstance->mI3);
++		}
++		else
++		{
++			combo->setCurrentByIndex(sInstance->mI0);
++			gSavedSettings.setString("LoginLocationPreset", LLURLSimString::sLocationStringHome);
++		}
++	}
++}
++
++// private static
++void LLPanelLogin::populate_locations(LLComboBox* combo, LLSD* sdata)
++{
++	for (LLSD::array_const_iterator iter = sdata->beginArray(); iter != sdata->endArray(); iter++)
++	{
++		std::ostringstream lstr(std::ostringstream::out);
++		LLString parcel = (*iter)[LLOfflineLandmarks::sKeyParcel].asString();
++		if (parcel.length() <= 30)
++		{
++			lstr << parcel;
++		}
++		else
++		{
++			lstr << parcel.substr(0, 27) << "...";
++		}
++		time_t last_visited = (time_t) (*iter)[LLOfflineLandmarks::sKeyTimestamp].asDate().secondsSinceEpoch();
++		if (last_visited > 0)
++		{
++			lstr << " (" << sInstance->getString("ago_bef");
++			if (sInstance->getString("ago_bef").length() > 0)
++			{
++				lstr << " ";
++			}
++			time_t passed = time(NULL) - last_visited;
++			time_t t = passed / 60;
++			if (t < 240)
++			{
++				lstr << t << " " << sInstance->getString("minutes");
++			}
++			else
++			{
++				t = passed / 60 / 60;
++				if (t < 72)
++				{
++					lstr << t << " " << sInstance->getString("hours");
++				}
++				else
++				{
++					t = passed / 24 / 60 / 60;
++					if (t < 14)
++					{
++						lstr << t << " " << sInstance->getString("days");
++					}
++					else
++					{
++						t = passed / 7 / 24 / 60 / 60;
++						if (t < 12)
++						{
++							lstr << t << " " << sInstance->getString("weeks");
++						}
++						else
++						{
++							t = passed / 30 / 24 / 60 / 60;
++							if (t < 24)
++							{
++								lstr << t << " " << sInstance->getString("months");
++							}
++							else
++							{
++								t = passed / 365 / 24 / 60 / 60;
++								lstr << t << " " << sInstance->getString("years");
++							}
++						}
++					}
++				}
++			}
++			if (sInstance->getString("ago_aft").length() > 0)
++			{
++				lstr << " ";
++			}
++			lstr << sInstance->getString("ago_aft") << ")";
++		}
++		lstr << ": " << (*iter)[LLOfflineLandmarks::sKeyRegion].asString();
++		combo->add(lstr.str(), *iter);
++	}
++}
+Index: indra/newview/llpanellogin.h
+===================================================================
+--- indra/newview/llpanellogin.h	(revision 3)
++++ indra/newview/llpanellogin.h	(working copy)
+@@ -93,6 +93,7 @@
+ 
+ 	static BOOL getServer(LLString &server, S32& domain_name);
+ 	static void getLocation(LLString &location);
++	static void getStartImageFilename(LLString &filename);
+ 
+ 	static void close();
+ 
+@@ -113,7 +114,9 @@
+ 	static void onClickForgotPassword(void*);
+ 	static void onPassKey(LLLineEditor* caller, void* user_data);
+ 	static void onSelectServer(LLUICtrl*, void*);
++	static void onSelectStartLocation(LLUICtrl*, void*);
+ 	static void onSelectAltAvatar(LLUICtrl*, void*);
++	static void onNameFocusChanged(LLFocusableElement* caller, void*);
+ 	
+ private:
+ 	LLPointer<LLUIImage> mLogoImage;
+@@ -121,12 +124,17 @@
+ 	void			(*mCallback)(S32 option, void *userdata);
+ 	void*			mCallbackData;
+ 
++	std::string mFirstName, mLastName;
+ 	std::string mIncomingPassword;
+ 	std::string mMungedPassword;
+ 
+ 	static LLPanelLogin* sInstance;
+ 	static BOOL		sCapslockDidNotification;
+ 	BOOL			mHtmlAvailable;
++	S32				mI0, mI1, mI2, mI3;
++
++	static void		load_locations();
++	static void		populate_locations(LLComboBox* combo, LLSD* sdata);
+ };
+ 
+ #endif
+Index: indra/newview/llprogressview.cpp
+===================================================================
+--- indra/newview/llprogressview.cpp	(revision 1)
++++ indra/newview/llprogressview.cpp	(working copy)
+@@ -57,6 +57,7 @@
+ 
+ S32 gStartImageWidth = 1;
+ S32 gStartImageHeight = 1;
++LLString gStartImageFilename = NULL;
+ const F32 FADE_IN_TIME = 1.f;
+ 
+ const LLString ANIMATION_FILENAME = "Login Sequence ";
+Index: indra/newview/llstartup.cpp
+===================================================================
+--- indra/newview/llstartup.cpp	(revision 4)
++++ indra/newview/llstartup.cpp	(working copy)
+@@ -173,6 +173,7 @@
+ #include "llpostprocess.h"
+ #include "llwlparammanager.h"
+ #include "llwaterparammanager.h"
++#include "llofflinelandmarks.h"
+ 
+ #if LL_WINDOWS
+ #include "llwindebug.h"
+@@ -192,6 +193,7 @@
+ //
+ extern S32 gStartImageWidth;
+ extern S32 gStartImageHeight;
++extern LLString gStartImageFilename;
+ 
+ //
+ // local globals
+@@ -828,6 +830,7 @@
+ 			LLString location;
+ 			LLPanelLogin::getLocation( location );
+ 			LLURLSimString::setString( location );
++			LLPanelLogin::getStartImageFilename(gStartImageFilename);
+ 			// END TODO
+ 			LLPanelLogin::close();
+ 		}
+@@ -850,6 +853,7 @@
+ 		// their last location, or some URL "-url //sim/x/y[/z]"
+ 		// All accounts have both a home and a last location, and we don't support
+ 		// more locations than that.  Choose the appropriate one.  JC
++		LLString location_preset = gSavedSettings.getString("LoginLocationPreset");
+ 		if (LLURLSimString::parse())
+ 		{
+ 			// a startup URL was specified
+@@ -860,16 +864,32 @@
+ 			// UserLoginLocationReply arrives
+ 			location_which = START_LOCATION_ID_LAST;
+ 		}
+-		else if (gSavedSettings.getBOOL("LoginLastLocation"))
++		else if (location_preset == LLURLSimString::sLocationStringLast)
+ 		{
+ 			agent_location_id = START_LOCATION_ID_LAST;	// last location
+ 			location_which = START_LOCATION_ID_LAST;
+ 		}
+-		else
++		else if (location_preset == LLURLSimString::sLocationStringHome)
+ 		{
+ 			agent_location_id = START_LOCATION_ID_HOME;	// home
+ 			location_which = START_LOCATION_ID_HOME;
+ 		}
++		else if (location_preset == LLURLSimString::sLocationStringFave)
++		{
++			LLURLSimString::setString(gFavouriteLocations.getRegion(0));
++			if (LLURLSimString::parse())
++			{
++				agent_location_id = START_LOCATION_ID_URL;
++				location_which = START_LOCATION_ID_LAST;
++				gStartImageFilename = gFavouriteLocations.getScreenshot(0);
++			}
++			else
++			{
++				agent_location_id = START_LOCATION_ID_HOME;	// home
++				location_which = START_LOCATION_ID_HOME;
++				gStartImageFilename = NULL;
++			}
++		}
+ 
+ 		gViewerWindow->getWindow()->setCursor(UI_CURSOR_WAIT);
+ 
+@@ -967,6 +987,11 @@
+ 		display_startup();
+ 		
+ 		std::stringstream start;
++		LLString location_preset = gSavedSettings.getString("LoginLocationPreset");
++		if (location_preset == LLURLSimString::sLocationStringFave)
++		{
++			LLURLSimString::setString(gFavouriteLocations.getRegion(0));
++		}
+ 		if (LLURLSimString::parse())
+ 		{
+ 			// a startup URL was specified
+@@ -979,14 +1004,10 @@
+ 			start << xml_escape_string(unescaped_start.str().c_str());
+ 			
+ 		}
+-		else if (gSavedSettings.getBOOL("LoginLastLocation"))
++		else if (location_preset == LLURLSimString::sLocationStringLast || location_preset == LLURLSimString::sLocationStringHome)
+ 		{
+-			start << "last";
++			start << location_preset;
+ 		}
+-		else
+-		{
+-			start << "home";
+-		}
+ 
+ 		char hashed_mac_string[MD5HEX_STR_SIZE];		/* Flawfinder: ignore */
+ 		LLMD5 hashed_mac;
+@@ -1258,6 +1279,9 @@
+ 			if(text) lastname.assign(text);
+ 			gSavedSettings.setString("FirstName", firstname);
+ 			gSavedSettings.setString("LastName", lastname);
++			gTeleportHistory.setMaxNum(gSavedSettings.getS32("TeleportHistoryEntries"));
++			gTeleportHistory.load();
++			gFavouriteLocations.load();
+ 			if (gSavedSettings.getBOOL("AllowSavingAlts"))
+ 			{
+ 				LLSD alt_avatars = gSavedSettings.getLLSD("AltAvatars");
+@@ -1313,7 +1337,7 @@
+ 				   save_password_to_disk(NULL);
+ 			}
+ 			gSavedSettings.setBOOL("RememberPassword", remember_password);
+-			gSavedSettings.setBOOL("LoginLastLocation", gSavedSettings.getBOOL("LoginLastLocation"));
++			gSavedSettings.setString("LoginLocationPreset", gSavedSettings.getString("LoginLocationPreset"));
+ 
+ 			text = LLUserAuth::getInstance()->getResponse("agent_access");
+ 			if(text && (text[0] == 'M'))
+@@ -1624,6 +1648,8 @@
+ 		if ( gViewerWindow != NULL)
+ 		{	// This isn't the first logon attempt, so show the UI
+ 			gViewerWindow->setNormalControlsVisible( TRUE );
++			update_world_last_locations_menu();
++			update_world_fave_locations_menu();
+ 		}	
+ 		gLoginMenuBarView->setVisible( FALSE );
+ 		gLoginMenuBarView->setEnabled( FALSE );
+@@ -2199,9 +2225,10 @@
+ 		if (!gAgent.isFirstLogin())
+ 		{
+ 			bool url_ok = LLURLSimString::sInstance.parse();
++			LLString location_preset = gSavedSettings.getString("LoginLocationPreset");
+ 			if (!((agent_start_location == "url" && url_ok) ||
+-                  (!url_ok && ((agent_start_location == "last" && gSavedSettings.getBOOL("LoginLastLocation")) ||
+-							   (agent_start_location == "home" && !gSavedSettings.getBOOL("LoginLastLocation"))))))
++                  (!url_ok && ((agent_start_location == LLURLSimString::sLocationStringLast && location_preset == LLURLSimString::sLocationStringLast) ||
++							   (agent_start_location == LLURLSimString::sLocationStringHome && location_preset != LLURLSimString::sLocationStringLast)))))
+ 			{
+ 				// The reason we show the alert is because we want to
+ 				// reduce confusion for when you log in and your provided
+@@ -2214,14 +2241,14 @@
+ 					args["[TYPE]"] = "desired";
+ 					args["[HELP]"] = "";
+ 				}
+-				else if (gSavedSettings.getBOOL("LoginLastLocation"))
++				else if (location_preset == LLURLSimString::sLocationStringLast)
+ 				{
+-					args["[TYPE]"] = "last";
++					args["[TYPE]"] = LLURLSimString::sLocationStringLast;
+ 					args["[HELP]"] = "";
+ 				}
+ 				else
+ 				{
+-					args["[TYPE]"] = "home";
++					args["[TYPE]"] = LLURLSimString::sLocationStringHome;
+ 					args["[HELP]"] = "You may want to set a new home location.";
+ 				}
+ 				gViewerWindow->alertXml("AvatarMoved", args);
+@@ -3708,18 +3735,13 @@
+ 		llinfos << "re-initializing start screen" << llendl;
+ 	}
+ 
+-	llinfos << "Loading startup bitmap..." << llendl;
+-
+-	LLString temp_str = gDirUtilp->getLindenUserDir() + gDirUtilp->getDirDelimiter();
+-
+-	if ((S32)START_LOCATION_ID_LAST == location_id)
++	LLString temp_str = gDirUtilp->getExpandedFilename(LL_PATH_PER_SL_ACCOUNT, gStartImageFilename);
++	if (gStartImageFilename.empty() || !gDirUtilp->fileExists(temp_str))
+ 	{
+-		temp_str += SCREEN_LAST_FILENAME;
++		temp_str = gDirUtilp->getExpandedFilename(LL_PATH_PER_SL_ACCOUNT,
++			(S32)START_LOCATION_ID_LAST == location_id ? SCREEN_LAST_FILENAME : SCREEN_HOME_FILENAME);
+ 	}
+-	else
+-	{
+-		temp_str += SCREEN_HOME_FILENAME;
+-	}
++	llinfos << "Loading startup bitmap from " << temp_str << llendl;
+ 
+ 	LLPointer<LLImageBMP> start_image_bmp = new LLImageBMP;
+ 	
+Index: indra/newview/llurlsimstring.cpp
+===================================================================
+--- indra/newview/llurlsimstring.cpp	(revision 1)
++++ indra/newview/llurlsimstring.cpp	(working copy)
+@@ -41,8 +41,10 @@
+ 
+ //static
+ LLURLSimString LLURLSimString::sInstance;
+-LLString LLURLSimString::sLocationStringHome("My Home");
+-LLString LLURLSimString::sLocationStringLast("My Last Location");
++LLString LLURLSimString::sLocationStringHome("home");
++LLString LLURLSimString::sLocationStringLast("last");
++LLString LLURLSimString::sLocationStringFave("fave");
++LLString LLURLSimString::sLocationStringSpecify("specify");
+ 
+ // "secondlife://simname/x/y/z" -> "simname/x/y/z"
+ // (actually .*//foo -> foo)
+@@ -52,14 +54,10 @@
+ 	sInstance.mSimString.clear();
+ 	sInstance.mSimName.clear();
+ 	sInstance.mParseState = NOT_PARSED;
+-	if (sim_string == sLocationStringHome)
++	if (sim_string == sLocationStringHome || sim_string == sLocationStringLast || sim_string == sLocationStringFave || sim_string == sLocationStringSpecify)
+ 	{
+-		gSavedSettings.setBOOL("LoginLastLocation", FALSE);
++		gSavedSettings.setString("LoginLocationPreset", sim_string);
+ 	}
+-	else if (sim_string == sLocationStringLast)
+-	{
+-		gSavedSettings.setBOOL("LoginLastLocation", TRUE);
+-	}
+ 	else
+ 	{
+ 		char* curlstr = curl_unescape(sim_string.c_str(), sim_string.size());
+Index: indra/newview/llurlsimstring.h
+===================================================================
+--- indra/newview/llurlsimstring.h	(revision 1)
++++ indra/newview/llurlsimstring.h	(working copy)
+@@ -70,6 +70,8 @@
+ 	static LLURLSimString sInstance;
+ 	static LLString sLocationStringHome;
+ 	static LLString sLocationStringLast;
++	static LLString sLocationStringFave;
++	static LLString sLocationStringSpecify;
+ 
+ public:
+ 	LLString mSimString; // "name/x/y/z"
+Index: indra/newview/llviewerimagelist.cpp
+===================================================================
+--- indra/newview/llviewerimagelist.cpp	(revision 1)
++++ indra/newview/llviewerimagelist.cpp	(working copy)
+@@ -58,6 +58,7 @@
+ #include "llviewerregion.h"
+ #include "pipeline.h"
+ #include "llappviewer.h"
++#include "llurlsimstring.h"
+ 
+ #include <sys/stat.h>
+ 
+@@ -157,8 +158,8 @@
+ 
+ static std::string get_texture_list_name()
+ {
+-	BOOL login_last = gSavedSettings.getBOOL("LoginLastLocation");
+-	return std::string("texture_list_") + (login_last?"last":"home") + ".xml";
++	BOOL login_last = gSavedSettings.getString("LoginLocationPreset") == LLURLSimString::sLocationStringLast;
++	return std::string("texture_list_") + (login_last ? LLURLSimString::sLocationStringLast : LLURLSimString::sLocationStringHome) + ".xml";
+ }
+ 
+ void LLViewerImageList::doPrefetchImages()
+Index: indra/newview/llviewermenu.cpp
+===================================================================
+--- indra/newview/llviewermenu.cpp	(revision 1)
++++ indra/newview/llviewermenu.cpp	(working copy)
+@@ -113,6 +113,7 @@
+ #include "llfloaterlandholdings.h"
+ #include "llfloatermap.h"
+ #include "llfloatermute.h"
++#include "llfloaterofflinelandmarks.h"
+ #include "llfloateropenobject.h"
+ #include "llfloaterpermissionsmgr.h"
+ #include "llfloaterpostprocess.h"
+@@ -286,6 +287,10 @@
+ LLPieMenu* gDetachBodyPartPieMenus[8];
+ 
+ LLMenuGL* gLandmarkMenu = NULL;
++LLMenuGL* gLastLocationsMenu = NULL;
++LLMenuGL* gFaveLocationsMenu = NULL;
++U32 gLastLocationsMenuXUILength = 0;
++U32 gFaveLocationsMenuXUILength = 0;
+ LLMenuItemCallGL* gAFKMenu = NULL;
+ LLMenuItemCallGL* gBusyMenu = NULL;
+ 
+@@ -736,6 +741,11 @@
+ 	gAttachSubMenu = gMenuBarView->getChildMenuByName("Attach Object", TRUE);
+ 	gDetachSubMenu = gMenuBarView->getChildMenuByName("Detach Object", TRUE);
+ 
++	gLastLocationsMenu = gMenuBarView->getChildMenuByName("LastLocations", TRUE);
++	gFaveLocationsMenu = gMenuBarView->getChildMenuByName("FavouriteLocations", TRUE);
++	gLastLocationsMenuXUILength = gLastLocationsMenu->getItemCount();
++	gFaveLocationsMenuXUILength = gFaveLocationsMenu->getItemCount();
++
+ 	// TomY TODO convert these two
+ 	LLMenuGL*menu;
+ 
+@@ -783,8 +793,44 @@
+ 	
+ }
+ 
++void update_world_locations_menu(LLOfflineLandmarks& lm_collection, LLMenuGL* menu, U32& n_menu_items_xui, const char* listener_name)
++{
++	while (menu->getItemCount() > n_menu_items_xui)
++	{
++		menu->removeLast();
++	}
++	LLSD* lms = lm_collection.getLandmarks();
++	LLSimpleListener* callback = gMenuHolder->getListenerByName(listener_name);
++	LLSD::array_iterator it;
++	U32 n;
++	for (it = lms->beginArray(), n = 1; it != lms->endArray(); it++, n++)
++	{
++		LLMenuItemCallGL* item = new LLMenuItemCallGL("TeleportLocation", NULL);
++		item->addListener(callback, "on_click", (*it)[LLOfflineLandmarks::sKeyLocation]);  // implies removeListener first
++		item->setLabel( llformat("%d. %s (%s)", n,
++			(*it)[LLOfflineLandmarks::sKeyParcel].asString().c_str(),
++			(*it)[LLOfflineLandmarks::sKeyRegion].asString().c_str()
++			));
++		menu->append(item);
++	}
++}
+ 
++void update_world_last_locations_menu()
++{
++	if (gLastLocationsMenu)
++	{
++		update_world_locations_menu(gTeleportHistory, gLastLocationsMenu, gLastLocationsMenuXUILength, "World.TeleportLast");
++	}
++}
+ 
++void update_world_fave_locations_menu()
++{
++	if (gFaveLocationsMenu)
++	{
++		update_world_locations_menu(gFavouriteLocations, gFaveLocationsMenu, gFaveLocationsMenuXUILength, "World.TeleportFave");
++	}
++}
++
+ void init_landmark_menu(LLMenuGL* menu)
+ {
+ 	if (!menu) return;
+@@ -2990,6 +3036,7 @@
+ {
+ 	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
+ 	{
++		gAgent.hasJustTeleported(false);
+ 		return handle_sit_or_stand();
+ 	}
+ };
+@@ -3024,6 +3071,7 @@
+ 		{
+ 			target_rot = gAgent.getFrameAgent().getQuaternion();
+ 		}
++		gAgent.hasJustTeleported(false);
+ 		gAgent.startAutoPilotGlobal(posGlobal, "Sit", &target_rot, near_sit_down_point, NULL, 0.7f);
+ 		return true;
+ 	}
+@@ -4926,6 +4974,27 @@
+ 	}
+ };
+ 
++class LLWorldTeleportLocation : public view_listener_t
++{
++	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
++	{
++		F64 x = userdata[0].asReal();
++		F64 y = userdata[1].asReal();
++		F64 z = userdata[2].asReal();
++		U64 handle = to_region_handle_global(x, y);
++		LLVector3 pos = LLVector3(x - 256.0 * floor(x / 256.0), y - 256.0 * floor(y / 256.0), z);
++		if (handle > 0)
++		{
++			gAgent.teleportRequest(handle, pos);
++		}
++		else
++		{
++			llwarns << "Invalid teleport coordinates" << llendl;
++		}
++		return true;
++	}
++};
++
+ class LLWorldAlwaysRun : public view_listener_t
+ {
+ 	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
+@@ -5323,6 +5392,10 @@
+ 		{
+ 			LLFloaterPreference::show(NULL);
+ 		}
++		else if (floater_name == "offlinelandmarks")
++		{
++			LLFloaterOfflineLandmarks::show(NULL);
++		}
+ 		else if (floater_name == "toolbar")
+ 		{
+ 			LLToolBar::toggle(NULL);
+@@ -7769,6 +7842,8 @@
+ 	addMenu(new LLWorldCreateLandmark(), "World.CreateLandmark");
+ 	addMenu(new LLWorldSetHomeLocation(), "World.SetHomeLocation");
+ 	addMenu(new LLWorldTeleportHome(), "World.TeleportHome");
++	addMenu(new LLWorldTeleportLocation(), "World.TeleportLast");
++	addMenu(new LLWorldTeleportLocation(), "World.TeleportFave");
+ 	addMenu(new LLWorldSetAway(), "World.SetAway");
+ 	addMenu(new LLWorldSetBusy(), "World.SetBusy");
+ 
+Index: indra/newview/llviewermenu.h
+===================================================================
+--- indra/newview/llviewermenu.h	(revision 1)
++++ indra/newview/llviewermenu.h	(working copy)
+@@ -36,6 +36,7 @@
+ 
+ //newview includes
+ #include "llfilepicker.h"
++#include "llofflinelandmarks.h"
+ 
+ class LLUICtrl;
+ class LLView;
+@@ -95,6 +96,10 @@
+ void handle_show_newest_map(void*);
+ void set_underclothes_menu_options();
+ 
++void update_world_locations_menu(LLOfflineLandmarks& lm_collection, LLMenuGL* menu, U32& n_menu_items_xui, const char* listener_name);
++void update_world_last_locations_menu();
++void update_world_fave_locations_menu();
++
+ void exchange_callingcard(const LLUUID& dest_id);
+ 
+ void handle_gestures(void*);
+@@ -164,6 +169,10 @@
+ extern LLMenuGL* gAttachSubMenu;
+ extern LLMenuGL* gDetachSubMenu;
+ extern LLMenuGL* gTakeOffClothes;
++extern LLMenuGL* gLastLocationsMenu;
++extern LLMenuGL* gFaveLocationsMenu;
++extern U32 gLastLocationsMenuXUILength;
++extern U32 gFaveLocationsMenuXUILength;
+ extern LLPieMenu* gAttachScreenPieMenu;
+ extern LLPieMenu* gDetachScreenPieMenu;
+ extern LLPieMenu* gAttachPieMenu;
+Index: indra/newview/llviewermessage.cpp
+===================================================================
+--- indra/newview/llviewermessage.cpp	(revision 1)
++++ indra/newview/llviewermessage.cpp	(working copy)
+@@ -2648,6 +2648,8 @@
+ //	gTeleportDisplayTimer.reset();
+ //	gViewerWindow->setShowProgress(TRUE);
+ 
++	gAgent.hasJustTeleported(true);
++
+ 	// This could be first use of teleport, so test for that
+ 	LLFirstUse::useTeleport();
+ }
+@@ -4685,6 +4687,7 @@
+ 	{
+ 		gAgent.setTeleportState( LLAgent::TELEPORT_NONE );
+ 	}
++	gAgent.hasJustTeleported(false, true);
+ }
+ 
+ void process_teleport_local(LLMessageSystem *msg,void**)
+@@ -4720,6 +4723,7 @@
+ 		gAgent.setFlying(FALSE);
+ 	}
+ 
++	gAgent.hasJustTeleported(true);
+ 	gAgent.setPositionAgent(pos);
+ 	gAgent.slamLookAt(look_at);
+ 
+Index: indra/newview/newview_vc8.vcproj
+===================================================================
+--- indra/newview/newview_vc8.vcproj	(revision 2)
++++ indra/newview/newview_vc8.vcproj	(working copy)
+@@ -824,6 +824,10 @@
+ 				>
+ 			</File>
+ 			<File
++				RelativePath=".\llfloaterofflinelandmarks.cpp"
++				>
++			</File>
++			<File
+ 				RelativePath=".\llfloateropenobject.cpp"
+ 				>
+ 			</File>
+@@ -1140,6 +1144,10 @@
+ 				>
+ 			</File>
+ 			<File
++				RelativePath=".\llofflinelandmarks.cpp"
++				>
++			</File>
++			<File
+ 				RelativePath=".\lloverlaybar.cpp"
+ 				>
+ 			</File>
+@@ -2410,6 +2418,10 @@
+ 				>
+ 			</File>
+ 			<File
++				RelativePath=".\llfloaterofflinelandmarks.h"
++				>
++			</File>
++			<File
+ 				RelativePath=".\llfloateropenobject.h"
+ 				>
+ 			</File>
+@@ -2714,6 +2726,10 @@
+ 				>
+ 			</File>
+ 			<File
++				RelativePath=".\llofflinelandmarks.h"
++				>
++			</File>
++			<File
+ 				RelativePath=".\lloverlaybar.h"
+ 				>
+ 			</File>
+@@ -3772,6 +3788,10 @@
+ 				>
+ 			</File>
+ 			<File
++				RelativePath=".\skins\xui\en-us\floater_offline_landmarks.xml"
++				>
++			</File>
++			<File
+ 				RelativePath=".\skins\xui\en-us\floater_openobject.xml"
+ 				>
+ 			</File>
+@@ -4000,6 +4020,10 @@
+ 				>
+ 			</File>
+ 			<File
++				RelativePath=".\app_settings\landmarks.xml"
++				>
++			</File>
++			<File
+ 				RelativePath=".\skins\xui\en-us\LCD_text.xml"
+ 				>
+ 			</File>
+Index: indra/newview/skins/xui/de/floater_offline_landmarks.xml
+===================================================================
+--- indra/newview/skins/xui/de/floater_offline_landmarks.xml	(revision 0)
++++ indra/newview/skins/xui/de/floater_offline_landmarks.xml	(revision 0)
+@@ -0,0 +1,19 @@
++<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
++<floater name="offlinelandmarks" title="Lieblingsorte">
++	<scroll_list name="offline_landmarks_list">
++		<column label="Beschreibung" name="parcel" />
++		<column label="Lage" name="region" />
++		<column label="Letzter Besuch" name="timestamp" />
++		<column label="" name="screenshot" />
++	</scroll_list>
++	<string name="never">Noch nie</string>
++	<line_editor label="" name="parcel_edit" tool_tip="Beschreibung bearbeiten" />
++	<button label="" name="show_map_btn" tool_tip="Auf der Karte zeigen" />
++	<button label="" name="screenshot_btn" tool_tip="Ein Bildschirmfoto zu diesem Ort speichern" />
++	<button label="" name="move_down_btn" tool_tip="Nach unten verschieben" />
++	<button label="" name="move_up_btn" tool_tip="Nach oben verschieben" />
++	<button label="" name="trash_btn" tool_tip="Eintrag löschen" />
++	<button label="" name="add_btn" tool_tip="Aktuellen Ort hinzufügen" />
++	<button label="OK" name="save_btn" tool_tip="Liste speichern und schließen" />
++	<button label="Cancel" name="cancel_btn" tool_tip="Schließen ohne zu speichern" />
++</floater>
+Index: indra/newview/skins/xui/de/menu_viewer.xml
+===================================================================
+--- indra/newview/skins/xui/de/menu_viewer.xml	(revision 1)
++++ indra/newview/skins/xui/de/menu_viewer.xml	(working copy)
+@@ -137,6 +137,10 @@
+ 		<menu_item_call label="Hier als Zuhause wählen" name="Set Home to Here" />
+ 		<menu_item_separator label="-----------" name="separator2" />
+ 		<menu_item_call label="Teleport nach Hause" name="Teleport Home" />
++		<menu name="LastLocations" label="Zuletzt besuchte Orte" />
++		<menu name="FavouriteLocations" label="Lieblingsorte">
++			<menu_item_call name="EditFavouriteLocations" label="Bearbeiten" />
++		</menu>
+ 		<menu_item_separator label="-----------" name="separator3" />
+ 		<menu_item_call label="Als abwesend anzeigen" name="Set Away" />
+ 		<menu_item_call label="Als beschäftigt anzeigen" name="Set Busy" />
+Index: indra/newview/skins/xui/de/panel_login.xml
+===================================================================
+--- indra/newview/skins/xui/de/panel_login.xml	(revision 1)
++++ indra/newview/skins/xui/de/panel_login.xml	(working copy)
+@@ -9,20 +9,19 @@
+ 	<text name="password_text">
+ 		Kennwort:
+ 	</text>
+-	<text name="start_location_text">
+-		Startposition:
+-	</text>
+-	<combo_box name="start_location_combo">
+-		<combo_item name="MyHome">
+-			Mein Heimatort
+-		</combo_item>
+-		<combo_item name="MyLastLocation">
+-			Mein letzter Standort
+-		</combo_item>
+-		<combo_item name="Typeregionname">
+-			&lt;Region eingeben&gt;
+-		</combo_item>
+-	</combo_box>
++	<combo_box name="start_location_combo" tool_tip="Startposition"/>
++	<string name="MyHome">Mein Heimatort</string>
++	<string name="MyLastLocation">Mein letzter Standort</string>
++	<string name="MyFavouriteLocation">Meine Lieblingsort</string>
++	<string name="TypeRegionName">&lt;Region eingeben&gt;</string>
++	<string name="ago_bef">vor</string>
++	<string name="ago_aft"></string>
++	<string name="minutes">Min.</string>
++	<string name="hours">Std.</string>
++	<string name="days">Tagen</string>
++	<string name="weeks">Wochen</string>
++	<string name="months">Monaten</string>
++	<string name="years">Jahren</string>
+ 	<check_box label="Kennwort merken" name="remember_check" />
+ 	<text name="full_screen_text">
+ 		Die Anzeige schaltet bei Anmeldung auf Vollbild um.
+Index: indra/newview/skins/xui/de/panel_preferences_general.xml
+===================================================================
+--- indra/newview/skins/xui/de/panel_preferences_general.xml	(revision 11)
++++ indra/newview/skins/xui/de/panel_preferences_general.xml	(working copy)
+@@ -1,15 +1,12 @@
+ <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+ <panel label="Allgemein" name="general_panel">
+-	<combo_box name="location_combobox">
+-		<combo_item name="MyHome">
+-			Mein Heimatort
+-		</combo_item>
+-		<combo_item name="MyLastLocation">
+-			Mein letzter Standort
+-		</combo_item>
+-	</combo_box>
+ 	<check_box label="Startposition auf Anmeldebildschirm anzeigen"
+ 	     name="show_location_checkbox" />
++	<spinner label="Zuletzt besuchte Orte:" name="teleport_history_spinner" />
++	<text name="history_entries_textbox">
++		Anz. der Einträge
++	</text>
++	<check_box label="Bildschirmfotos machen" name="hist_screenshots_checkbox" />
+ 	<radio_group name="fade_out_radio">
+ 		<radio_item type="string" length="1" name="Never">
+ 			Nie
+Index: indra/newview/skins/xui/en-us/floater_offline_landmarks.xml
+===================================================================
+--- indra/newview/skins/xui/en-us/floater_offline_landmarks.xml	(revision 0)
++++ indra/newview/skins/xui/en-us/floater_offline_landmarks.xml	(revision 0)
+@@ -0,0 +1,57 @@
++<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
++<floater can_close="true" can_minimize="true" can_resize="false"
++     height="200" name="offlinelandmarks" title="Favourite Locations" width="532">
++	<scroll_list bottom_delta="-170" draw_border="true" draw_heading="true"
++	     follows="top|left|bottom|right" height="150" left="4" multi_select="false"
++	     name="offline_landmarks_list" right="-4">
++		<column label="Description" name="parcel" width="200" />
++		<column label="Location" name="region" width="150" />
++		<column label="Last Visited" name="timestamp" width="120" />
++		<column label="" name="screenshot" width="20" />
++	</scroll_list>
++	<string name="never">Never</string>
++	<line_editor bottom_delta="-24" follows="top|right" height="20" label=""
++	     left="4" name="parcel_edit" select_on_focus="true"
++	     tool_tip="Edit description" width="200" />
++	<button bottom_delta="0" height="20" label=""
++        image_overlay="icn_toolbar_map.tga" image_overlay_alignment="center"
++		scale_image="true" left_delta="204" name="show_map_btn"
++	       tool_tip="Show on map"
++	       width="28" follows="left|right" user_resize="false"/>
++	<button bottom_delta="0" height="20" label=""
++        image_overlay="icn_toolbar_snapshot.tga" image_overlay_alignment="center"
++		scale_image="true" left_delta="32" name="screenshot_btn"
++	       tool_tip="Save screenshot for this destination"
++	       width="28" follows="left|right" user_resize="false"/>
++	<button bottom_delta="0" height="10" label=""
++        image_overlay="down_arrow.tga" image_overlay_alignment="center"
++		scale_image="true" left_delta="32" name="move_down_btn"
++	       tool_tip="Move down"
++	       width="20" follows="left|right" user_resize="false"/>
++	<button bottom_delta="10" height="10" label=""
++        image_overlay="up_arrow.tga" image_overlay_alignment="center"
++		scale_image="true" left_delta="0" name="move_up_btn"
++	       tool_tip="Move up"
++	       width="20" follows="left|right" user_resize="false"/>
++	<button bottom_delta="-10" height="20" label=""
++        image_overlay="inv_folder_trash.tga" image_overlay_alignment="center"
++		scale_image="true" left_delta="24" name="trash_btn"
++	       tool_tip="Delete entry"
++	       width="20" follows="left|right" user_resize="false"/>
++	<button bottom_delta="0" height="20" label=""
++        image_overlay="icn_toolbar_minimap.tga" image_overlay_alignment="center"
++		scale_image="true" left_delta="24" name="add_btn"
++	       tool_tip="Add current location"
++	       width="20" follows="left|right" user_resize="false"/>
++	<button bottom_delta="0" follows="bottom|right" height="20" label="OK" left="364"
++	     name="save_btn" width="80" tool_tip="Save list and close"/>
++	<button bottom_delta="0" follows="bottom|right" height="20" label="Cancel"
++	     left_delta="84" name="cancel_btn" width="80" tool_tip="Close without saving"/>
++</floater>
++<!--
++	to do:
++		better gui;
++		don't reuse icons from other functions that don't quite fit here;
++		scroll list cells could be clickable instead of needing all the buttons below;
++		description editor in place instead of below -> is there a way to make a scroll list line editable?
++-->
+Index: indra/newview/skins/xui/en-us/menu_viewer.xml
+===================================================================
+--- indra/newview/skins/xui/en-us/menu_viewer.xml	(revision 1)
++++ indra/newview/skins/xui/en-us/menu_viewer.xml	(working copy)
+@@ -531,6 +531,20 @@
+ 			<on_click function="World.TeleportHome" userdata="" />
+ 			<on_enable function="World.EnableTeleportHome" userdata="" />
+ 		</menu_item_call>
++		<menu name="LastLocations" create_jump_keys="true" drop_shadow="true" enabled="true"
++		     height="117" label="Last Locations" left="0" mouse_opaque="false"
++		     opaque="true" tear_off="true" width="169">
++		</menu>
++		<menu name="FavouriteLocations" create_jump_keys="true" drop_shadow="true" enabled="true"
++		     height="117" label="Favourite Locations" left="0" mouse_opaque="false"
++		     opaque="true" tear_off="true" width="169">
++			<menu_item_call name="EditFavouriteLocations" enabled="true" height="19" label="Edit" left="0"
++			     mouse_opaque="true" width="169">
++				<on_click function="ShowFloater" userdata="offlinelandmarks" />
++			</menu_item_call>
++			<menu_item_separator enabled="true" height="8" label="-----------" left="0"
++			     mouse_opaque="true" width="169" />
++		</menu>
+ 		<menu_item_separator bottom="-167" enabled="true" height="8" label="-----------" left="0"
+ 		     mouse_opaque="true" name="separator3" width="185" />
+ 		<menu_item_call bottom="-186" enabled="true" height="19" label="Set Away" left="0"
+Index: indra/newview/skins/xui/en-us/panel_login.xml
+===================================================================
+--- indra/newview/skins/xui/en-us/panel_login.xml	(revision 3)
++++ indra/newview/skins/xui/en-us/panel_login.xml	(working copy)
+@@ -43,29 +43,24 @@
+ 	     follows="left|bottom" font="SansSerif" handle_edit_keys_directly="true"
+ 	     height="20" left="296" max_length="16" mouse_opaque="true"
+ 	     name="password_edit" select_all_on_focus_received="true" width="120" />
+-	<text bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
+-	     bottom="10" drop_shadow_visible="true" follows="left|bottom"
+-	     font="SansSerif" h_pad="0" halign="left" height="16"
+-	     left="32" mouse_opaque="true" name="start_location_text" v_pad="0"
+-	     width="95">
+-		Start Location:
+-	</text>
+ 	<combo_box allow_text_entry="true" bottom="8" follows="left|bottom" height="18"
+-	     left_delta="97" max_chars="128" mouse_opaque="true"
+-	     name="start_location_combo" width="155">
+-		<combo_item name="MyHome" value="My Home">
+-			My Home
+-		</combo_item>
+-		<combo_item name="MyLastLocation" value="My Last Location">
+-			My Last Location
+-		</combo_item>
+-		<combo_item name="Typeregionname" value="&lt;Type region name&gt;">
+-			&lt;Type region name&gt;
+-		</combo_item>
+-	</combo_box>
++	     left="32" max_chars="128" mouse_opaque="true"
++	     name="start_location_combo" width="252" tool_tip="Start Location" />
++	<string name="MyHome">My Home</string>
++	<string name="MyLastLocation">My Last Location</string>
++	<string name="MyFavouriteLocation">My Favourite Location</string>
++	<string name="TypeRegionName">&lt;Type region name&gt;</string>
++	<string name="ago_bef"></string>
++	<string name="ago_aft">ago</string>
++	<string name="minutes">mins</string>
++	<string name="hours">hrs</string>
++	<string name="days">days</string>
++	<string name="weeks">weeks</string>
++	<string name="months">months</string>
++	<string name="years">years</string>
+ 	<check_box bottom="10" follows="left|bottom" font="SansSerifSmall" height="16"
+ 	     initial_value="false" label="Remember password"
+-	     left_delta="165" mouse_opaque="true" name="remember_check" width="138" />
++	     left="296" mouse_opaque="true" name="remember_check" width="138" />
+ 	<button bottom="28" follows="left|bottom" font="SansSerif" halign="center"
+ 	     height="24" label="Connect" label_selected="Connect"
+ 	     left="440" mouse_opaque="true" name="connect_btn" scale_image="TRUE"
+Index: indra/newview/skins/xui/en-us/panel_preferences_general.xml
+===================================================================
+--- indra/newview/skins/xui/en-us/panel_preferences_general.xml	(revision 4)
++++ indra/newview/skins/xui/en-us/panel_preferences_general.xml	(working copy)
+@@ -2,21 +2,37 @@
+ <panel border="true" bottom="-409" enabled="true" follows="left|top|right|bottom"
+      height="408" label="General" left="102" mouse_opaque="true"
+      name="general_panel" width="517">
+-	<combo_box allow_text_entry="true" bottom="-24" enabled="true" follows="left|bottom"
+-	     height="16" left="155" max_chars="128" mouse_opaque="true"
+-	     name="location_combobox" width="146">
+-		<combo_item name="MyHome" value="My Home">
+-			My Home
+-		</combo_item>
+-		<combo_item name="MyLastLocation" value="My Last Location">
+-			My Last Location
+-		</combo_item>
+-	</combo_box>
+-	<check_box bottom="-44" control_name="ShowStartLocation" enabled="true" follows="left|top"
++	<text type="string" length="1" bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
++	     bottom="-20" drop_shadow_visible="true" enabled="true" follows="left|top"
++	     font="SansSerifSmall" h_pad="0" halign="left" height="10" left="10"
++	     mouse_opaque="true" name="start_location_textbox" v_pad="0" width="394">
++		Start Location:
++	</text>
++	<check_box bottom="-25" control_name="ShowStartLocation" enabled="true" follows="left|bottom"
+ 	     font="SansSerifSmall" height="16" initial_value="true"
+-	     label="Show Start Location on Login Screen" left="151" mouse_opaque="true"
++	     label="Show on Login Screen" left="151" mouse_opaque="true"
+ 	     name="show_location_checkbox" radio_style="false" width="256" />
+-	<combo_box bottom_delta="-25" follows="left|top" height="18" left="155"
++	<spinner bottom_delta="-24" control_name="TeleportHistoryEntries" decimal_digits="0" enabled="true"
++	     follows="left|top" height="16" increment="1" initial_val="10"
++	     label="Teleport History:" label_width="141" left="10" max_val="99"
++	     min_val="0" mouse_opaque="true" name="teleport_history_spinner" width="188" />
++	<text type="string" length="1" bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
++	     bottom_delta="5" drop_shadow_visible="true" enabled="true" follows="left|top"
++	     font="SansSerifSmall" h_pad="0" halign="left" height="10" left_delta="198"
++	     mouse_opaque="true" name="history_entries_textbox" v_pad="0" width="128">
++		No. of Entries
++	</text>
++	<check_box bottom_delta="-6" control_name="TeleportHistoryScreenshots" enabled="true" follows="left|top"
++	     font="SansSerifSmall" height="16" initial_value="true"
++	     label="Take Screenshots" left="300" mouse_opaque="true"
++	     name="hist_screenshots_checkbox" radio_style="false" width="256" />
++	<text type="string" length="1" bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
++	     bottom_delta="-20" drop_shadow_visible="true" enabled="true" follows="left|top"
++	     font="SansSerifSmall" h_pad="0" halign="left" height="10" left="10"
++	     mouse_opaque="true" name="show_names_textbox" v_pad="0" width="394">
++		Show Names:
++	</text>
++	<combo_box bottom_delta="-5" follows="left|top" height="18" left="155"
+ 	     mouse_opaque="true" name="fade_out_combobox" width="146">
+ 		<combo_item name="Never" value="Never">
+ 			Never
+@@ -107,18 +123,6 @@
+ 	     name="show_search_panel" radio_style="false"
+ 	     tool_tip="Display the embedded search panel." width="256" />
+ 	<text type="string" length="1" bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
+-	     bottom="-20" drop_shadow_visible="true" enabled="true" follows="left|top"
+-	     font="SansSerifSmall" h_pad="0" halign="left" height="10" left="10"
+-	     mouse_opaque="true" name="start_location_textbox" v_pad="0" width="394">
+-		Start Location:
+-	</text>
+-	<text type="string" length="1" bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
+-	     bottom="-64" drop_shadow_visible="true" enabled="true" follows="left|top"
+-	     font="SansSerifSmall" h_pad="0" halign="left" height="10" left="10"
+-	     mouse_opaque="true" name="show_names_textbox" v_pad="0" width="394">
+-		Show Names:
+-	</text>
+-	<text type="string" length="1" bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
+ 	     bottom="-184" drop_shadow_visible="true" enabled="true" follows="left|top"
+ 	     font="SansSerifSmall" h_pad="0" halign="left" height="10" left="10"
+ 	     mouse_opaque="true" name="effects_color_textbox" v_pad="0" width="394">
+Index: indra/newview/skins/xui/ja/panel_preferences_general.xml
+===================================================================
+--- indra/newview/skins/xui/ja/panel_preferences_general.xml	(revision 1)
++++ indra/newview/skins/xui/ja/panel_preferences_general.xml	(working copy)
+@@ -1,13 +1,5 @@
+ <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+ <panel label="一般" name="general_panel">
+-	<combo_box name="location_combobox">
+-		<combo_item name="MyHome">
+-			自宅（ホーム）
+-		</combo_item>
+-		<combo_item name="MyLastLocation">
+-			最後のロケーション
+-		</combo_item>
+-	</combo_box>
+ 	<check_box label="ログイン画面に開始ロケーションを表示"
+ 	     name="show_location_checkbox" />
+ 	<radio_group name="fade_out_radio">
+Index: indra/newview/skins/xui/ko/panel_preferences_general.xml
+===================================================================
+--- indra/newview/skins/xui/ko/panel_preferences_general.xml	(revision 1)
++++ indra/newview/skins/xui/ko/panel_preferences_general.xml	(working copy)
+@@ -1,13 +1,5 @@
+ <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+ <panel label="일반" name="general_panel">
+-	<combo_box name="location_combobox">
+-		<combo_item name="MyHome">
+-			홈
+-		</combo_item>
+-		<combo_item name="MyLastLocation">
+-			최종 방문지
+-		</combo_item>
+-	</combo_box>
+ 	<check_box label="로그인 화면에 시작위치 표시" name="show_location_checkbox" />
+ 	<radio_group name="fade_out_radio">
+ 		<radio_item type="string" length="1" name="Never">

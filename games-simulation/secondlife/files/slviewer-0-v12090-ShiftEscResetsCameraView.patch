@@ -1,0 +1,28 @@
+diff -urN linden/indra/newview/llchatbar.cpp linden-patched/indra/newview/llchatbar.cpp
+--- linden/indra/newview/llchatbar.cpp	2008-05-24 01:17:55.000000000 +0200
++++ linden-patched/indra/newview/llchatbar.cpp	2008-05-27 23:04:07.000000000 +0200
+@@ -181,7 +181,7 @@
+ 		}
+ 	}
+ 	// only do this in main chatbar
+-	else if ( KEY_ESCAPE == key && gChatBar == this)
++	else if (KEY_ESCAPE == key && mask == MASK_NONE && gChatBar == this)
+ 	{
+ 		stopChat();
+ 
+diff -urN linden/indra/newview/llviewerwindow.cpp linden-patched/indra/newview/llviewerwindow.cpp
+--- linden/indra/newview/llviewerwindow.cpp	2008-05-24 01:17:55.000000000 +0200
++++ linden-patched/indra/newview/llviewerwindow.cpp	2008-05-27 23:02:47.000000000 +0200
+@@ -2466,6 +2466,12 @@
+ 		trigger_hippo_bug(NULL);
+ 	}
+ 
++	// handle shift-escape key (reset camera view)
++	if (key == KEY_ESCAPE && mask == MASK_SHIFT)
++	{
++		handle_reset_view();
++	}
++
+ 	// handle escape key
+ 	if (key == KEY_ESCAPE && mask == MASK_NONE)
+ 	{

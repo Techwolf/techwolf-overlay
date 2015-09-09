@@ -1,0 +1,56 @@
+diff -urN linden/indra/llmath/xform.h linden-patched/indra/llmath/xform.h
+--- linden/indra/llmath/xform.h	2008-07-10 16:51:25.000000000 +0200
++++ linden-patched/indra/llmath/xform.h	2008-07-11 00:14:01.000000000 +0200
+@@ -37,7 +37,7 @@
+ 
+ const F32 MAX_OBJECT_Z 		= 4096.f; // should match REGION_HEIGHT_METERS, Pre-havok4: 768.f
+ const F32 MIN_OBJECT_Z 		= -256.f;
+-const F32 DEFAULT_MAX_PRIM_SCALE = 10.f;
++const F32 DEFAULT_MAX_PRIM_SCALE = 128.f;
+ const F32 MIN_PRIM_SCALE = 0.01f;
+ const F32 MAX_PRIM_SCALE = 65536.f;	// something very high but not near FLT_MAX
+ 
+diff -urN linden/indra/newview/skins/default/xui/en-us/floater_tools.xml linden-patched/indra/newview/skins/default/xui/en-us/floater_tools.xml
+--- linden/indra/newview/skins/default/xui/en-us/floater_tools.xml	2008-07-10 16:51:37.000000000 +0200
++++ linden-patched/indra/newview/skins/default/xui/en-us/floater_tools.xml	2008-07-11 00:14:10.000000000 +0200
+@@ -599,15 +599,15 @@
+ 			</text>
+ 			<spinner bottom_delta="-20" decimal_digits="3" follows="left|top" height="16"
+ 			     increment="0.01" initial_val="0" label="X" label_width="10" left="10"
+-			     max_val="10" min_val="0.01" mouse_opaque="true" name="Scale X"
++			     max_val="128" min_val="0.01" mouse_opaque="true" name="Scale X"
+ 			     text_enabled_color="1, 1, 1, 1" width="87" />
+ 			<spinner bottom_delta="-18" decimal_digits="3" follows="left|top" height="16"
+ 			     increment="0.01" initial_val="0" label="Y" label_width="10" left="10"
+-			     max_val="10" min_val="0.01" mouse_opaque="true" name="Scale Y"
++			     max_val="128" min_val="0.01" mouse_opaque="true" name="Scale Y"
+ 			     text_enabled_color="1, 1, 1, 1" width="87" />
+ 			<spinner bottom_delta="-18" decimal_digits="3" follows="left|top" height="16"
+ 			     increment="0.01" initial_val="0" label="Z" label_width="10" left="10"
+-			     max_val="10" min_val="0.01" mouse_opaque="true" name="Scale Z"
++			     max_val="128" min_val="0.01" mouse_opaque="true" name="Scale Z"
+ 			     text_enabled_color="1, 1, 1, 1" width="87" />
+ 			<text bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
+ 			     bottom_delta="-16" drop_shadow_visible="true" follows="left|top"
+diff -urN linden/indra/newview/skins/silver/xui/en-us/floater_tools.xml linden-patched/indra/newview/skins/silver/xui/en-us/floater_tools.xml
+--- linden/indra/newview/skins/silver/xui/en-us/floater_tools.xml	2008-07-10 16:51:38.000000000 +0200
++++ linden-patched/indra/newview/skins/silver/xui/en-us/floater_tools.xml	2008-07-11 00:15:32.000000000 +0200
+@@ -599,15 +599,15 @@
+ 			</text>
+ 			<spinner bottom_delta="-20" decimal_digits="3" follows="left|top" height="16"
+ 			     increment="0.01" initial_val="0" label="X" label_width="10" left="10"
+-			     max_val="10" min_val="0.01" mouse_opaque="true" name="Scale X"
++			     max_val="128" min_val="0.01" mouse_opaque="true" name="Scale X"
+ 			     text_enabled_color="1, 1, 1, 1" width="87" />
+ 			<spinner bottom_delta="-18" decimal_digits="3" follows="left|top" height="16"
+ 			     increment="0.01" initial_val="0" label="Y" label_width="10" left="10"
+-			     max_val="10" min_val="0.01" mouse_opaque="true" name="Scale Y"
++			     max_val="128" min_val="0.01" mouse_opaque="true" name="Scale Y"
+ 			     text_enabled_color="1, 1, 1, 1" width="87" />
+ 			<spinner bottom_delta="-18" decimal_digits="3" follows="left|top" height="16"
+ 			     increment="0.01" initial_val="0" label="Z" label_width="10" left="10"
+-			     max_val="10" min_val="0.01" mouse_opaque="true" name="Scale Z"
++			     max_val="128" min_val="0.01" mouse_opaque="true" name="Scale Z"
+ 			     text_enabled_color="1, 1, 1, 1" width="87" />
+ 			<text bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
+ 			     bottom_delta="-16" drop_shadow_visible="true" follows="left|top"

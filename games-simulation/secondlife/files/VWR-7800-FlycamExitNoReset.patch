@@ -1,0 +1,52 @@
+Index: trunk-clean/indra/newview/llviewerjoystick.cpp
+===================================================================
+--- trunk-clean/indra/newview/llviewerjoystick.cpp	(revision 1135)
++++ trunk-clean/indra/newview/llviewerjoystick.cpp	(working copy)
+@@ -935,15 +935,10 @@
+ 		moveFlycam(true);
+ 		
+ 	}
+-	else if (!LLToolMgr::getInstance()->inBuildMode())
+-	{
+-		moveAvatar(true);
+-	}
+ 	else 
+ 	{
+-		// we are in build mode, exiting from the flycam mode: since we are 
+-		// going to keep the flycam POV for the main camera until the avatar
+-		// moves, we need to track this situation.
++		// Exiting from the flycam mode: since we are going to keep the flycam POV for
++		// the main camera until the avatar moves, we need to track this situation.
+ 		setCameraNeedsUpdate(false);
+ 		setNeedsReset(true);
+ 	}
+Index: trunk-clean/indra/newview/llviewercamera.cpp
+===================================================================
+--- trunk-clean/indra/newview/llviewercamera.cpp	(revision 1135)
++++ trunk-clean/indra/newview/llviewercamera.cpp	(working copy)
+@@ -96,9 +96,8 @@
+ 											const LLVector3 &up_direction,
+ 											const LLVector3 &point_of_interest)
+ {
+-	// do not update if we are in build mode AND avatar didn't move
+-	if (LLToolMgr::getInstance()->inBuildMode() 
+-		&& !LLViewerJoystick::getInstance()->getCameraNeedsUpdate())
++	// do not update if avatar didn't move
++	if (!LLViewerJoystick::getInstance()->getCameraNeedsUpdate())
+ 	{
+ 		return;
+ 	}
+Index: trunk-clean/indra/newview/llagent.cpp
+===================================================================
+--- trunk-clean/indra/newview/llagent.cpp	(revision 1135)
++++ trunk-clean/indra/newview/llagent.cpp	(working copy)
+@@ -3140,6 +3140,7 @@
+ 				mFollowCam.copyParams(*current_cam);
+ 				mFollowCam.setSubjectPositionAndRotation( mAvatarObject->getRenderPosition(), avatarRotationForFollowCam );
+ 				mFollowCam.update();
++				LLViewerJoystick::getInstance()->setCameraNeedsUpdate(true);
+ 			}
+ 			else
+ 			{
+Index: trunk-clean/doc/contributions.txt
+===================================================================

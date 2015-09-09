@@ -1,0 +1,14 @@
+diff -urN linden/indra/llui/llalertdialog.cpp linden-patched/indra/llui/llalertdialog.cpp
+--- linden/indra/llui/llalertdialog.cpp	2008-02-29 19:47:38.000000000 +0100
++++ linden-patched/indra/llui/llalertdialog.cpp	2008-10-16 16:41:10.000000000 +0200
+@@ -393,6 +393,10 @@
+ 			edit_text,
+ 			LLFontGL::sSansSerif,
+ 			STD_STRING_STR_LEN);
++
++		// make sure all edit keys get handled properly
++		mLineEditor->setHandleEditKeysDirectly(TRUE);
++
+ 		addChild(mLineEditor);
+ 	}
+ }

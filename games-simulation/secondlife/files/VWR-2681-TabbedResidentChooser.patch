@@ -1,0 +1,611 @@
+Index: indra/newview/llfloateravatarpicker.h
+===================================================================
+--- indra/newview/llfloateravatarpicker.h	(revision 1703)
++++ indra/newview/llfloateravatarpicker.h	(working copy)
+@@ -65,27 +65,37 @@
+ 	static void* createInventoryPanel(void* userdata);
+ 
+ 	static void onBtnFind(void* userdata);
+-	static void onBtnAdd(void* userdata);
++	static void onBtnSelect(void* userdata);
++	static void onBtnRefresh(void* userdata);
+ 	static void onBtnClose(void* userdata);
+ 	static void onList(LLUICtrl* ctrl, void* userdata);
++	static void onTabChanged(void* userdata, bool from_click);
+ 	
+ 		   void doSelectionChange(const std::deque<LLFolderViewItem*> &items, BOOL user_action, void* data);
+ 	static void onSelectionChange(const std::deque<LLFolderViewItem*> &items, BOOL user_action, void* data);
+ 
++	void populateNearMe();
++	bool saveSelectedItems();
+ 	void find();
+ 	void setAllowMultiple(BOOL allow_multiple);
+ 
++	virtual void draw();
+ 	virtual BOOL handleKeyHere(KEY key, MASK mask);
+ 
+ protected:
+-	LLScrollListCtrl*	mListNames;
++	LLScrollListCtrl*	mListSearchResults;
++	LLScrollListCtrl*	mListNearMe;
+ 	LLInventoryPanel*	mInventoryPanel;
++	LLPanel*			mActivePanel;
+ 	
+ 	std::vector<LLUUID>				mAvatarIDs;
+ 	std::vector<std::string>		mAvatarNames;
++	std::vector<LLUUID>				mSelectedInventoryAvatarIDs;
++	std::vector<std::string>		mSelectedInventoryAvatarNames;
+ 	BOOL				mAllowMultiple;
+ 	LLUUID				mQueryID;
+ 	BOOL				mResultsReturned;
++	BOOL				mNearMeListComplete;
+ 	BOOL				mCloseOnSelect;
+ 
+ 	void (*mCallback)(const std::vector<std::string>& name, const std::vector<LLUUID>& id, void* userdata);
+Index: indra/newview/llfloateravatarpicker.cpp
+===================================================================
+--- indra/newview/llfloateravatarpicker.cpp	(revision 1703)
++++ indra/newview/llfloateravatarpicker.cpp	(working copy)
+@@ -37,6 +37,7 @@
+ 
+ #include "llbutton.h"
+ #include "llfocusmgr.h"
++#include "llfloateractivespeakers.h"
+ #include "llinventoryview.h"
+ #include "llinventorymodel.h"
+ #include "lllineeditor.h"
+@@ -78,6 +79,7 @@
+ 		sInstance->setAllowMultiple(allow_multiple);
+ 	}
+ 	
++	sInstance->mNearMeListComplete = TRUE;
+ 	sInstance->mCloseOnSelect = closeOnSelect;
+ 	return sInstance;
+ }
+@@ -97,26 +99,37 @@
+ 	childSetKeystrokeCallback("Edit", editKeystroke, this);
+ 
+ 	childSetAction("Find", onBtnFind, this);
++	childSetAction("Refresh", onBtnRefresh, this);
+ 	childDisable("Find");
+ 
+-	mListNames = getChild<LLScrollListCtrl>("Names");
+-	childSetDoubleClickCallback("Names",onBtnAdd);
+-	childSetCommitCallback("Names", onList, this);
+-	childDisable("Names");
++	mListSearchResults = getChild<LLScrollListCtrl>("SearchResults");
++	mListNearMe = getChild<LLScrollListCtrl>("NearMe");
++	childSetDoubleClickCallback("SearchResults", onBtnSelect);
++	childSetDoubleClickCallback("NearMe", onBtnSelect);
++	childSetCommitCallback("SearchResults", onList, this);
++	childSetCommitCallback("NearMe", onList, this);
++	childDisable("SearchResults");
+ 
+-	childSetAction("Select", onBtnAdd, this);
++	childSetAction("Select", onBtnSelect, this);
+ 	childDisable("Select");
+ 
+ 	childSetAction("Close", onBtnClose, this);
+ 
+ 	childSetFocus("Edit");
+ 
+-	if (mListNames)
++	LLPanel* search_panel = getChild<LLPanel>("SearchPanel");
++	if (search_panel)
+ 	{
+-		mListNames->addCommentText(std::string("No results")); // *TODO: Translate
++		// Start searching when Return is pressed in the line editor.
++		search_panel->setDefaultBtn("Find");
+ 	}
+ 
+-	mInventoryPanel = getChild<LLInventoryPanel>("Inventory Panel");
++	if (mListSearchResults)
++	{
++		mListSearchResults->addCommentText(getString("NoResults"));
++	}
++
++	mInventoryPanel = getChild<LLInventoryPanel>("InventoryPanel");
+ 	if(mInventoryPanel)
+ 	{
+ 		mInventoryPanel->setFilterTypes(0x1 << LLInventoryType::IT_CALLINGCARD);
+@@ -126,11 +139,28 @@
+ 		mInventoryPanel->setSelectCallback(LLFloaterAvatarPicker::onSelectionChange, this);
+ 	}
+ 	
++	childSetTabChangeCallback("ResidentChooserTabs", "SearchPanel", onTabChanged, this);
++	childSetTabChangeCallback("ResidentChooserTabs", "CallingCardsPanel", onTabChanged, this);
++	childSetTabChangeCallback("ResidentChooserTabs", "NearMePanel", onTabChanged, this);
++	
++	mActivePanel = search_panel;
+ 	setAllowMultiple(FALSE);
+ 
+ 	return TRUE;
+ }
+ 
++void LLFloaterAvatarPicker::onTabChanged(void* userdata, bool from_click)
++{
++	LLFloaterAvatarPicker* self = (LLFloaterAvatarPicker*)userdata;
++	if (!self)
++	{
++		return;
++	}
++	
++	self->mActivePanel = self->childGetVisibleTab("ResidentChooserTabs");
++	self->childSetEnabled("Select", self->saveSelectedItems());
++}
++
+ // Destroys the object
+ LLFloaterAvatarPicker::~LLFloaterAvatarPicker()
+ {
+@@ -145,7 +175,7 @@
+ 	if(self) self->find();
+ }
+ 
+-void LLFloaterAvatarPicker::onBtnAdd(void* userdata)
++void LLFloaterAvatarPicker::onBtnSelect(void* userdata)
+ {
+ 	LLFloaterAvatarPicker* self = (LLFloaterAvatarPicker*)userdata;
+ 
+@@ -157,10 +187,14 @@
+ 	{
+ 		self->mInventoryPanel->setSelection(LLUUID::null, FALSE);
+ 	}
+-	if (self->mListNames)
++	if (self->mListSearchResults)
+ 	{
+-		self->mListNames->deselectAllItems(TRUE);
++		self->mListSearchResults->deselectAllItems(TRUE);
+ 	}
++	if (self->mListNearMe)
++	{
++		self->mListNearMe->deselectAllItems(TRUE);
++	}
+ 	if(self->mCloseOnSelect)
+ 	{
+ 		self->mCloseOnSelect = FALSE;
+@@ -168,6 +202,22 @@
+ 	}
+ }
+ 
++void LLFloaterAvatarPicker::onBtnRefresh(void* userdata)
++{
++	LLFloaterAvatarPicker* self = (LLFloaterAvatarPicker*)userdata;
++	if (!self)
++	{
++		return;
++	}
++	
++	if (self->mListNearMe)
++	{
++		self->mListNearMe->deleteAllItems();
++		self->mListNearMe->addCommentText(self->getString("Searching"));
++	}
++	self->mNearMeListComplete = FALSE;
++}
++
+ void LLFloaterAvatarPicker::onBtnClose(void* userdata)
+ {
+ 	LLFloaterAvatarPicker* self = (LLFloaterAvatarPicker*)userdata;
+@@ -177,31 +227,10 @@
+ void LLFloaterAvatarPicker::onList(LLUICtrl* ctrl, void* userdata)
+ {
+ 	LLFloaterAvatarPicker* self = (LLFloaterAvatarPicker*)userdata;
+-	if (!self)
++	if (self)
+ 	{
+-		return;
++		self->childSetEnabled("Select", self->saveSelectedItems());
+ 	}
+-
+-	self->mAvatarIDs.clear();
+-	self->mAvatarNames.clear();
+-
+-	if (!self->mListNames)
+-	{
+-		return;
+-	}
+-	
+-	std::vector<LLScrollListItem*> items =
+-		self->mListNames->getAllSelected();
+-	for (
+-		std::vector<LLScrollListItem*>::iterator iter = items.begin();
+-		iter != items.end();
+-		++iter)
+-	{
+-		LLScrollListItem* item = *iter;
+-		self->mAvatarNames.push_back(item->getColumn(0)->getValue().asString());
+-		self->mAvatarIDs.push_back(item->getUUID());
+-		self->childSetEnabled("Select", TRUE);
+-	}
+ }
+ 
+ // static callback for inventory picker (select from calling cards)
+@@ -217,20 +246,16 @@
+ // Callback for inventory picker (select from calling cards)
+ void LLFloaterAvatarPicker::doSelectionChange(const std::deque<LLFolderViewItem*> &items, BOOL user_action, void* data)
+ {
+-	if (!mListNames)
++	bool panel_active = (mActivePanel == getChild<LLPanel>("CallingCardsPanel"));
++	
++	mSelectedInventoryAvatarIDs.clear();
++	mSelectedInventoryAvatarNames.clear();
++	
++	if (panel_active)
+ 	{
+-		return;
+-	}
+-
+-	std::vector<LLScrollListItem*> search_items = mListNames->getAllSelected();
+-	if ( search_items.size() == 0 )
+-	{	// Nothing selected in the search results
+-		mAvatarIDs.clear();
+-		mAvatarNames.clear();
+ 		childSetEnabled("Select", FALSE);
+ 	}
+-	BOOL first_calling_card = TRUE;
+-
++	
+ 	std::deque<LLFolderViewItem*>::const_iterator item_it;
+ 	for (item_it = items.begin(); item_it != items.end(); ++item_it)
+ 	{
+@@ -241,24 +266,133 @@
+ 
+ 			if (item)
+ 			{
+-				if ( first_calling_card )
+-				{	// Have a calling card selected, so clear anything from the search panel
+-					first_calling_card = FALSE;
+-					mAvatarIDs.clear();
+-					mAvatarNames.clear();
+-					mListNames->deselectAllItems();
+-				}
++				mSelectedInventoryAvatarIDs.push_back(item->getCreatorUUID());
++				mSelectedInventoryAvatarNames.push_back(listenerp->getName());
++			}
++		}
++	}
++	
++	if (panel_active)
++	{
++		childSetEnabled("Select", saveSelectedItems());
++	}
++}
+ 
+-				// Add calling card info to the selected avatars
+-				mAvatarIDs.push_back(item->getCreatorUUID());
+-				mAvatarNames.push_back(listenerp->getName());
+-				childSetEnabled("Select", TRUE);
++void LLFloaterAvatarPicker::populateNearMe()
++{
++	BOOL all_loaded = TRUE;
++	BOOL empty = TRUE;
++	LLLocalSpeakerMgr::getInstance()->update(TRUE);
++
++	LLSpeakerMgr::speaker_list_t speaker_list;
++	LLLocalSpeakerMgr::getInstance()->getSpeakerList(&speaker_list, TRUE);
++	mListNearMe->deleteAllItems();
++	for (LLSpeakerMgr::speaker_list_t::const_iterator speaker_it = speaker_list.begin(); speaker_it != speaker_list.end(); ++speaker_it)
++	{
++		LLUUID speaker_id = (*speaker_it)->mID;
++		LLPointer<LLSpeaker> speakerp = (*speaker_it);
++	
++		if (speakerp.notNull() && speakerp->mType == LLSpeaker::SPEAKER_AGENT && speaker_id != gAgent.getID())
++		{
++			LLSD element;
++			element["id"] = speaker_id; // value
++			
++			if (speakerp->mDisplayName.empty())
++			{
++				element["columns"][0]["value"] = LLCacheName::getDefaultName();
++				all_loaded = FALSE;
+ 			}
++			else
++			{
++				element["columns"][0]["value"] = speakerp->mDisplayName;
++			}
++
++			mListNearMe->addElement(element);
++			empty = FALSE;
+ 		}
++	}	
++
++	if (empty)
++	{
++		childDisable("NearMe");
++		childDisable("Select");
++		if (mListNearMe)
++		{
++			mListNearMe->addCommentText(getString("NoOneNear"));
++		}
+ 	}
++	else 
++	{
++		childEnable("NearMe");
++		childEnable("Select");
++		if (mListNearMe) 
++		{
++			mListNearMe->selectFirstItem();
++			onList(mListNearMe, this);
++			mListNearMe->setFocus(TRUE);
++		}
++	}
++
++	if (all_loaded)
++	{
++		mNearMeListComplete = TRUE;
++	}
+ }
+ 
++void LLFloaterAvatarPicker::draw()
++{
++	LLFloater::draw();
++	if (!mNearMeListComplete)
++	{
++		populateNearMe();
++	}
++}
+ 
++bool LLFloaterAvatarPicker::saveSelectedItems()
++{
++	// Save items selected in the current tab.
++	// Returns true if the "Select" button should be enabled.
++	
++	if (mActivePanel == getChild<LLPanel>("CallingCardsPanel"))
++	{
++		mAvatarIDs = mSelectedInventoryAvatarIDs;
++		mAvatarNames = mSelectedInventoryAvatarNames;
++		return mAvatarIDs.size() > 0; 
++	}
++	
++	mAvatarIDs.clear();
++	mAvatarNames.clear();
++	
++	LLScrollListCtrl* list = (mActivePanel == getChild<LLPanel>("SearchPanel") ? mListSearchResults : mListNearMe);
++	if (!list)
++	{
++		return false;
++	}
++	
++	std::vector<LLScrollListItem*> items = list->getAllSelected();
++	if (items.size() == 0)
++	{
++		return false;
++	}
++	
++	bool rc = true;
++	for (std::vector<LLScrollListItem*>::iterator iter = items.begin(); iter != items.end(); ++iter)
++	{
++		LLScrollListItem* item = *iter;
++		if (item->getUUID().notNull())
++		{
++			mAvatarNames.push_back(item->getColumn(0)->getValue().asString());
++			mAvatarIDs.push_back(item->getUUID());
++		}
++		else
++		{
++			rc = false;
++		}
++	}
++	
++	return rc;
++}
++
+ void LLFloaterAvatarPicker::find()
+ {
+ 	const std::string& text = childGetValue("Edit").asString();
+@@ -277,10 +411,10 @@
+ 
+ 	gAgent.sendReliableMessage();
+ 
+-	if (mListNames)
++	if (mListSearchResults)
+ 	{
+-		mListNames->deleteAllItems();	
+-		mListNames->addCommentText(std::string("Searching..."));  // *TODO: Translate
++		mListSearchResults->deleteAllItems();
++		mListSearchResults->addCommentText(childGetValue("Searching").asString());
+ 	}
+ 	
+ 	childSetEnabled("Select", FALSE);
+@@ -294,10 +428,14 @@
+ 	{
+ 		mInventoryPanel->setAllowMultiSelect(mAllowMultiple);
+ 	}
+-	if (mListNames)
++	if (mListSearchResults)
+ 	{
+-		mListNames->setAllowMultipleSelection(mAllowMultiple);
++		mListSearchResults->setAllowMultipleSelection(mAllowMultiple);
+ 	}
++	if (mListNearMe)
++	{
++		mListNearMe->setAllowMultipleSelection(mAllowMultiple);
++	}
+ }
+ 
+ // static 
+@@ -328,14 +466,14 @@
+ 	if (!self->mResultsReturned)
+ 	{
+ 		// clear "Searching" label on first results
+-		if (self->mListNames)
++		if (self->mListSearchResults)
+ 		{
+-			self->mListNames->deleteAllItems();
++			self->mListSearchResults->deleteAllItems();
+ 		}
+ 	}
+ 	self->mResultsReturned = TRUE;
+ 
+-	if (self->mListNames)
++	if (self->mListSearchResults)
+ 	{
+ 		BOOL found_one = FALSE;
+ 		S32 num_new_rows = msg->getNumberOfBlocks("Data");
+@@ -351,25 +489,27 @@
+ 				LLStringUtil::format_map_t map;
+ 				map["[TEXT]"] = self->childGetText("Edit");
+ 				avatar_name = self->getString("NotFound", map);
+-				self->mListNames->setEnabled(FALSE);
++				self->mListSearchResults->setEnabled(FALSE);
++				self->childDisable("Select");
+ 			}
+ 			else
+ 			{
+ 				avatar_name = first_name + " " + last_name;
+-				self->mListNames->setEnabled(TRUE);
++				self->mListSearchResults->setEnabled(TRUE);
+ 				found_one = TRUE;
+ 			}
+ 			LLSD element;
+ 			element["id"] = avatar_id; // value
+ 			element["columns"][0]["value"] = avatar_name;
+-			self->mListNames->addElement(element);
++			self->mListSearchResults->addElement(element);
+ 		}
+ 	
+ 		if (found_one)
+ 		{
+-			self->mListNames->selectFirstItem();
+-			self->onList(self->mListNames, self);
+-			self->mListNames->setFocus(TRUE);
++			self->childEnable("Select");
++			self->mListSearchResults->selectFirstItem();
++			self->onList(self->mListSearchResults, self);
++			self->mListSearchResults->setFocus(TRUE);
+ 		}
+ 	}
+ }
+@@ -401,7 +541,7 @@
+ 		}
+ 		else
+ 		{
+-			onBtnAdd(this);
++			onBtnSelect(this);
+ 			return TRUE;
+ 		}
+ 	}
+Index: indra/newview/skins/default/xui/en-us/floater_avatar_picker.xml
+===================================================================
+--- indra/newview/skins/default/xui/en-us/floater_avatar_picker.xml	(revision 1703)
++++ indra/newview/skins/default/xui/en-us/floater_avatar_picker.xml	(working copy)
+@@ -1,42 +1,87 @@
+ <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+ <floater bottom="-380" can_close="true" can_drag_on_left="false" can_minimize="true"
+-     can_resize="true" height="380" left="400" min_height="340" min_width="200"
+-     mouse_opaque="true" name="avatarpicker" title="Choose Resident" width="240">
+-	<text bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
+-	     bottom="-40" drop_shadow_visible="true" follows="left|top"
+-	     font="SansSerifSmall" h_pad="0" halign="left" height="16" left="12"
+-	     mouse_opaque="true" name="instruct_search_resident_name" v_pad="0"
+-	     width="220">
+-		Type part of the resident&apos;s name:
+-	</text>
+-	<line_editor bevel_style="in" border_style="line" border_thickness="1" bottom_delta="-16"
+-	     follows="left|top|right" font="SansSerifSmall" height="16" left="12"
+-	     max_length="254" mouse_opaque="true" name="Edit" select_on_focus="false"
+-	     width="132" />
+-	<button bottom_delta="-3" follows="top|right" font="SansSerif" halign="center"
+-	     height="20" label="Find" label_selected="Find" left_delta="140"
+-	     mouse_opaque="true" name="Find" scale_image="TRUE" width="80" />
+-	<scroll_list background_visible="true" bottom_delta="-164" column_padding="5"
+-	     draw_border="true" draw_heading="false" draw_stripes="true"
+-	     follows="left|top|right" height="156" left="12" mouse_opaque="true"
+-	     multi_select="false" name="Names" width="220" />
+-	<text bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
+-	     bottom_delta="-24" drop_shadow_visible="true" follows="left|top"
+-	     font="SansSerifSmall" h_pad="0" halign="left" height="16" left="12"
+-	     mouse_opaque="true" name="Or select their calling card:" v_pad="0"
+-	     width="220">
+-		Or select a calling card:
+-	</text>
+-	<inventory_panel allow_multi_select="false" border="true" bottom_delta="-100"
+-	     follows="left|top|right|bottom" height="100" left="12" mouse_opaque="true"
+-	     name="Inventory Panel" sort_order="AvatarPickerSortOrder" width="220" />
++     can_resize="true" height="350" left="400" min_height="200" min_width="250"
++     mouse_opaque="true" name="avatarpicker" title="Choose Resident" width="250">
++
++	<tab_container bottom="46" follows="left|right|top|bottom" height="280" left="4"
++	     name="ResidentChooserTabs" tab_position="top" tab_width="65" width="240">
++		<panel name="SearchPanel" label="Search"
++			border="true" bottom="0" height="150" left="6" width="120"
++			mouse_opaque="true">
++			<text bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
++			     bottom="-24" drop_shadow_visible="true" follows="left|top"
++			     font="SansSerifSmall" h_pad="0" halign="left" height="16" left="10"
++			     mouse_opaque="true" name="InstructSearchResidentName" v_pad="0"
++			     width="220">
++				Type part of the resident&apos;s name:
++			</text>
++			<line_editor bevel_style="in" border_style="line"
++			     border_thickness="1" bottom_delta="-20" enabled="true" follows="left|top|right"
++			     font="SansSerifSmall" height="16" left="10" right="-120"
++			     max_length="254" mouse_opaque="true" name="Edit"
++			     width="132" />
++			<button bottom_delta="-3" follows="top|right" font="SansSerif" halign="center"
++			     height="20" label="Find" label_selected="Find" left_delta="20" right="-10"
++			     mouse_opaque="true" name="Find" scale_image="TRUE" width="80" />
++			<scroll_list background_visible="true" bottom_delta="-95" column_padding="5"
++			     draw_border="true" draw_heading="false" draw_stripes="true"
++			     follows="left|top|right|bottom" height="90" left="10" mouse_opaque="true"
++			     multi_select="false" name="SearchResults" width="100" />
++		</panel>
++
++		<panel name="CallingCardsPanel" label="Calling Cards"
++			border="true" bottom="0" height="150" left="0" width="120" 
++			mouse_opaque="true">
++			<text bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
++			     bottom="-24" drop_shadow_visible="true" follows="left|top"
++			     font="SansSerifSmall" h_pad="0" halign="left" height="16" left="10"
++			     mouse_opaque="true" name="InstructSelectCallingCard" v_pad="0"
++			     width="220">
++				Select a calling card:
++			</text>
++			<inventory_panel allow_multi_select="false" border="true" bottom_delta="-117"
++			     follows="left|top|right|bottom" height="110" left="10" mouse_opaque="true"
++			     name="InventoryPanel" sort_order="AvatarPickerSortOrder" width="100" />
++		</panel>
++
++		<panel name="NearMePanel" label="Near Me"
++			border="true" bottom="0" height="150" left="6" width="120"
++			mouse_opaque="true">
++			<text bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
++			     bottom="-24" drop_shadow_visible="true" follows="left|top"
++			     font="SansSerifSmall" h_pad="0" halign="left" height="16" left="10"
++			     mouse_opaque="true" name="InstructSelectResident" v_pad="0"
++			     width="220">
++				Select nearby resident:
++			</text>
++			<button bottom_delta="-3" follows="top|right" font="SansSerif" halign="center"
++			     height="20" label="Refresh List" label_selected="Refresh List" left_delta="20"
++			     mouse_opaque="true" name="Refresh" scale_image="TRUE" width="80" />
++			<scroll_list background_visible="true" bottom_delta="-115" column_padding="5"
++			     draw_border="true" draw_heading="false" draw_stripes="true"
++			     follows="left|top|right|bottom" height="111" left="10" mouse_opaque="true"
++			     multi_select="false" name="NearMe" width="100" />
++		</panel>
++
++	</tab_container>
++	
+ 	<button bottom_delta="-28" follows="left|bottom" font="SansSerif" halign="center"
+ 	     height="20" label="Close" label_selected="Close" mouse_opaque="true"
+-	     name="Close" right="230" scale_image="TRUE" width="105" />
++	     name="Close" right="230" scale_image="TRUE" width="75" />
+ 	<button bottom_delta="0" follows="left|bottom" font="SansSerif" halign="center"
+ 	     height="20" label="Select" label_selected="Select" mouse_opaque="true"
+-	     name="Select" right="119" scale_image="TRUE" width="105" />
++	     name="Select" right="79" scale_image="TRUE" width="75" />
++
+ 	<string name="NotFound">
+ 		&apos;[TEXT]&apos; not found
+ 	</string>
++	<string name="NoOneNear">
++		No-one near
++	</string>
++	<string name="NoResults">
++		No results
++	</string>
++	<string name="Searching">
++		Searching...
++	</string>
+ </floater>

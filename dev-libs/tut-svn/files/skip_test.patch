@@ -1,0 +1,69 @@
+--- tut.orig/tut_assert.hpp	2008-12-05 17:35:10.000000000 -0800
++++ tut.new/tut_assert.hpp	2008-12-05 17:37:56.000000000 -0800
+@@ -154,9 +154,23 @@
+     throw failure(msg);
+ }
+ 
++/**
++ * Skip test because of known failure.
++ */
++void skip(const char* msg = "")
++{
++    throw skip_failure(msg);
++}
++
++void skip(const std::string& msg)
++{
++    throw skip_failure(msg);
++}
++
+ } // end of namespace
+ 
+ }
+ 
++
+ #endif
+ 
+diff -u tut.orig/tut_exception.hpp tut.new/tut_exception.hpp
+--- tut.orig/tut_exception.hpp	2008-12-05 17:35:10.000000000 -0800
++++ tut.new/tut_exception.hpp	2008-12-05 17:37:56.000000000 -0800
+@@ -201,6 +201,26 @@
+     const test_result tr;
+ };
+ 
++/**
++ * Exception to be throwed when skip_fail() is called.
++ */
++struct skip_failure : public failure
++{
++    skip_failure(const std::string& msg) 
++        : failure(msg) 
++    {
++    }
++
++    test_result::result_type result() const
++    {
++        return test_result::skip;
++    }
++
++    ~skip_failure() throw()
++    {
++    }
++};
++
+ }
+ 
+ #endif
+diff -u tut.orig/tut_result.hpp tut.new/tut_result.hpp
+--- tut.orig/tut_result.hpp	2008-12-05 17:35:10.000000000 -0800
++++ tut.new/tut_result.hpp	2008-12-05 17:37:56.000000000 -0800
+@@ -60,7 +61,8 @@
+         ex_ctor,  ///< 
+         rethrown, ///< 
+         skipped,  ///< 
+-        dummy     ///< 
++        dummy,    ///< 
++        skip      ///< test skpped because it is a known failure case
+     };
+ 
+     result_type result;

@@ -1,0 +1,34 @@
+diff -urN linden/indra/newview/lltexturectrl.cpp linden-patched/indra/newview/lltexturectrl.cpp
+--- linden/indra/newview/lltexturectrl.cpp	2008-08-28 17:31:38.000000000 +0200
++++ linden-patched/indra/newview/lltexturectrl.cpp	2008-08-29 19:49:42.000000000 +0200
+@@ -353,6 +353,12 @@
+ 		{
+ 			mResolutionLabel->setTextArg("[DIMENSIONS]", std::string("[? x ?]"));
+ 		}
++		if (gAgent.isGodlike())
++		{
++			std::string tstring = "Pick: ";
++			tstring.append(mTexturep->getID().asString());
++			setTitle(tstring);
++		}
+ 	}
+ }
+ 
+diff -urN linden/indra/newview/llviewermenu.cpp linden-patched/indra/newview/llviewermenu.cpp
+--- linden/indra/newview/llviewermenu.cpp	2008-08-28 17:31:38.000000000 +0200
++++ linden-patched/indra/newview/llviewermenu.cpp	2008-08-29 19:49:26.000000000 +0200
+@@ -6335,7 +6335,13 @@
+ 			S32 height = img->getHeight();
+ 			S32 width = img->getWidth();
+ 			S32 components = img->getComponents();
+-			msg = llformat("%dx%d %s on face ",
++			std::string image_id_string;
++			if (gAgent.isGodlike())
++			{
++				image_id_string = image_id.asString() + " ";
++			}
++			msg = llformat("%s%dx%d %s on face ",
++								image_id_string.c_str(),
+ 								width,
+ 								height,
+ 								(components == 4 ? "alpha" : "opaque"));

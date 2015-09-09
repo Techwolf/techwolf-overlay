@@ -1,0 +1,16 @@
+diff -urN linden/indra/newview/llchatbar.cpp linden-patched/indra/newview/llchatbar.cpp
+--- linden/indra/newview/llchatbar.cpp	2008-07-24 19:30:09.000000000 +0200
++++ linden-patched/indra/newview/llchatbar.cpp	2008-09-22 10:58:24.000000000 +0200
+@@ -173,6 +173,12 @@
+ 			sendChat(CHAT_TYPE_SHOUT);
+ 			handled = TRUE;
+ 		}
++		else if (mask == MASK_SHIFT)
++		{
++			// whisper
++			sendChat( CHAT_TYPE_WHISPER );
++			handled = TRUE;
++		}
+ 		else if (mask == MASK_NONE)
+ 		{
+ 			// say

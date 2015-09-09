@@ -1,0 +1,14 @@
+Index: indra/llmessage/lltemplatemessagereader.cpp
+===================================================================
+--- indra/llmessage/lltemplatemessagereader.cpp	(revision 1420)
++++ indra/llmessage/lltemplatemessagereader.cpp	(working copy)
+@@ -676,7 +676,8 @@
+ 						// default to 0s.
+ 						U32 size = mvci.getSize();
+ 						std::vector<U8> data(size);
+-						memset(&(data[0]), 0, size);
++						if (size)
++						memset(&data[0], 0, size);
+ 						cur_data_block->addData(mvci.getName(), &(data[0]), 
+ 												size, mvci.getType());
+ 					}

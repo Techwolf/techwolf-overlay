@@ -1,0 +1,42 @@
+Index: indra/cmake/WebKitLibPlugin.cmake
+===================================================================
+--- indra/cmake/WebKitLibPlugin.cmake	(revision 3198)
++++ indra/cmake/WebKitLibPlugin.cmake	(working copy)
+@@ -34,31 +34,23 @@
+         debug ${ARCH_PREBUILT_DIRS_RELEASE}/libllqtwebkit.dylib
+         )
+ elseif (LINUX)
+-    set(WEBKIT_PLUGIN_LIBRARIES
++     if (STANDALONE)
++       set(WEBKIT_PLUGIN_LIBRARIES llqtwebkit)
++     else (STANDALONE)
++       set(WEBKIT_PLUGIN_LIBRARIES
+         llqtwebkit
+-
+         qgif
+-#        qico
+         qjpeg
+-#        qpng
+-#        qtiff
+-#        qsvg
+-
+-#        QtSvg
+         QtWebKit
+         QtOpenGL
+         QtNetwork
+         QtGui
+         QtCore
+-
+         jpeg
+         fontconfig
+         X11
+         Xrender
+         GL
+-
+-#        sqlite3
+-#        Xi
+-#        SM
+         )
++     endif (STANDALONE)
+ endif (WINDOWS)
+

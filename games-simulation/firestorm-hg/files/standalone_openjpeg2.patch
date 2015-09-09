@@ -1,0 +1,85 @@
+diff -r 8e3656a95c9e indra/cmake/FindOpenJPEG.cmake
+--- a/indra/cmake/FindOpenJPEG.cmake	Sat Dec 21 01:12:34 2013 +0100
++++ b/indra/cmake/FindOpenJPEG.cmake	Sun Jan 19 16:34:57 2014 -0500
+@@ -9,17 +9,28 @@
+ # also defined, but not for general use are
+ #  OPENJPEG_LIBRARY, where to find the OpenJPEG library.
+ 
+-FIND_PATH(OPENJPEG_INCLUDE_DIR openjpeg.h
+-/usr/local/include/openjpeg
+-/usr/local/include
+-/usr/include/openjpeg
+-/usr/include
+-)
++IF (OPENJPEG2)
++  # only need to find root path
++  # the openjpeg-2.0 in front of openjpeg.h will ensure that only
++  # openjpeg.h version 2 is used and error out if not found
++  FIND_PATH(OPENJPEG_INCLUDE_DIR openjpeg-2.0/openjpeg.h)
++ELSE (OPENJPEG2)
++  # the header may or may not be under openjpeg-1.5 or symbolic linked to it from /usr/include.
++  FIND_PATH(OPENJPEG_INCLUDE_DIR openjpeg.h
++  PATH_SUFFIXES openjpeg-1.5
++  )
++ENDIF (OPENJPEG2)
+ 
+-SET(OPENJPEG_NAMES ${OPENJPEG_NAMES} openjpeg)
++# not sure why ${OPENJPEG_NAMES} is used, but keep it for legisty
++# default OPENJPEG_NAMES is blank, so this is safe.
++IF (OPENJPEG2)
++  SET(OPENJPEG_NAMES ${OPENJPEG_NAMES} openjp2)
++ELSE (OPENJPEG2)
++  SET(OPENJPEG_NAMES ${OPENJPEG_NAMES} openjpeg)
++ENDIF (OPENJPEG2)
++
+ FIND_LIBRARY(OPENJPEG_LIBRARY
+   NAMES ${OPENJPEG_NAMES}
+-  PATHS /usr/lib /usr/local/lib
+   )
+ 
+ IF (OPENJPEG_LIBRARY AND OPENJPEG_INCLUDE_DIR)
+diff -r 8e3656a95c9e indra/cmake/OpenJPEG.cmake
+--- a/indra/cmake/OpenJPEG.cmake	Sat Dec 21 01:12:34 2013 +0100
++++ b/indra/cmake/OpenJPEG.cmake	Sun Jan 19 16:34:57 2014 -0500
+@@ -20,3 +20,9 @@
+   
+     set(OPENJPEG_INCLUDE_DIR ${LIBS_PREBUILT_DIR}/include/openjpeg-2.0)
+ endif (STANDALONE)
++
++# <FS:Techwolf Lupindo> openjpeg2 support
++if (OPENJPEG2)
++  add_definitions(-DFS_OPENJPEG2=1)
++endif (OPENJPEG2)
++# </FS:Techwolf Lupindo>
+diff -r 8e3656a95c9e indra/cmake/Variables.cmake
+--- a/indra/cmake/Variables.cmake	Sat Dec 21 01:12:34 2013 +0100
++++ b/indra/cmake/Variables.cmake	Sun Jan 19 16:34:57 2014 -0500
+@@ -208,6 +208,10 @@
+ endif( HAVOK_TPV )
+ # </FS:ND>
+ 
++# <FS:Techwolf Lupindo> openjpeg2 support
++set(OPENJPEG2 OFF CACHE BOOL "Use openjpeg version 2 library")
++# </FS:Techwolf Lupindo>
++
+ source_group("CMake Rules" FILES CMakeLists.txt)
+ 
+ endif(NOT DEFINED ${CMAKE_CURRENT_LIST_FILE}_INCLUDED)
+diff -r 8e3656a95c9e indra/llimagej2coj/llimagej2coj.cpp
+--- a/indra/llimagej2coj/llimagej2coj.cpp	Sat Dec 21 01:12:34 2013 +0100
++++ b/indra/llimagej2coj/llimagej2coj.cpp	Sun Jan 19 16:34:57 2014 -0500
+@@ -28,7 +28,13 @@
+ #include "llimagej2coj.h"
+ 
+ // this is defined so that we get static linking.
+-#include "openjpeg-2.0-fs/openjpeg.h"
++// <FS:Techwolf Lupindo> openjpeg2 support
++#if FS_OPENJPEG2
++#include "openjpeg-2.0/openjpeg.h"
++#else
++#include "openjpeg.h"
++#endif
++// </FS:Techwolf Lupindo>
+ 
+ #include "lltimer.h"
+ //#include "llmemory.h"

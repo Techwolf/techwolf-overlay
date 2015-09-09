@@ -1,0 +1,131 @@
+Index: indra/newview/llviewermenu.cpp
+===================================================================
+--- indra/newview/llviewermenu.cpp	(revision 1401)
++++ indra/newview/llviewermenu.cpp	(working copy)
+@@ -757,7 +757,7 @@
+ 	/*menu->append(new LLMenuItemCallGL("Reload settings/colors", 
+ 					&handle_reload_settings, NULL, NULL));*/
+ 	menu->append(new LLMenuItemCallGL("Reload personal setting overrides", 
+-		&reload_personal_settings_overrides, NULL, NULL, KEY_F2, MASK_CONTROL|MASK_SHIFT));
++		&reload_personal_settings_overrides, NULL, NULL, KEY_F12, MASK_CONTROL|MASK_SHIFT));
+ 
+ 	sub_menu = new LLMenuGL("HUD Info");
+ 	{
+@@ -1075,95 +1075,96 @@
+ 	//
+ 	sub_menu = new LLMenuGL("Types");
+ 	menu->appendMenu(sub_menu);
+-
++	
+ 	sub_menu->append(new LLMenuItemCheckGL("Simple",
+ 											&LLPipeline::toggleRenderTypeControl, NULL,
+ 											&LLPipeline::hasRenderTypeControl,
+-											(void*)LLPipeline::RENDER_TYPE_SIMPLE,	'1', MASK_CONTROL|MASK_ALT|MASK_SHIFT));
++											(void*)LLPipeline::RENDER_TYPE_SIMPLE,	'1', MASK_ALT|MASK_SHIFT));
+ 	sub_menu->append(new LLMenuItemCheckGL("Alpha",
+ 											&LLPipeline::toggleRenderTypeControl, NULL,
+ 											&LLPipeline::hasRenderTypeControl,
+-											(void*)LLPipeline::RENDER_TYPE_ALPHA, '2', MASK_CONTROL|MASK_ALT|MASK_SHIFT));
++											(void*)LLPipeline::RENDER_TYPE_ALPHA, '2', MASK_ALT|MASK_SHIFT));
+ 	sub_menu->append(new LLMenuItemCheckGL("Tree",
+ 											&LLPipeline::toggleRenderTypeControl, NULL,
+ 											&LLPipeline::hasRenderTypeControl,
+-											(void*)LLPipeline::RENDER_TYPE_TREE, '3', MASK_CONTROL|MASK_ALT|MASK_SHIFT));
++											(void*)LLPipeline::RENDER_TYPE_TREE, '3', MASK_ALT|MASK_SHIFT));
+ 	sub_menu->append(new LLMenuItemCheckGL("Character",
+ 											&LLPipeline::toggleRenderTypeControl, NULL,
+ 											&LLPipeline::hasRenderTypeControl,
+-											(void*)LLPipeline::RENDER_TYPE_AVATAR, '4', MASK_CONTROL|MASK_ALT|MASK_SHIFT));
++											(void*)LLPipeline::RENDER_TYPE_AVATAR, '4', MASK_ALT|MASK_SHIFT));
+ 	sub_menu->append(new LLMenuItemCheckGL("SurfacePatch",
+ 											&LLPipeline::toggleRenderTypeControl, NULL,
+ 											&LLPipeline::hasRenderTypeControl,
+-											(void*)LLPipeline::RENDER_TYPE_TERRAIN, '5', MASK_CONTROL|MASK_ALT|MASK_SHIFT));
++											(void*)LLPipeline::RENDER_TYPE_TERRAIN, '5', MASK_ALT|MASK_SHIFT));
+ 	sub_menu->append(new LLMenuItemCheckGL("Sky",
+ 											&LLPipeline::toggleRenderTypeControl, NULL,
+ 											&LLPipeline::hasRenderTypeControl,
+-											(void*)LLPipeline::RENDER_TYPE_SKY, '6', MASK_CONTROL|MASK_ALT|MASK_SHIFT));
++											(void*)LLPipeline::RENDER_TYPE_SKY, '6', MASK_ALT|MASK_SHIFT));
+ 	sub_menu->append(new LLMenuItemCheckGL("Water",
+ 											&LLPipeline::toggleRenderTypeControl, NULL,
+ 											&LLPipeline::hasRenderTypeControl,
+-											(void*)LLPipeline::RENDER_TYPE_WATER, '7', MASK_CONTROL|MASK_ALT|MASK_SHIFT));
++											(void*)LLPipeline::RENDER_TYPE_WATER, '7', MASK_ALT|MASK_SHIFT));
+ 	sub_menu->append(new LLMenuItemCheckGL("Ground",
+ 											&LLPipeline::toggleRenderTypeControl, NULL,
+ 											&LLPipeline::hasRenderTypeControl,
+-											(void*)LLPipeline::RENDER_TYPE_GROUND, '8', MASK_CONTROL|MASK_ALT|MASK_SHIFT));
++											(void*)LLPipeline::RENDER_TYPE_GROUND, '8', MASK_ALT|MASK_SHIFT));
+ 	sub_menu->append(new LLMenuItemCheckGL("Volume",
+ 											&LLPipeline::toggleRenderTypeControl, NULL,
+ 											&LLPipeline::hasRenderTypeControl,
+-											(void*)LLPipeline::RENDER_TYPE_VOLUME, '9', MASK_CONTROL|MASK_ALT|MASK_SHIFT));
++											(void*)LLPipeline::RENDER_TYPE_VOLUME, '9', MASK_ALT|MASK_SHIFT));
+ 	sub_menu->append(new LLMenuItemCheckGL("Grass",
+ 											&LLPipeline::toggleRenderTypeControl, NULL,
+ 											&LLPipeline::hasRenderTypeControl,
+-											(void*)LLPipeline::RENDER_TYPE_GRASS, '0', MASK_CONTROL|MASK_ALT|MASK_SHIFT));
++											(void*)LLPipeline::RENDER_TYPE_GRASS, '0', MASK_ALT|MASK_SHIFT));
+ 	sub_menu->append(new LLMenuItemCheckGL("Clouds",
+ 											&LLPipeline::toggleRenderTypeControl, NULL,
+ 											&LLPipeline::hasRenderTypeControl,
+-											(void*)LLPipeline::RENDER_TYPE_CLOUDS, '-', MASK_CONTROL|MASK_ALT| MASK_SHIFT));
++											(void*)LLPipeline::RENDER_TYPE_CLOUDS, '-', MASK_ALT|MASK_SHIFT));
+ 	sub_menu->append(new LLMenuItemCheckGL("Particles",
+ 											&LLPipeline::toggleRenderTypeControl, NULL,
+ 											&LLPipeline::hasRenderTypeControl,
+-											(void*)LLPipeline::RENDER_TYPE_PARTICLES, '=', MASK_CONTROL|MASK_ALT|MASK_SHIFT));
++											(void*)LLPipeline::RENDER_TYPE_PARTICLES, '`', MASK_ALT|MASK_SHIFT));
+ 	sub_menu->append(new LLMenuItemCheckGL("Bump",
+ 											&LLPipeline::toggleRenderTypeControl, NULL,
+ 											&LLPipeline::hasRenderTypeControl,
+-											(void*)LLPipeline::RENDER_TYPE_BUMP, '\\', MASK_CONTROL|MASK_ALT|MASK_SHIFT));
++											(void*)LLPipeline::RENDER_TYPE_BUMP, '\\', MASK_ALT|MASK_SHIFT));
++
+ 	sub_menu->createJumpKeys();
+ 	sub_menu = new LLMenuGL("Features");
+ 	menu->appendMenu(sub_menu);
+ 	sub_menu->append(new LLMenuItemCheckGL("UI",
+ 											&LLPipeline::toggleRenderDebugFeature, NULL,
+ 											&LLPipeline::toggleRenderDebugFeatureControl,
+-											(void*)LLPipeline::RENDER_DEBUG_FEATURE_UI, KEY_F1, MASK_ALT|MASK_CONTROL));
++											(void*)LLPipeline::RENDER_DEBUG_FEATURE_UI, KEY_F1, MASK_CONTROL|MASK_SHIFT));
+ 	sub_menu->append(new LLMenuItemCheckGL("Selected",
+ 											&LLPipeline::toggleRenderDebugFeature, NULL,
+ 											&LLPipeline::toggleRenderDebugFeatureControl,
+-											(void*)LLPipeline::RENDER_DEBUG_FEATURE_SELECTED, KEY_F2, MASK_ALT|MASK_CONTROL));
++											(void*)LLPipeline::RENDER_DEBUG_FEATURE_SELECTED, KEY_F2, MASK_CONTROL|MASK_SHIFT));
+ 	sub_menu->append(new LLMenuItemCheckGL("Highlighted",
+ 											&LLPipeline::toggleRenderDebugFeature, NULL,
+ 											&LLPipeline::toggleRenderDebugFeatureControl,
+-											(void*)LLPipeline::RENDER_DEBUG_FEATURE_HIGHLIGHTED, KEY_F3, MASK_ALT|MASK_CONTROL));
++											(void*)LLPipeline::RENDER_DEBUG_FEATURE_HIGHLIGHTED, KEY_F3, MASK_CONTROL|MASK_SHIFT));
+ 	sub_menu->append(new LLMenuItemCheckGL("Dynamic Textures",
+ 											&LLPipeline::toggleRenderDebugFeature, NULL,
+ 											&LLPipeline::toggleRenderDebugFeatureControl,
+-											(void*)LLPipeline::RENDER_DEBUG_FEATURE_DYNAMIC_TEXTURES, KEY_F4, MASK_ALT|MASK_CONTROL));
++											(void*)LLPipeline::RENDER_DEBUG_FEATURE_DYNAMIC_TEXTURES, KEY_F4, MASK_CONTROL|MASK_SHIFT));
+ 	sub_menu->append(new LLMenuItemCheckGL( "Foot Shadows", 
+ 											&LLPipeline::toggleRenderDebugFeature, NULL,
+ 											&LLPipeline::toggleRenderDebugFeatureControl,
+-											(void*)LLPipeline::RENDER_DEBUG_FEATURE_FOOT_SHADOWS, KEY_F5, MASK_ALT|MASK_CONTROL));
++											(void*)LLPipeline::RENDER_DEBUG_FEATURE_FOOT_SHADOWS, KEY_F5, MASK_CONTROL|MASK_SHIFT));
+ 	sub_menu->append(new LLMenuItemCheckGL("Fog",
+ 											&LLPipeline::toggleRenderDebugFeature, NULL,
+ 											&LLPipeline::toggleRenderDebugFeatureControl,
+-											(void*)LLPipeline::RENDER_DEBUG_FEATURE_FOG, KEY_F6, MASK_ALT|MASK_CONTROL));
++											(void*)LLPipeline::RENDER_DEBUG_FEATURE_FOG, KEY_F6, MASK_CONTROL|MASK_SHIFT));
+ 	sub_menu->append(new LLMenuItemCheckGL("Test FRInfo",
+ 											&LLPipeline::toggleRenderDebugFeature, NULL,
+ 											&LLPipeline::toggleRenderDebugFeatureControl,
+-											(void*)LLPipeline::RENDER_DEBUG_FEATURE_FR_INFO, KEY_F8, MASK_ALT|MASK_CONTROL));
++											(void*)LLPipeline::RENDER_DEBUG_FEATURE_FR_INFO, KEY_F8, MASK_CONTROL|MASK_SHIFT));
+ 	sub_menu->append(new LLMenuItemCheckGL( "Flexible Objects", 
+ 											&LLPipeline::toggleRenderDebugFeature, NULL,
+ 											&LLPipeline::toggleRenderDebugFeatureControl,
+-											(void*)LLPipeline::RENDER_DEBUG_FEATURE_FLEXIBLE, KEY_F9, MASK_ALT|MASK_CONTROL));
++											(void*)LLPipeline::RENDER_DEBUG_FEATURE_FLEXIBLE, KEY_F9, MASK_CONTROL|MASK_SHIFT));
+ 	sub_menu->createJumpKeys();
+ 
+ 	/////////////////////////////

@@ -1,0 +1,11 @@
+--- secondlife.anc	2008-06-11 20:38:53.000000000 +0200
++++ indra/newview/linux_tools/wrapper.sh	2008-06-11 20:39:12.000000000 +0200
+@@ -96,7 +96,7 @@
+     fi
+ fi
+ 
+-export SL_ENV='LD_LIBRARY_PATH="`pwd`"/lib:"`pwd`"/app_settings/mozilla-runtime-linux-i686:"${LD_LIBRARY_PATH}"'
++export SL_ENV='LD_LIBRARY_PATH="`pwd`"/lib:/usr/lib/llmozlib2:/usr/lib/llmozlib2/runtime_release:"`pwd`"/app_settings/mozilla-runtime-linux-i686:"${LD_LIBRARY_PATH}"'
+ export SL_CMD='$LL_WRAPPER bin/do-not-directly-run-secondlife-bin'
+ export SL_OPT="`cat gridargs.dat` $@"
+ 

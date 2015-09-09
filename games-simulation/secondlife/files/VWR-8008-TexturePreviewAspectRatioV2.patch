@@ -1,0 +1,322 @@
+Index: viewer_1-21/indra/newview/llpreviewtexture.cpp
+===================================================================
+--- viewer_1-21/indra/newview/llpreviewtexture.cpp	(revision 1328)
++++ viewer_1-21/indra/newview/llpreviewtexture.cpp	(working copy)
+@@ -35,6 +35,7 @@
+ 
+ #include "llagent.h"
+ #include "llbutton.h"
++#include "llcombobox.h"
+ #include "llfilepicker.h"
+ #include "llimagetga.h"
+ #include "llinventoryview.h"
+@@ -68,7 +69,8 @@
+ 	mCopyToInv(FALSE),
+ 	mIsCopyable(FALSE),
+ 	mLastHeight(0),
+-	mLastWidth(0)
++	mLastWidth(0),
++	mAspectRatio(0)
+ {
+ 	const LLInventoryItem *item = getItem();
+ 	if(item)
+@@ -129,7 +131,8 @@
+ 	mCopyToInv(copy_to_inv),
+ 	mIsCopyable(TRUE),
+ 	mLastHeight(0),
+-	mLastWidth(0)
++	mLastWidth(0),
++	mAspectRatio(0)
+ {
+ 
+ 	init();
+@@ -155,26 +158,48 @@
+ 
+ void LLPreviewTexture::init()
+ {
++	LLUICtrlFactory::getInstance()->buildFloater(this,"floater_preview_texture.xml");
+ 	
+-	
++	childSetVisible("Copy To Inventory", mCopyToInv);
++	childSetVisible("Keep", mShowKeepDiscard);
++	childSetVisible("Discard", mShowKeepDiscard);
++
+ 	if (mCopyToInv) 
+ 	{
+-		LLUICtrlFactory::getInstance()->buildFloater(this,"floater_preview_embedded_texture.xml");
+-
+ 		childSetAction("Copy To Inventory",LLPreview::onBtnCopyToInv,this);
+ 	}
+ 
+ 	else if (mShowKeepDiscard)
+ 	{
+-		LLUICtrlFactory::getInstance()->buildFloater(this,"floater_preview_texture_keep_discard.xml");
+-
+ 		childSetAction("Keep",onKeepBtn,this);
+ 		childSetAction("Discard",onDiscardBtn,this);
+ 	}
+ 
+ 	else 
+ 	{
+-		LLUICtrlFactory::getInstance()->buildFloater(this,"floater_preview_texture.xml");
++		// If the buttons are hidden move stuff down to use the space.
++		
++		LLRect keep_rect, old_rect, new_rect;
++		S32 diff;
++		
++		childGetRect("Keep", keep_rect);
++		childGetRect("combo_aspect_ratio", old_rect);
++		
++		diff = old_rect.mBottom - keep_rect.mBottom;
++		
++		new_rect.setOriginAndSize(old_rect.mLeft, old_rect.mBottom - diff,
++								  old_rect.getWidth(), old_rect.getHeight());
++		childSetRect("combo_aspect_ratio", new_rect);
++
++		childGetRect("aspect_ratio", old_rect);
++		new_rect.setOriginAndSize(old_rect.mLeft, old_rect.mBottom - diff,
++								  old_rect.getWidth(), old_rect.getHeight());
++		childSetRect("aspect_ratio", new_rect);
++
++		childGetRect("dimensions", old_rect);
++		new_rect.setOriginAndSize(old_rect.mLeft, old_rect.mBottom - diff,
++								  old_rect.getWidth(), old_rect.getHeight());
++		childSetRect("dimensions", new_rect);
+ 	}
+ 
+ 
+@@ -189,6 +214,8 @@
+ 			childSetPrevalidate("desc", &LLLineEditor::prevalidatePrintableNotPipe);
+ 		}
+ 	}
++
++	childSetCommitCallback("combo_aspect_ratio", onAspectRatioCommit, this);
+ }
+ 
+ void LLPreviewTexture::draw()
+@@ -392,8 +419,10 @@
+ 	S32 max_client_width = gViewerWindow->getWindowWidth() - horiz_pad;
+ 	S32 max_client_height = gViewerWindow->getWindowHeight() - vert_pad;
+ 
++	if (mAspectRatio > 0) client_height = client_width / mAspectRatio;
++
+ 	while ((client_width > max_client_width) ||
+-	       (client_height > max_client_height ) )
++	       (client_height > max_client_height ))
+ 	{
+ 		client_width /= 2;
+ 		client_height /= 2;
+@@ -406,12 +435,12 @@
+ 	childSetTextArg("dimensions", "[WIDTH]", llformat("%d", mImage->mFullWidth));
+ 	childSetTextArg("dimensions", "[HEIGHT]", llformat("%d", mImage->mFullHeight));
+ 	
+-	// add space for dimensions
++	// add space for dimensions and aspect ratio
+ 	S32 info_height = 0;
+-	LLRect dim_rect;
+-	childGetRect("dimensions", dim_rect);
+-	S32 dim_height = dim_rect.getHeight();
+-	info_height += dim_height + CLIENT_RECT_VPAD;
++	LLRect aspect_rect;
++	childGetRect("combo_aspect_ratio", aspect_rect);
++	S32 aspect_height = aspect_rect.getHeight();
++	info_height += aspect_height + CLIENT_RECT_VPAD;
+ 	view_height += info_height;
+ 	
+ 	S32 button_height = 0;
+@@ -424,7 +453,7 @@
+ 
+ 	view_width = llmax(view_width, getMinWidth());
+ 	view_height = llmax(view_height, getMinHeight());
+-	
++		
+ 	if (client_height != mLastHeight || client_width != mLastWidth)
+ 	{
+ 		mLastWidth = client_width;
+@@ -459,23 +488,79 @@
+ 	else
+ 	{
+ 		client_width = getRect().getWidth() - horiz_pad;
+-		client_height = getRect().getHeight() - vert_pad;
++		if (mAspectRatio > 0)
++		{
++			client_height = llround(client_width / mAspectRatio);
++		}
++		else
++		{
++			client_height = getRect().getHeight() - vert_pad;
++		}
+ 	}
+ 
+-	S32 max_height = getRect().getHeight() - PREVIEW_BORDER - button_height
++	S32 max_height = getRect().getHeight() - PREVIEW_BORDER - button_height 
+ 		- CLIENT_RECT_VPAD - info_height - CLIENT_RECT_VPAD - PREVIEW_HEADER_SIZE;
+-	S32 max_width = getRect().getWidth() - horiz_pad;
+ 
+-	client_height = llclamp(client_height, 1, max_height);
+-	client_width = llclamp(client_width, 1, max_width);
++	if (mAspectRatio > 0)
++	{
++		max_height = llmax(max_height, 1);
++
++		if (client_height > max_height)
++		{
++			client_height = max_height;
++			client_width = llround(client_height * mAspectRatio);
++		}
++	}
++	else
++	{
++		S32 max_width = getRect().getWidth() - horiz_pad;
++
++		client_height = llclamp(client_height, 1, max_height);
++		client_width = llclamp(client_width, 1, max_width);
++	}
+ 	
+ 	LLRect window_rect(0, getRect().getHeight(), getRect().getWidth(), 0);
+ 	window_rect.mTop -= (PREVIEW_HEADER_SIZE + CLIENT_RECT_VPAD);
+ 	window_rect.mBottom += PREVIEW_BORDER + button_height + CLIENT_RECT_VPAD + info_height + CLIENT_RECT_VPAD;
+ 
+-	mClientRect.setLeftTopAndSize(window_rect.getCenterX() - (client_width / 2), window_rect.mTop, client_width, client_height);
++	mClientRect.setLeftTopAndSize(window_rect.getCenterX() - (client_width / 2), window_rect.mTop, client_width, client_height);	
++	
++	// Hide the aspect ratio label if the window is too narrow
++	// Assumes the label should be to the right of the dimensions
++	LLRect dim_rect, aspect_label_rect;
++	childGetRect("aspect_ratio", aspect_label_rect);
++	childGetRect("dimensions", dim_rect);
++	childSetVisible("aspect_ratio", dim_rect.mRight < aspect_label_rect.mLeft);
+ }
+ 
++void LLPreviewTexture::onAspectRatioCommit(LLUICtrl* ctrl, void* userdata)
++{
++	LLPreviewTexture* self = (LLPreviewTexture*) userdata;
++	
++	std::string ratio(ctrl->getValue().asString());
++	std::string::size_type separator(ratio.find_first_of(":/\\"));
++	
++	if (std::string::npos == separator) {
++		// If there's no separator assume we want an unconstrained ratio
++		self->mAspectRatio = 0.f;
++		return;
++	}
++	
++	F32 width, height;
++	std::istringstream numerator(ratio.substr(0, separator));
++	std::istringstream denominator(ratio.substr(separator + 1));
++	numerator >> width;
++	denominator >> height;
++	
++	if (0.f != height && 0.f != width)
++	{
++		self->mAspectRatio = width / height;
++	}
++	else
++	{
++		self->mAspectRatio = 0.f;
++	}
++}
+ 
+ void LLPreviewTexture::loadAsset()
+ {
+Index: viewer_1-21/indra/newview/llpreviewtexture.h
+===================================================================
+--- viewer_1-21/indra/newview/llpreviewtexture.h	(revision 1328)
++++ viewer_1-21/indra/newview/llpreviewtexture.h	(working copy)
+@@ -37,6 +37,7 @@
+ #include "llframetimer.h"
+ #include "llviewerimage.h"
+ 
++class LLComboBox;
+ class LLImageRaw;
+ 
+ class LLPreviewTexture : public LLPreview
+@@ -78,6 +79,7 @@
+ 
+ protected:
+ 	void				init();
++	static void			onAspectRatioCommit(LLUICtrl*,void* userdata);
+ 
+ 	virtual const char *getTitleName() const { return "Texture"; }
+ 	
+@@ -97,6 +99,7 @@
+ 
+ 	S32 mLastHeight;
+ 	S32 mLastWidth;
++	F32 mAspectRatio;
+ };
+ 
+ 
+Index: viewer_1-21/indra/newview/skins/default/xui/en-us/floater_preview_texture.xml
+===================================================================
+--- viewer_1-21/indra/newview/skins/default/xui/en-us/floater_preview_texture.xml	(revision 1328)
++++ viewer_1-21/indra/newview/skins/default/xui/en-us/floater_preview_texture.xml	(working copy)
+@@ -1,8 +1,7 @@
+ <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+-<floater bottom="-300" can_close="true" can_drag_on_left="false" can_minimize="true"
+-     can_resize="true" enabled="true" follows="left|bottom" height="324"
+-     left="300" min_height="120" min_width="300" mouse_opaque="true"
+-     name="preview_texture" width="335">
++<floater bottom="-331" can_close="true" can_drag_on_left="false" can_minimize="true"
++     can_resize="true" enabled="true" height="324" left="300" min_height="120"
++     min_width="300" mouse_opaque="true" name="preview_texture" width="335">
+ 	<text type="string" length="1" bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
+ 	     bottom="-40" drop_shadow_visible="true" enabled="true" follows="left|top"
+ 	     font="SansSerif" h_pad="0" halign="left" height="19" left="13"
+@@ -14,10 +13,54 @@
+ 	     handle_edit_keys_directly="false" height="19" left="93" max_length="127"
+ 	     mouse_opaque="true" name="desc" select_all_on_focus_received="false"
+ 	     select_on_focus="false" width="229" />
++	<button bottom="8" enabled="true" follows="left|bottom" font="SansSerif"
++	     halign="center" height="20" label="Keep" label_selected="Keep" left="9"
++	     mouse_opaque="true" name="Keep" scale_image="true" width="100" />
++	<button bottom="8" enabled="true" follows="left|bottom" font="SansSerif"
++	     halign="center" height="20" label="Discard" label_selected="Discard"
++	     left="114" mouse_opaque="true" name="Discard" scale_image="true"
++	     width="100" />
++	<button bottom="8" enabled="true" follows="left|bottom" font="SansSerif"
++	     halign="center" height="20" label="Copy To Inventory" left="9"
++	     mouse_opaque="true" name="Copy To Inventory" scale_image="true" width="170" />
+ 	<text type="string" length="1" bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
+-	     bottom="10" drop_shadow_visible="true" enabled="true" follows="left|bottom"
++	     bottom="35" drop_shadow_visible="true" enabled="true" follows="left|bottom"
+ 	     font="SansSerifSmall" h_pad="0" halign="left" height="14" left="13"
+-	     mouse_opaque="true" name="dimensions" v_pad="0" width="163">
++	     mouse_opaque="true" name="dimensions" v_pad="0" width="135">
+ 		Dimensions: [WIDTH] x [HEIGHT]
+ 	</text>
++	<text type="string" length="1" bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
++	     bottom="35" drop_shadow_visible="true" enabled="true" follows="right|bottom"
++	     font="SansSerifSmall" h_pad="0" halign="right" height="14" left="86"
++	     mouse_opaque="true" name="aspect_ratio" v_pad="0" width="110">
++		Preview Aspect Ratio
++	</text>
++	<combo_box allow_text_entry="true" bottom="32" follows="right|bottom" height="20"
++	     left="202" max_chars="20" mouse_opaque="true" enabled="true" width="108"
++	     name="combo_aspect_ratio" tool_tip="Preview at a fixed aspect ratio">
++		<combo_item name="Unconstrained" value="Unconstrained">
++			Unconstrained
++		</combo_item>
++		<combo_item name="1:1" value="1:1" tool_tip="Group Insignia or 1st Life Profile">
++			1:1
++		</combo_item>
++		<combo_item name="4:3" value="4:3" tool_tip="2nd Life Profile">
++			4:3
++		</combo_item>
++		<combo_item name="10:7" value="10:7" tool_tip="Classifieds and search listings, landmarks">
++			10:7
++		</combo_item>
++		<combo_item name="3:2" value="3:2" tool_tip="About land">
++			3:2
++		</combo_item>
++		<combo_item name="16:10" value="16:10">
++			16:10
++		</combo_item>
++		<combo_item name="16:9" value="16:9" tool_tip="Profile Picks">
++			16:9
++		</combo_item>
++		<combo_item name="2:1" value="2:1">
++			2:1
++		</combo_item>
++	</combo_box>
+ </floater>

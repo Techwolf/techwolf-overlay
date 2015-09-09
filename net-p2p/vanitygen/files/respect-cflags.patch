@@ -1,0 +1,10 @@
+diff --git a/Makefile b/Makefile
+index 3486201..1e093f8 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,5 +1,4 @@
+ LIBS=-lpcre -lcrypto -lm -lpthread
+-CFLAGS=-ggdb -O3 -Wall
+ OBJS=vanitygen.o oclvanitygen.o oclvanityminer.o oclengine.o keyconv.o pattern.o util.o
+ PROGS=vanitygen keyconv oclvanitygen oclvanityminer
+ 

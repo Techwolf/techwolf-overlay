@@ -1,0 +1,18 @@
+Index: indra/newview/llappviewerlinux.h
+===================================================================
+--- indra/newview/llappviewerlinux.h	(revision 876)
++++ indra/newview/llappviewerlinux.h	(working copy)
+@@ -33,9 +33,12 @@
+ #ifndef LL_LLAPPVIEWERLINUX_H
+ #define LL_LLAPPVIEWERLINUX_H
+ 
++extern "C" {
++# include <glib.h>
++}
++
+ #if LL_DBUS_ENABLED
+ extern "C" {
+-# include <glib.h>
+ # include <glib-object.h>
+ # include <dbus/dbus-glib.h>
+ }

@@ -1,0 +1,13 @@
+Index: indra/newview/llviewermenufile.cpp
+===================================================================
+--- indra/newview/llviewermenufile.cpp	(revision 90)
++++ indra/newview/llviewermenufile.cpp	(revision 91)
+@@ -984,7 +984,7 @@
+ 	lldebugs << "Folder: " << gInventory.findCategoryUUIDForType((destination_folder_type == LLAssetType::AT_NONE) ? asset_type : destination_folder_type) << llendl;
+ 	lldebugs << "Asset Type: " << LLAssetType::lookup(asset_type) << llendl;
+ 	std::string url = gAgent.getRegion()->getCapability("NewFileAgentInventory");
+-	if (!url.empty())
++	if (!url.empty() && LLAssetType::AT_SOUND != asset_type)
+ 	{
+ 		llinfos << "New Agent Inventory via capability" << llendl;
+ 		LLSD body;

@@ -1,0 +1,130 @@
+--- linden_untouched/indra/newview/llviewermenu.cpp	2008-12-19 03:10:49.000000000 +0200
++++ linden/indra/newview/llviewermenu.cpp	2008-12-27 20:05:06.000000000 +0200
+@@ -4176,6 +4176,89 @@
+ 	}
+ };
+ 
++// Determine if the option to cycle between linked prims is shown
++class LLToolsEnableSelectNextPart : public view_listener_t
++{
++	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
++	{
++		bool new_value = (gSavedSettings.getBOOL("EditLinkedParts") &&
++				 !LLSelectMgr::getInstance()->getSelection()->isEmpty());
++		gMenuHolder->findControl(userdata["control"].asString())->setValue(new_value);
++		return true;
++	}
++};
++
++// Cycle selection through linked children in selected object.
++// FIXME: Order of children list is not always the same as sim's idea of link order. This may confuse users.
++class LLToolsSelectNextPart : public view_listener_t
++{
++	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
++	{
++		S32 object_count = LLSelectMgr::getInstance()->getSelection()->getObjectCount();
++		if (gSavedSettings.getBOOL("EditLinkedParts") && object_count)
++		{
++			LLViewerObject* selected = LLSelectMgr::getInstance()->getSelection()->getFirstObject();
++			if (selected && selected->getRootEdit())
++			{
++				bool fwd = (userdata.asString() == "next");
++				LLViewerObject* to_select = NULL;
++				LLViewerObject::child_list_t children = selected->getRootEdit()->getChildren();
++				children.push_front(selected->getRootEdit());	// need root in the list too
++
++				for (LLViewerObject::child_list_t::iterator iter = children.begin(); iter != children.end(); ++iter)
++				{
++					if ((*iter)->isSelected())
++					{
++						if (object_count > 1)	// multiple selection, find first or last selected
++						{
++							to_select = *iter;
++							if (fwd)
++							{
++								break;
++							}
++						}
++						else if (object_count == 1)	// single selection
++						{
++							if (fwd)
++							{
++								++iter;
++								while (iter != children.end() && (*iter)->isAvatar())
++								{
++									++iter;	// skip sitting avatars
++								}
++							}
++							else
++							{
++								iter = (iter == children.begin() ? children.end() : iter);
++								--iter;
++								while (iter != children.begin() && (*iter)->isAvatar())
++								{
++									--iter;	// skip sitting avatars
++								}
++							}
++							iter = (iter == children.end() ? children.begin() : iter);
++							to_select = *iter;
++							break;
++						}
++					}
++				}
++
++				if (to_select)
++				{
++					if (gFocusMgr.childHasKeyboardFocus(gFloaterTools))
++					{
++						gFocusMgr.setKeyboardFocus(NULL);	// force edit toolbox to commit any changes
++					}
++					LLSelectMgr::getInstance()->deselectAll();
++					LLSelectMgr::getInstance()->selectObjectOnly(to_select);
++					return true;
++				}
++			}
++		}
++		return true;
++	}
++};
++
+ // in order to link, all objects must have the same owner, and the
+ // agent must have the ability to modify all of the objects. However,
+ // we're not answering that question with this method. The question
+@@ -7493,6 +7576,7 @@
+ 	addMenu(new LLToolsEditLinkedParts(), "Tools.EditLinkedParts");
+ 	addMenu(new LLToolsSnapObjectXY(), "Tools.SnapObjectXY");
+ 	addMenu(new LLToolsUseSelectionForGrid(), "Tools.UseSelectionForGrid");
++	addMenu(new LLToolsSelectNextPart(), "Tools.SelectNextPart");
+ 	addMenu(new LLToolsLink(), "Tools.Link");
+ 	addMenu(new LLToolsUnlink(), "Tools.Unlink");
+ 	addMenu(new LLToolsStopAllAnimations(), "Tools.StopAllAnimations");
+@@ -7506,6 +7590,7 @@
+ 	addMenu(new LLToolsSelectedScriptAction(), "Tools.SelectedScriptAction");
+ 
+ 	addMenu(new LLToolsEnableToolNotPie(), "Tools.EnableToolNotPie");
++	addMenu(new LLToolsEnableSelectNextPart(), "Tools.EnableSelectNextPart");
+ 	addMenu(new LLToolsEnableLink(), "Tools.EnableLink");
+ 	addMenu(new LLToolsEnableUnlink(), "Tools.EnableUnlink");
+ 	addMenu(new LLToolsEnableBuyOrTake(), "Tools.EnableBuyOrTake");
+--- linden_untouched/indra/newview/skins/default/xui/en-us/menu_viewer.xml	2008-12-19 03:10:54.000000000 +0200
++++ linden/indra/newview/skins/default/xui/en-us/menu_viewer.xml	2008-12-27 18:51:11.000000000 +0200
+@@ -618,6 +618,19 @@
+ 			<on_check control="EditLinkedParts" />
+ 			<on_enable function="Tools.EnableToolNotPie" />
+ 		</menu_item_check>
++		<menu create_jump_keys="true" drop_shadow="true" enabled="true" label="Select Linked Parts"
++			 mouse_opaque="false" name="Select Linked Parts" opaque="true" tear_off="true">
++			<menu_item_call enabled="false" label="Select Next Part" mouse_opaque="true"
++				 name="Select Next Part" shortcut="control|]">
++				<on_click function="Tools.SelectNextPart" userdata="next" />
++				<on_enable function="Tools.EnableSelectNextPart" />
++			</menu_item_call>
++			<menu_item_call enabled="false" label="Select Previous Part" mouse_opaque="true"
++				 name="Select Previous Part" shortcut="control|[">
++				<on_click function="Tools.SelectNextPart" userdata="previous" />
++				<on_enable function="Tools.EnableSelectNextPart" />
++			</menu_item_call>
++		</menu>
+ 		<menu_item_call bottom="-262" enabled="false" height="19" label="Link" left="0"
+ 		     mouse_opaque="true" name="Link" shortcut="control|L" width="250">
+ 			<on_click function="Tools.Link" userdata="" />

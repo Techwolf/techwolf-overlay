@@ -1,0 +1,19 @@
+diff -urN linden/indra/llui/llfloater.cpp linden-patched/indra/llui/llfloater.cpp
+--- linden/indra/llui/llfloater.cpp	2008-07-24 19:29:51.000000000 +0200
++++ linden-patched/indra/llui/llfloater.cpp	2008-07-25 20:01:13.000000000 +0200
+@@ -765,13 +765,8 @@
+ 	}
+ 	else
+ 	{
+-		// If minimized, and origin has changed, set
+-		// mHasBeenDraggedWhileMinimized to TRUE
+-		if ((new_rect.mLeft != old_rect.mLeft) ||
+-			(new_rect.mBottom != old_rect.mBottom))
+-		{
+-			mHasBeenDraggedWhileMinimized = TRUE;
+-		}
++		// If minimized, then the floater could only be moved. Remember it.
++		mHasBeenDraggedWhileMinimized = TRUE;
+ 	}
+ }
+ 

@@ -1,0 +1,80 @@
+diff -urN SL/indra/newview/llchatbar.cpp SL-patched/indra/newview/llchatbar.cpp
+--- SL/indra/newview/llchatbar.cpp	2009-02-11 10:42:56.000000000 +0100
++++ SL-patched/indra/newview/llchatbar.cpp	2009-02-11 10:46:44.000000000 +0100
+@@ -527,12 +527,33 @@
+ 						utf8text.replace(0, 1, "/me ");
+ 					}
+ 				}
+-				// discard returned "found" boolean
+-				gGestureManager.triggerAndReviseString(utf8text, &utf8_revised_text);
++//MK
++////				// discard returned "found" boolean
++////				gGestureManager.triggerAndReviseString(utf8text, &utf8_revised_text);
++				BOOL found_gesture=gGestureManager.triggerAndReviseString(utf8text, &utf8_revised_text);
++
++				if (RRenabled && gAgent.mRRInterface.contains ("sendchat") && !gAgent.mRRInterface.containsSubstr ("redirchat:"))
++				{
++					// user is forbidden to send any chat message on channel 0 except emotes and OOC text
++					utf8_revised_text = gAgent.mRRInterface.crunchEmote (utf8_revised_text, 20);
++					if (found_gesture && utf8_revised_text=="...") utf8_revised_text="";
++				}
++//mk
+ 			}
+ 			else
+ 			{
+-				utf8_revised_text = utf8text;
++//MK
++				std::ostringstream stream;
++				stream << "sendchannel:" << channel;
++				if (RRenabled && gAgent.mRRInterface.contains ("sendchannel") && // user prevented from chatting on private channels
++					!gAgent.mRRInterface.contains (stream.str ()))
++				{
++					// and this channel is no exception
++					utf8_revised_text = "";
++				}
++				else
++//mk
++					utf8_revised_text = utf8text;
+ 			}
+ 
+ 			utf8_revised_text = utf8str_trim(utf8_revised_text);
+diff -urN SL/indra/newview/lloverlaybar.cpp SL-patched/indra/newview/lloverlaybar.cpp
+--- SL/indra/newview/lloverlaybar.cpp	2009-02-11 10:42:56.000000000 +0100
++++ SL-patched/indra/newview/lloverlaybar.cpp	2009-02-11 10:47:42.000000000 +0100
+@@ -465,6 +465,14 @@
+ //static
+ void LLOverlayBar::onClickStandUp(void*)
+ {
++//MK
++	if (RRenabled && gAgent.mRRInterface.mContainsUnsit) {
++		if (gAgent.getAvatarObject() &&
++			gAgent.getAvatarObject()->mIsSitting) {
++			return;
++		}
++	}
++//mk
+   	LLSelectMgr::getInstance()->deselectAllForStandingUp();
+ 	gAgent.setControlFlags(AGENT_CONTROL_STAND_UP);
+ }
+diff -urN SL/indra/newview/llviewermenu.cpp SL-patched/indra/newview/llviewermenu.cpp
+--- SL/indra/newview/llviewermenu.cpp	2009-02-11 10:42:56.000000000 +0100
++++ SL-patched/indra/newview/llviewermenu.cpp	2009-02-11 10:51:10.000000000 +0100
+@@ -965,12 +965,16 @@
+ 										(void*)"SaveMinidump"));
+ 
+ 	// TomY Temporary menu item so we can test this floater
+-	menu->append(new LLMenuItemCheckGL("Clothing...", 
++//MK
++	if (!RRenabled)
++	{
++//mk
++		menu->append(new LLMenuItemCheckGL("Clothing...", 
+ 												&handle_clothing,
+ 												NULL,
+ 												NULL,
+ 												NULL));
+-
++	}
+ 	menu->append(new LLMenuItemCallGL("Debug Settings...", LLFloaterSettingsDebug::show, NULL, NULL, 'S', MASK_ALT | MASK_CONTROL));
+ 	menu->append(new LLMenuItemCheckGL("View Admin Options", &handle_admin_override_toggle, NULL, &check_admin_override, NULL, 'V', MASK_CONTROL | MASK_ALT));
+ 

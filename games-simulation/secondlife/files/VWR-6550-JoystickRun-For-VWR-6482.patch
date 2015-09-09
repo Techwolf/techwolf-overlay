@@ -1,0 +1,103 @@
+--- linden/indra/newview/llviewerjoystick.cpp.orig	2008-04-17 16:26:16.000000000 +0100
++++ linden/indra/newview/llviewerjoystick.cpp	2008-04-19 21:16:18.000000000 +0100
+@@ -142,7 +142,8 @@
+ 	mNdofDev(NULL),
+ 	mResetFlag(false),
+ 	mCameraUpdated(true),
+-	mOverrideCamera(false)
++	mOverrideCamera(false),
++	mJoystickRun(0)
+ {
+ 	for (int i = 0; i < 6; i++)
+ 	{
+@@ -287,6 +288,43 @@
+ }
+ 
+ // -----------------------------------------------------------------------------
++void LLViewerJoystick::handleRun(F32 inc)
++{
++	// Decide whether to walk or run by applying a threshold, with slight
++	// hysteresis to avoid oscillating between the two with input spikes.
++	// Analog speed control would be better, but not likely any time soon.
++	if (!gAgent.getAlwaysRun())
++	{
++		if (inc > gSavedSettings.getF32("JoystickRunThreshold"))
++		{
++			if (1 == mJoystickRun)
++			{
++				++mJoystickRun;
++				gAgent.setRunning();
++				gAgent.sendWalkRun(gAgent.getRunning());
++			}
++			else if (1 > mJoystickRun)
++			{
++				++mJoystickRun;
++			}
++		}
++		else
++		{
++			if (1 == mJoystickRun)
++			{
++				--mJoystickRun;
++				gAgent.clearRunning();
++				gAgent.sendWalkRun(gAgent.getRunning());
++			}
++			else if (1 < mJoystickRun)
++			{
++				--mJoystickRun;
++			}
++		}
++	}
++}
++
++// -----------------------------------------------------------------------------
+ void LLViewerJoystick::agentJump()
+ {
+     gAgent.moveUp(1);
+@@ -625,6 +663,8 @@
+ 	sDelta[RX_I] += (cur_delta[RX_I] - sDelta[RX_I]) * time * feather;
+ 	sDelta[RY_I] += (cur_delta[RY_I] - sDelta[RY_I]) * time * feather;
+ 	
++	handleRun(fmax(fabs(sDelta[Z_I]), fabs(sDelta[X_I])));
++	
+ 	// Allow forward/backward movement some priority
+     if (dom_axis == Z_I)
+     {
+--- linden/indra/newview/llviewerjoystick.h.orig	2008-04-17 16:22:15.000000000 +0100
++++ linden/indra/newview/llviewerjoystick.h	2008-04-19 20:10:04.000000000 +0100
+@@ -78,6 +78,7 @@
+ protected:
+ 	void updateEnabled(bool autoenable);
+ 	void terminate();
++	void handleRun(F32 inc);
+ 	void agentSlide(F32 inc);
+ 	void agentPush(F32 inc);
+ 	void agentFly(F32 inc);
+@@ -98,6 +99,7 @@
+ 	F32						mPerfScale;
+ 	bool					mCameraUpdated;
+ 	bool 					mOverrideCamera;
++	U32						mJoystickRun;
+ 	
+ 	static F32				sLastDelta[7];
+ 	static F32				sDelta[7];
+--- linden/indra/newview/app_settings/settings.xml.orig	2008-04-18 19:17:59.000000000 +0100
++++ linden/indra/newview/app_settings/settings.xml	2008-04-19 20:10:37.000000000 +0100
+@@ -4015,6 +4015,17 @@
+       <key>Value</key>
+       <integer>1</integer>
+     </map>
++    <key>JoystickRunThreshold</key>
++        <map>
++        <key>Comment</key>
++            <string>Input threshold to initiate running</string>
++        <key>Persist</key>
++            <integer>1</integer>
++        <key>Type</key>
++            <string>F32</string>
++        <key>Value</key>
++            <real>0.25</real>
++        </map>
+     <key>JoystickAxis1</key>
+     <map>
+       <key>Comment</key>

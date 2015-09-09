@@ -1,0 +1,49 @@
+diff --git a/Makefile b/Makefile
+index 6d54c56..17a498e 100644
+--- a/Makefile
++++ b/Makefile
+@@ -994,10 +994,10 @@ qchdman-install: qchdman
+ 	@$(MKDIR) "$(DESTDIR)/$(BINDIR)" "$(DESTDIR)/$(DATADIR)/$(PROJECT)"
+ 	@$(RSYNC) --exclude '*svn*' "tools/qchdman/qchdman" "$(DESTDIR)/$(BINDIR)"
+ 	@$(RSYNC) --exclude '*svn*' ./data/img "$(GLOBAL_DATADIR)/$(PROJECT)/"
+-	@$(ECHO) "Installing qchdman.desktop to $(GLOBAL_DATADIR)/applications"
+-	@$(MKDIR) $(GLOBAL_DATADIR)/applications
+-	@$(CHMOD) a+rx $(GLOBAL_DATADIR)/applications
+-	@$(SED) -e "s*DATADIR*$(DATADIR)*g" < ./inst/qchdman.desktop.template > $(GLOBAL_DATADIR)/applications/qchdman.desktop
++	@$(ECHO) "Installing qchdman.desktop to $(DESTDIR)/usr/share/applications"
++	@$(MKDIR) $(DESTDIR)/usr/share/applications
++	@$(CHMOD) a+rx $(DESTDIR)/usr/share/applications
++	@$(SED) -e "s*DATADIR*$(DATADIR)*g" < ./inst/qchdman.desktop.template > $(DESTDIR)/usr/share/applications/qchdman.desktop
+ endif
+ 
+ tools: qchdman
+@@ -1061,10 +1061,10 @@ arcade-install: arcade
+ 	@$(MKDIR) "$(DESTDIR)/$(BINDIR)" "$(DESTDIR)/$(DATADIR)/$(PROJECT)"
+ 	@$(RSYNC) --exclude '*svn*' "arcade/qmc2-arcade" "$(DESTDIR)/$(BINDIR)"
+ 	@$(RSYNC) --exclude '*svn*' ./data/img "$(GLOBAL_DATADIR)/$(PROJECT)/"
+-	@$(ECHO) "Installing qmc2-arcade.desktop to $(GLOBAL_DATADIR)/applications"
+-	@$(MKDIR) $(GLOBAL_DATADIR)/applications
+-	@$(CHMOD) a+rx $(GLOBAL_DATADIR)/applications
+-	@$(SED) -e "s*DATADIR*$(DATADIR)*g" < ./inst/qmc2-arcade.desktop.template > $(GLOBAL_DATADIR)/applications/qmc2-arcade.desktop
++	@$(ECHO) "Installing qmc2-arcade.desktop to $(DESTDIR)/usr/share/applications"
++	@$(MKDIR) $(DESTDIR)/usr/share/applications
++	@$(CHMOD) a+rx $(DESTDIR)/usr/share/applications
++	@$(SED) -e "s*DATADIR*$(DATADIR)*g" < ./inst/qmc2-arcade.desktop.template > $(DESTDIR)/usr/share/applications/qmc2-arcade.desktop
+ endif
+ endif
+ 
+@@ -1272,10 +1272,10 @@ endif
+ 	  $(SED) -e "s*DATADIR*$(DATADIR)*g" < ./inst/$(PROJECT).ini.template > "$(GLOBAL_QMC2_INI)" ; \
+ 	fi
+ ifneq '$(ARCH)' 'Darwin'
+-	@$(ECHO) "Installing $(TARGET_NAME).desktop to $(GLOBAL_DATADIR)/applications"
+-	@$(MKDIR) $(GLOBAL_DATADIR)/applications
+-	@$(CHMOD) a+rx $(GLOBAL_DATADIR)/applications
+-	@$(SED) -e "s*DATADIR*$(DATADIR)*g; s*EMULATOR*$(QMC2_EMULATOR)*g; s*TARGET*$(TARGET_NAME)*g; s*EMUICO*$(EMUICO)*g; s*GENERICNAME*$(GENERICNAME)*g" < ./inst/$(PROJECT).desktop.template > $(GLOBAL_DATADIR)/applications/$(TARGET_NAME).desktop
++	@$(ECHO) "Installing $(TARGET_NAME).desktop to $(DESTDIR)/usr/share/applications"
++	@$(MKDIR) $(DESTDIR)/usr/share/applications
++	@$(CHMOD) a+rx $(DESTDIR)/usr/share/applications
++	@$(SED) -e "s*DATADIR*$(DATADIR)*g; s*EMULATOR*$(QMC2_EMULATOR)*g; s*TARGET*$(TARGET_NAME)*g; s*EMUICO*$(EMUICO)*g; s*GENERICNAME*$(GENERICNAME)*g" < ./inst/$(PROJECT).desktop.template > $(DESTDIR)/usr/share/applications/$(TARGET_NAME).desktop
+ endif
+ 	@$(ECHO) "Installation complete"
+ 

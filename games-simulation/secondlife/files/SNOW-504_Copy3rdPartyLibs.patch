@@ -1,0 +1,13 @@
+--- linden/indra/cmake/Copy3rdPartyLibs.cmake	2010-02-21 02:19:28.000000000 +0000
++++ 2.0/indra/cmake/Copy3rdPartyLibs.cmake	2010-02-24 13:10:06.000000000 +0000
+@@ -389,7 +389,10 @@
+ endif (NOT EXISTS ${internal_llkdu_path})
+ 
+ 
++if(NOT STANDALONE)
+ add_custom_target(stage_third_party_libs ALL
+   DEPENDS 
+     ${third_party_targets}
+   )
++endif(NOT STANDALONE)
++

@@ -1,0 +1,14 @@
+Index: indra/llmedia/llmediamanager.cpp
+===================================================================
+--- indra/llmedia/llmediamanager.cpp	(revision 1333)
++++ indra/llmedia/llmediamanager.cpp	(working copy)
+@@ -151,7 +151,9 @@
+ void LLMediaManager::setBrowserUserAgent(std::string user_agent)
+ {
+ 	// *HACK: Breaks encapsulation model, as initClass does above. JC
++#if LL_LLMOZLIB_ENABLED
+ 	LLMediaImplLLMozLib::setBrowserUserAgent(user_agent);
++#endif
+ }
+ 
+ ////////////////////////////////////////////////////////////////////////////////

@@ -1,0 +1,41 @@
+diff -urN linden/indra/newview/app_settings/settings.xml linden-patched/indra/newview/app_settings/settings.xml
+--- linden/indra/newview/app_settings/settings.xml	2008-06-11 19:01:49.000000000 +0200
++++ linden-patched/indra/newview/app_settings/settings.xml	2008-06-20 16:15:16.000000000 +0200
+@@ -3881,6 +3881,17 @@
+         <real>1.0</real>
+       </array>
+     </map>
++    <key>HideNotificationsInChat</key>
++    <map>
++      <key>Comment</key>
++      <string>Do not echo/log notifications in chat</string>
++      <key>Persist</key>
++      <integer>1</integer>
++      <key>Type</key>
++      <string>Boolean</string>
++      <key>Value</key>
++      <integer>0</integer>
++    </map>
+     <key>IMInChatConsole</key>
+     <map>
+       <key>Comment</key>
+diff -urN linden/indra/newview/llnotify.cpp linden-patched/indra/newview/llnotify.cpp
+--- linden/indra/newview/llnotify.cpp	2008-06-11 19:01:48.000000000 +0200
++++ linden-patched/indra/newview/llnotify.cpp	2008-06-20 16:14:01.000000000 +0200
+@@ -325,10 +325,12 @@
+ 
+ 	if (mIsTip)
+ 	{
+-		// TODO: Make a separate archive for these.
+-		LLChat chat(mMessage);
+-		chat.mSourceType = CHAT_SOURCE_SYSTEM;
+-		LLFloaterChat::getInstance(LLSD())->addChatHistory(chat);
++		if (!gSavedSettings.getBOOL("HideNotificationsInChat")) {
++			// TODO: Make a separate archive for these.
++			LLChat chat(mMessage);
++			chat.mSourceType = CHAT_SOURCE_SYSTEM;
++			LLFloaterChat::getInstance(LLSD())->addChatHistory(chat);
++		}
+ 	}
+ 	else
+ 	{

@@ -1,0 +1,16 @@
+--- ./linden/indra/newview/skins/default/xui/en-us/floater_tools.xml.org	2009-03-21 13:19:24.000000000 -0400
++++ ./linden/indra/newview/skins/default/xui/en-us/floater_tools.xml	2009-03-21 13:47:57.000000000 -0400
+@@ -1176,11 +1176,11 @@
+ 			     mouse_opaque="true" name="tex offset" v_pad="0" width="160">
+ 				Offset
+ 			</text>
+-			<spinner bottom="-308" decimal_digits="3" follows="left|top" height="16" increment="0.1"
++			<spinner bottom="-308" decimal_digits="3" follows="left|top" height="16" increment="0.05"
+ 			     initial_val="0" label="Horizontal (U)" label_width="90" left="20"
+ 			     max_val="1" min_val="-1" mouse_opaque="true" name="TexOffsetU" width="160" />
+ 			<spinner bottom_delta="-18" decimal_digits="3" follows="left|top" height="16"
+-			     increment="0.1" initial_val="0" label="Vertical (V)" label_width="90"
++			     increment="0.05" initial_val="0" label="Vertical (V)" label_width="90"
+ 			     left="20" max_val="1" min_val="-1" mouse_opaque="true" name="TexOffsetV"
+ 			     width="160" />
+ 			<text bg_visible="false" border_drop_shadow_visible="false" border_visible="false"

@@ -1,0 +1,18 @@
+diff --git a/indra/newview/llviewerjoystick.cpp b/indra/newview/llviewerjoystick.cpp
+index 1b73c56..993850c 100644
+--- a/indra/newview/llviewerjoystick.cpp
++++ b/indra/newview/llviewerjoystick.cpp
+@@ -994,6 +994,13 @@ void LLViewerJoystick::scanJoystick()
+ #endif
+ 	updateStatus();
+ 
++	// App focus check Needs to happen AFTER updateStatus in case the joystick
++	// is not centred when the app loses focus.
++	if (!gFocusMgr.getAppHasFocus())
++	{
++		return;
++	}
++
+ 	static long toggle_flycam = 0;
+ 
+ 	if (mBtn[0] == 1)

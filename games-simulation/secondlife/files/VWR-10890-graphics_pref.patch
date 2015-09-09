@@ -1,0 +1,13 @@
+Index: newview/skins/default/xui/en-us/panel_preferences_graphics1.xml
+===================================================================
+--- linden/indra/newview/skins/default/xui/en-us/panel_preferences_graphics1.xml	(revision 1546)
++++ linden/indra/newview/skins/default/xui/en-us/panel_preferences_graphics1.xml	(working copy)
+@@ -21,7 +21,7 @@
+ 	     mouse_opaque="true" name="WindowSizeLabel" v_pad="0" width="128">
+ 		Window Size:
+ 	</text>
+-	<combo_box allow_text_entry="false" bottom="-67" enabled="true" follows="left|top"
++	<combo_box allow_text_entry="true" bottom="-67" enabled="true" follows="left|top"
+ 	     height="18" left="185" max_chars="20" mouse_opaque="true"
+ 	     name="windowsize combo" width="150">
+ 		<combo_item type="string" length="1" enabled="true" name="640x480" value="640 x 480">

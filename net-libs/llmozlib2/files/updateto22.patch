@@ -1,0 +1,11 @@
+--- ./build_mozilla/linux-checkout_patch_build.sh.org	2009-09-13 13:11:51.000000000 -0400
++++ ./build_mozilla/linux-checkout_patch_build.sh	2009-09-13 13:17:34.000000000 -0400
+@@ -16,7 +16,7 @@
+ export CVSROOT=':pserver:anonymous@cvs-mirror.mozilla.org:/cvsroot'
+ echo 'use the password "anonymous" if prompted'
+ cvs login
+-cvs checkout -r THUNDERBIRD_2_0_0_21_RELEASE mozilla/client.mk
++cvs checkout -r THUNDERBIRD_2_0_0_22_RELEASE mozilla/client.mk
+ (cd mozilla && make -f client.mk checkout MOZ_CO_PROJECT=xulrunner)
+ 
+ # install our special .mozconfig file

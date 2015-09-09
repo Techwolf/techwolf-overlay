@@ -1,0 +1,368 @@
+Index: indra/newview/llvoavatar.cpp
+===================================================================
+--- indra/newview/llvoavatar.cpp	(revision 89)
++++ indra/newview/llvoavatar.cpp	(revision 90)
+@@ -2961,6 +2961,111 @@
+ 		}
+ 	}
+ }
++
++void resolve_client(LLColor4& avatar_name_color, std::string& client, LLUUID idx)
++{
++	if(idx == LLUUID("2a9a406c-f448-68f2-4e38-878f8c46c190"))
++	{
++		avatar_name_color += LLColor4(1.0f,0.9f,0.7f);//Meerkat
++		avatar_name_color = avatar_name_color * (F32)0.333333333333;
++		client = "Meerkat";
++	}else if(idx == LLUUID("ccda2b3b-e72c-a112-e126-fee238b67218"))
++	{
++		avatar_name_color += LLColor4::green;//emerald
++		avatar_name_color += LLColor4::green;
++		avatar_name_color = avatar_name_color * (F32)0.333333333333;
++		client = "Emerald";
++	}else if(idx == LLUUID("c252d89d-6f7c-7d90-f430-d140d2e3fbbe"))
++	{
++		avatar_name_color += LLColor4::red;//vlife jcool410
++		avatar_name_color = avatar_name_color * 0.5;
++		client = "VLife";
++	}else if(idx == LLUUID("adcbe893-7643-fd12-f61c-0b39717e2e32"))
++	{
++		avatar_name_color += LLColor4::pink;//tyk3n
++		avatar_name_color = avatar_name_color * 0.5;
++		client = "tyk3n";
++	}else if(idx == LLUUID("f3fd74a6-fee7-4b2f-93ae-ddcb5991da04") || idx == LLUUID("77662f23-c77a-9b4d-5558-26b757b2144c"))
++	{
++		avatar_name_color += (LLColor4::purple);//psl
++		avatar_name_color = avatar_name_color * 0.5;
++		client = "PSL";
++	}else if(idx == LLUUID("5aa5c70d-d787-571b-0495-4fc1bdef1500"))
++	{
++		avatar_name_color += LLColor4::red;//lordgreg
++		avatar_name_color += LLColor4::red;
++		avatar_name_color = avatar_name_color * (F32)0.333333333333;
++		client = "LGG proxy";
++	}else if(idx == LLUUID("8183e823-c443-2142-6eb6-2ab763d4f81c"))
++	{
++		avatar_name_color += LLColor4::blue;//day oh
++		avatar_name_color = avatar_name_color * 0.5;
++		client = "Day Oh proxy";
++	}else if(idx == LLUUID("e52d21f7-3c8b-819f-a3db-65c432295dac") || idx == LLUUID("0f6723d2-5b23-6b58-08ab-308112b33786"))
++	{
++		avatar_name_color += LLColor4::cyan;//cryolife
++		avatar_name_color += LLColor4::cyan;
++		avatar_name_color = avatar_name_color * 0.5;
++		client = "CryoLife";
++    }else if(idx == LLUUID("0bcd5f5d-a4ce-9ea4-f9e8-15132653b3d8"))
++	{
++		avatar_name_color += LLColor4::pink;//moy
++		avatar_name_color += LLColor4::pink;//moy
++		avatar_name_color = avatar_name_color * (F32)0.333333333333;
++		client = "MoyMix";
++	}else if(idx == LLUUID("f5a48821-9a98-d09e-8d6a-50cc08ba9a47"))
++	{
++		avatar_name_color += LLColor4::yellow;//neil
++		avatar_name_color += LLColor4::yellow;//neil
++		avatar_name_color = avatar_name_color * (F32)0.333333333333;
++		client = "NeilLife";
++	}else if(idx == LLUUID("2c9c1e0b-e5d1-263e-16b1-7fc6d169f3d6"))
++	{
++		avatar_name_color += LLColor4(0.0f,1.0f,1.0f);
++		avatar_name_color = avatar_name_color * 0.5;//phox
++		client = "PhoxSL";
++	}else if(idx == LLUUID("c5b570ca-bb7e-3c81-afd1-f62646b20014") || idx == LLUUID("7c4d47a3-0c51-04d1-fa47-e4f3ac12f59b"))
++	{
++		avatar_name_color += LLColor4::white;
++		avatar_name_color += LLColor4::white;
++		avatar_name_color = avatar_name_color * (F32)0.333333333333;
++		client = "Kung Fu";
++	}else if(idx == LLUUID("9422e9d7-7b11-83e4-6262-4a8db4716a3b"))
++	{
++		avatar_name_color += LLColor4::magenta;
++		avatar_name_color += LLColor4::magenta;
++		avatar_name_color = avatar_name_color * (F32)0.333333333333;
++		client = "BetaLife";
++	}else if(idx == LLUUID("872c0005-3095-0967-866d-11cd71115c22"))
++    {
++		avatar_name_color += LLColor4::green;//SimFed Poland
++		avatar_name_color += LLColor4::blue;//SimFed Poland
++		avatar_name_color += LLColor4::blue;//SimFed Poland
++		avatar_name_color = avatar_name_color * 0.5;
++		client = "<-- Fag";
++	}else if(idx == LLUUID("3ab7e2fa-9572-ef36-1a30-d855dbea4f92"))
++	{
++		avatar_name_color += LLColor4(0.0f,0.5f,1.0f); //Nexii
++		avatar_name_color = avatar_name_color * 0.5;
++		client = "VerticalLife";
++	}else if(idx == LLUUID("4e8dcf80-336b-b1d8-ef3e-08dacf015a0f"))
++	{
++		avatar_name_color += LLColor4::blue; //Sapphire
++		avatar_name_color += LLColor4::blue; //Sapphire
++		avatar_name_color = avatar_name_color * (F32)0.333333333333;
++		client = "Sapphire";
++	}else 
++	{
++		LLPointer<LLViewerImage> image_point = gImageList.getImage(idx, MIPMAP_YES, IMMEDIATE_NO);
++		//client = idx.getString();
++		if(image_point.notNull() && image_point->isMissingAsset())
++		{
++			avatar_name_color += LLColor4::grey;//anomalous
++			avatar_name_color = avatar_name_color * 0.5;
++			client = "Invalid";
++		}
++	}
++}
+ 
+ void LLVOAvatar::idleUpdateNameTag(const LLVector3& root_pos_last)
+ {
+@@ -3005,7 +3110,8 @@
+ 			mRenderGroupTitles = sRenderGroupTitles;
+ 			new_name = TRUE;
+ 		}
+-
++
++		std::string client;
+ 		// First Calculate Alpha
+ 		// If alpha > 0, create mNameText if necessary, otherwise delete it
+ 		{
+@@ -3046,6 +3152,8 @@
+ 				}
+ 				
+ 				LLColor4 avatar_name_color = gColors.getColor( "AvatarNameColor" );
++				LLUUID idx = getTE(0)->getID();
++				resolve_client(avatar_name_color,client, idx);
+ 				avatar_name_color.setAlpha(alpha);
+ 				mNameText->setColor(avatar_name_color);
+ 				
+Index: indra/newview/llfloateravatarlist.cpp
+===================================================================
+--- indra/newview/llfloateravatarlist.cpp	(revision 89)
++++ indra/newview/llfloateravatarlist.cpp	(revision 90)
+@@ -661,6 +661,7 @@
+  * Only does anything if the avatar list is visible.
+  * @author Dale Glass
+  */
++void resolve_client(LLColor4& avatar_name_color, std::string& client, LLUUID idx);
+ void LLFloaterAvatarList::refreshAvatarList() 
+ {
+ 
+@@ -950,8 +951,25 @@
+ 		element["columns"][LIST_ENTERED]["column"] = "entered";
+ 		element["columns"][LIST_ENTERED]["type"] = "text";
+ 		element["columns"][LIST_ENTERED]["value"] = tempentered;
+-		element["columns"][LIST_ENTERED]["color"] = getAvatarColor(ent, distance, CT_ENTERED).getValue();
+ 
++		
++		element["columns"][LIST_CLIENT]["column"] = "client";
++		element["columns"][LIST_CLIENT]["type"] = "text";
++		LLColor4 avatar_name_color = gColors.getColor( "AvatarNameColor" );
++		std::string client;
++		LLVOAvatar *av = (LLVOAvatar*)gObjectList.findObject(av_id);
++		if(av)
++		{
++			resolve_client(avatar_name_color, client, av->getTE(0)->getID());
++			if(client == "")client = "?";
++			element["columns"][LIST_CLIENT]["value"] = client.c_str();
++			//element["columns"][LIST_CLIENT]["color"] = avatar_name_color.getValue();
++		}else
++		{
++			element["columns"][LIST_CLIENT]["value"] = "Out Of Range";
++		}
++		element["columns"][LIST_CLIENT]["color"] = avatar_name_color.getValue();
++
+ 		// Add to list
+ 		mAvatarList->addElement(element, ADD_BOTTOM);
+ 
+Index: indra/newview/llfloateravatarlist.h
+===================================================================
+--- indra/newview/llfloateravatarlist.h	(revision 89)
++++ indra/newview/llfloateravatarlist.h	(revision 90)
+@@ -651,6 +651,7 @@
+ 		LIST_PAYMENT,
+ 		LIST_ACTIVITY,
+ 		LIST_ENTERED,
++		LIST_CLIENT
+ 	};
+ 
+ 	typedef void (*avlist_command_t)(const LLUUID &avatar, const std::string &name);
+Index: indra/newview/skins/default/xui/en-us/floater_avatar_scanner.xml
+===================================================================
+--- indra/newview/skins/default/xui/en-us/floater_avatar_scanner.xml	(revision 89)
++++ indra/newview/skins/default/xui/en-us/floater_avatar_scanner.xml	(revision 90)
+@@ -36,7 +36,7 @@
+ 		<!-- Icons relating to the avatar, currently: tracking, and marked -->
+ 		<column name="avatar_icon" label="Icon" width="20" />
+ 		<column name="avatar_name" label="Name" dynamicwidth="true" />
+-		<column name="distance" label="Distance" width="70"/>
++		<column name="distance" label="Distance" width="50"/>
+ 		<column name="age" label="Age" width="50"/>
+ 		<!-- <column name="payment_data" label="Payment" width="80"/> -->
+ 		<!-- TrustNet Score -->
+@@ -45,8 +45,10 @@
+ 		<column name="payment_data" label="" width="20" />
+ 		<!-- What the avatar is doing: producing sounds, rezzing, particles, etc -->
+ 		<column name="activity" label="" width="20" />
++		<!-- Avatars client -->
++		<column name="client" label="Client" width="60" />
+ 		<!-- Time when avatar entered -->
+-		<column name="entered" label="Entered" width="60"/>
++		<column name="entered" label="Entered" width="25"/>
+ 	</scroll_list>
+ <!--	<panel 
+ 	       name="scanner_options"
+@@ -255,142 +255,6 @@
+ 			       follows="bottom|left"
+ 			       />
+ 		</panel>
+-		
+-		<panel border="true" bottom_delta="-130" follows="left|top|right|bottom" height="255"
+-		       label="TrustNet" left="1" mouse_opaque="true"
+-		       name="trustnet_tab" width="398">
+-			<!--TrustNet tools -->
+-			<!-- upper row -->
+-			<button
+-			       name="tn_rate_btn"
+-			       label="Rate"
+-			       tool_tip="Give a TrustNet rating to this avatar"
+-			       left="10"
+-			       bottom_delta="-190"
+-			       width="80"
+-			       height="20"
+-			       font="SansSerifSmall"
+-			       follows="bottom|left"
+-			       />
+-			<button
+-			       name="tn_explain_btn"
+-			       label="Explain"
+-			       tool_tip="Explain this avatar's score"
+-			       left="100"
+-			       bottom_delta="0"
+-			       width="80"
+-			       height="20"
+-			       font="SansSerifSmall"
+-			       follows="bottom|left"
+-			       />
+-			<!--lower row-->
+-			<button
+-			       name="tn_website_btn"
+-			       label="Web"
+-			       tool_tip="Open a web browser with the TrustNet website"
+-			       left="10"
+-			       bottom_delta="-24"
+-			       width="80"
+-			       height="20"
+-			       font="SansSerifSmall"
+-			       follows="bottom|left"
+-			       />
+-			<button
+-			       name="tn_password_btn"
+-			       label="Password"
+-			       tool_tip="Get a password for the TrustNet website. A new password is generated every time."
+-			       left="100"
+-			       bottom_delta="0"
+-			       width="80"
+-			       height="20"
+-			       font="SansSerifSmall"
+-			       follows="bottom|left"
+-			       />
+-			<button
+-			       name="tn_renew_btn"
+-			       label="Renew"
+-			       tool_tip="Renew the TrustNet subscription"
+-			       left="190"
+-			       bottom_delta="0"
+-			       width="80"
+-			       height="20"
+-			       font="SansSerifSmall"
+-			       follows="bottom|left"
+-			       />
+-			
+-		</panel>
+-		<panel border="true" bottom_delta="-130" follows="left|top|right|bottom" height="255"
+-		       label="Luskwood" left="1" mouse_opaque="true"
+-		     name="luskwood_tab" width="398">
+-			<!--Luskwood tools, upper row-->
+-			<button
+-			       name="gowarn_btn"
+-			       label="Warn"
+-			       tool_tip="Give a warning to this avatar"
+-			       left="10"
+-			       bottom_delta="-190"
+-			       width="80"
+-			       height="20"
+-			       font="SansSerifSmall"
+-			       follows="bottom|left"
+-			       />
+-			<button
+-			       name="goeject_btn"
+-			       label="Eject"
+-			       tool_tip="Eject this avatar"
+-			       left="100"
+-			       bottom_delta="0"
+-			       width="80"
+-			       height="20"
+-			       font="SansSerifSmall"
+-			       follows="bottom|left"
+-			       />
+-			<button
+-			       name="goaway_btn"
+-			       label="Keep away"
+-			       tool_tip="Eject, and keep this avatar away for 2 hours"
+-			       left="190"
+-			       bottom_delta="0"
+-			       width="80"
+-			       height="20"
+-			       font="SansSerifSmall"
+-			       follows="bottom|left"
+-			       />
+-			<button
+-			       name="gohome_btn"
+-			       label="Send home"
+-			       tool_tip="Send home, and keep this avatar away for 4 hours"
+-			       left="280"
+-			       bottom_delta="0"
+-			       width="80"
+-			       height="20"
+-			       font="SansSerifSmall"
+-			       follows="bottom|left"
+-			       />
+-			<!-- Middle row -->
+-			<button
+-			       name="gokey_btn"
+-			       label="Ban by key"
+-			       tool_tip="Turn off the send home function"
+-			       left="10"
+-			       bottom_delta="-24"
+-			       width="80"
+-			       height="20"
+-			       font="SansSerifSmall"
+-			       follows="bottom|left"
+-			       />
+-			<button
+-			       name="gohomeoff_btn"
+-			       label="Off"
+-			       tool_tip="Turn off the send home function"
+-			       left_delta="90"
+-			       bottom_delta="0"
+-			       width="80"
+-			       height="20"
+-			       font="SansSerifSmall"
+-			       follows="bottom|left"
+-			       />			
+-		</panel>
+ 		<panel border="true" bottom_delta="-150" follows="left|top|right|bottom" height="255"
+ 		       label="Options" left="1" mouse_opaque="true"
+ 		     name="options_tab" width="398">
+Index: indra/newview/CMakeLists.txt
+===================================================================
+--- indra/newview/CMakeLists.txt	(revision 89)
++++ indra/newview/CMakeLists.txt	(revision 90)
+@@ -540,7 +540,8 @@
+     llfloateractivespeakers.h
+     llfloateranimpreview.h
+     llfloaterauction.h
+-    llfloateravatarinfo.h
++    llfloateravatarinfo.h
++	llfloateravatarlist.h
+     llfloateravatarpicker.h
+     llfloateravatartextures.h
+     llfloaterbuildoptions.h

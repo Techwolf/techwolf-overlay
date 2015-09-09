@@ -1,0 +1,122 @@
+Index: trunk-clean/indra/newview/llviewerjoystick.cpp
+===================================================================
+--- trunk-clean/indra/newview/llviewerjoystick.cpp	(revision 1135)
++++ trunk-clean/indra/newview/llviewerjoystick.cpp	(working copy)
+@@ -58,6 +58,9 @@
+ // flycam translations in build mode should be reduced
+ const F32 BUILDMODE_FLYCAM_T_SCALE = 3.f;
+ 
++// minimum time after setting away state before coming back
++const F32 MIN_AFK_TIME = 2.f;
++
+ F32  LLViewerJoystick::sLastDelta[] = {0,0,0,0,0,0,0};
+ F32  LLViewerJoystick::sDelta[] = {0,0,0,0,0,0,0};
+ 
+@@ -499,6 +502,12 @@
+     
+ 	if (!is_zero)
+ 	{
++		// Clear AFK state if moved beyond the deadzone
++		if (gAwayTimer.getElapsedTimeF32() > MIN_AFK_TIME)
++		{
++			gAgent.clearAFK();
++		}
++		
+ 		if (sDelta[0] || sDelta[1] || sDelta[2])
+ 		{
+ 			upd_type |= UPD_POSITION;
+@@ -556,10 +565,12 @@
+ 		return;
+ 	}
+ 
++	bool is_zero = true;
++
+ 	if (mBtn[1] == 1)
+     {
+ 		agentJump();
+-		return;
++		is_zero = false;
+     }
+ 
+ 	F32 axis_scale[] =
+@@ -633,8 +644,21 @@
+ 				dom_mov = val;
+ 			}
+ 		}
++		
++		is_zero = is_zero && (cur_delta[i] == 0.f);
+ 	}
+ 
++	if (!is_zero)
++	{
++		// Clear AFK state if moved beyond the deadzone
++		if (gAwayTimer.getElapsedTimeF32() > MIN_AFK_TIME)
++		{
++			gAgent.clearAFK();
++		}
++
++		setCameraNeedsUpdate(true);
++	}
++
+ 	// forward|backward movements overrule the real dominant movement if 
+ 	// they're bigger than its 20%. This is what you want cos moving forward
+ 	// is what you do most. We also added a special (even more lenient) case 
+@@ -784,7 +808,7 @@
+ 
+ 	F32 time = gFrameIntervalSeconds;
+ 
+-	// avoid making ridicously big movements if there's a big drop in fps 
++	// avoid making ridiculously big movements if there's a big drop in fps 
+ 	if (time > .2f)
+ 	{
+ 		time = .2f;
+@@ -793,6 +817,7 @@
+ 	F32 cur_delta[7];
+ 	F32 feather = gSavedSettings.getF32("FlycamFeathering");
+ 	bool absolute = gSavedSettings.getBOOL("Cursor3D");
++	bool is_zero = true;
+ 
+ 	for (U32 i = 0; i < 7; i++)
+ 	{
+@@ -834,8 +859,17 @@
+ 		}
+ 
+ 		sDelta[i] = sDelta[i] + (cur_delta[i]-sDelta[i])*time*feather;
++
++		is_zero = is_zero && (cur_delta[i] == 0.f);
++
+ 	}
+ 	
++	// Clear AFK state if moved beyond the deadzone
++	if (!is_zero && gAwayTimer.getElapsedTimeF32() > MIN_AFK_TIME)
++	{
++		gAgent.clearAFK();
++	}
++	
+ 	sFlycamPosition += LLVector3(sDelta) * sFlycamRotation;
+ 
+ 	LLMatrix3 rot_mat(sDelta[3], sDelta[4], sDelta[5]);
+@@ -884,6 +918,12 @@
+ 	{
+ 		return false;
+ 	}
++	
++	if (gAwayTimer.getElapsedTimeF32() > MIN_AFK_TIME)
++	{
++		gAgent.clearAFK();
++	}
++	
+ 	if (!mOverrideCamera)
+ 	{
+ 		gAgent.changeCameraToDefault();
+@@ -938,7 +978,7 @@
+ 		toggle_flycam = 0;
+ 	}
+ 	
+-	if (!mOverrideCamera && !LLToolMgr::getInstance()->inBuildMode())
++	if (!mOverrideCamera && !(LLToolMgr::getInstance()->inBuildMode() && gSavedSettings.getBOOL("JoystickBuildEnabled")))
+ 	{
+ 		moveAvatar();
+ 	}
+Index: trunk-clean/doc/contributions.txt
+===================================================================

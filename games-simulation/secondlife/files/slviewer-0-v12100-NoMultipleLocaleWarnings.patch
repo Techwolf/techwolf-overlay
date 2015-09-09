@@ -1,0 +1,22 @@
+diff -urN linden/indra/llui/llresmgr.cpp linden-patched/indra/llui/llresmgr.cpp
+--- linden/indra/llui/llresmgr.cpp	2008-08-28 17:31:36.000000000 +0200
++++ linden-patched/indra/llui/llresmgr.cpp	2008-08-29 19:15:36.000000000 +0200
+@@ -450,15 +450,17 @@
+ const std::string LLLocale::SYSTEM_LOCALE("C");
+ #endif
+ 
++static std::string PrevFailedLocaleString = "";
+ 
+ LLLocale::LLLocale(const std::string& locale_string)
+ {
+ 	mPrevLocaleString = setlocale( LC_ALL, NULL );
+ 	char* new_locale_string = setlocale( LC_ALL, locale_string.c_str());
+-	if ( new_locale_string == NULL)
++	if ( new_locale_string == NULL && PrevFailedLocaleString != locale_string )
+ 	{
+ 		llwarns << "Failed to set locale " << locale_string << llendl;
+ 		setlocale(LC_ALL, SYSTEM_LOCALE.c_str());
++		PrevFailedLocaleString = locale_string;
+ 	}
+ 	//else
+ 	//{

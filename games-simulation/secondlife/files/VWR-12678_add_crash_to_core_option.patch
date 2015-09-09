@@ -1,0 +1,82 @@
+diff --git a/indra/llcommon/llapp.cpp b/indra/llcommon/llapp.cpp
+index 6406d12..391055a 100644
+--- a/indra/llcommon/llapp.cpp
++++ b/indra/llcommon/llapp.cpp
+@@ -75,6 +75,9 @@ LLApp* LLApp::sApplication = NULL;
+ //static
+ BOOL LLApp::sLogInSignal = FALSE;
+ 
++//Allows the generation of core files for post mortum under gdb
++BOOL LLApp::sGenerateCores = FALSE; 
++
+ // static
+ LLApp::EAppStatus LLApp::sStatus = LLApp::APP_STATUS_STOPPED; // Keeps track of application status
+ LLAppErrorHandler LLApp::sErrorHandler = NULL;
+@@ -705,6 +708,15 @@ void default_unix_signal_handler(int signum, siginfo_t *info, void *)
+ 				llwarns << "Signal handler - Flagging error status and waiting for shutdown" << llendl;
+ 			}
+ 			// Flag status to ERROR, so thread_error does its work.
++			
++			if(LLApp::sGenerateCores)	//Don't gracefully handle any signals crash and core for a gdb post mortum
++			{
++				clear_signals();
++				llwarns << "Fatal signal recieved, not handling the crash here, passing back to operating system" << llendl;
++				raise(signum);
++				return;
++			}		
++
+ 			LLApp::setError();
+ 			// Block in the signal handler until somebody says that we're done.
+ 			while (LLApp::sErrorThreadRunning && !LLApp::isStopped())
+diff --git a/indra/llcommon/llapp.h b/indra/llcommon/llapp.h
+index b5e72f5..1620ad8 100644
+--- a/indra/llcommon/llapp.h
++++ b/indra/llcommon/llapp.h
+@@ -282,6 +282,7 @@ private:
+ 
+ public:
+ 	static BOOL sLogInSignal;
++	static BOOL sGenerateCores; // Generate a core on a crash rather than the signal handler crash logger route;
+ };
+ 
+ #endif // LL_LLAPP_H
+diff --git a/indra/newview/app_settings/cmd_line.xml b/indra/newview/app_settings/cmd_line.xml
+index db665b7..813830c 100644
+--- a/indra/newview/app_settings/cmd_line.xml
++++ b/indra/newview/app_settings/cmd_line.xml
+@@ -331,6 +331,14 @@
+       <string>Crashes on startup. For QA use.</string>
+       <key>map-to</key>
+       <string>CrashOnStartup</string>
++    </map>
++
++    <key>coreoncrash</key>
++    <map>
++      <key>desc</key>
++      <string>Disables the crash logger and creates a core file in the event of a crash</string>
++      <key>map-to</key>
++      <string>CoreOnCrash</string>
+     </map>
+ 
+   </map>
+diff --git a/indra/newview/llappviewer.cpp b/indra/newview/llappviewer.cpp
+index 19c618e..c809a4e 100644
+--- a/indra/newview/llappviewer.cpp
++++ b/indra/newview/llappviewer.cpp
+@@ -1703,6 +1703,16 @@ bool LLAppViewer::initConfiguration()
+ 	// - apply command line settings 
+ 	clp.notify(); 
+ 
++	// Register the core crash option as soon as we can
++	// if we want gdb post-mortum on cores we need to be up and running
++	// ASAP or we might miss init issue etc.
++	
++	if(clp.hasOption("coreoncrash"))
++	{
++		llwarns << "Crashes will be handled by system, stack trace logs and crash logger are both disabled" <<llendl;
++		sGenerateCores=true;
++	}
++
+ 	// Handle initialization from settings.
+ 	// Start up	the	debugging console before handling other	options.
+ 	if (gSavedSettings.getBOOL("ShowConsoleWindow"))

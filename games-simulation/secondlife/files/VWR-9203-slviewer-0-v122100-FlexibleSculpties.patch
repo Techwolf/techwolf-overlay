@@ -1,0 +1,341 @@
+diff -urN linden/indra/llmath/llvolume.cpp linden-patched/indra/llmath/llvolume.cpp
+--- linden/indra/llmath/llvolume.cpp	2009-02-24 22:59:22.000000000 +0100
++++ linden-patched/indra/llmath/llvolume.cpp	2009-03-02 17:46:44.000000000 +0100
+@@ -2040,7 +2040,12 @@
+ }
+ 
+ // create the vertices from the map
+-void LLVolume::sculptGenerateMapVertices(U16 sculpt_width, U16 sculpt_height, S8 sculpt_components, const U8* sculpt_data, U8 sculpt_type)
++void LLVolume::sculptGenerateMapVertices(U16 sculpt_width,
++										 U16 sculpt_height,
++										 S8 sculpt_components,
++										 const U8* sculpt_data,
++										 U8 sculpt_type,
++										 BOOL is_flexible)
+ {
+ 	U8 sculpt_stitching = sculpt_type & LL_SCULPT_TYPE_MASK;
+ 	BOOL sculpt_invert = sculpt_type & LL_SCULPT_FLAG_INVERT;
+@@ -2123,6 +2128,43 @@
+ 			{
+ 				pt.mPos.mV[VX] *= -1.f;
+ 			}
++
++
++			if(is_flexible)
++			{
++				// apply path deformation to position
++				LLQuaternion rotation;
++				LLVector3 position;
++				LLVector2 scale;
++
++				F32 path_dist = pt.mPos[VZ] + 0.5;  // in interval [0..1]
++
++				S32 p1 = (sizeS-1) * (S32)path_dist;
++				if (p1 == (sizeS-1))
++				{
++					rotation = mPathp->mPath[p1].mRot;
++					position = mPathp->mPath[p1].mPos;
++				}
++				else
++				{
++					// point is somewhere between p1 and p1+1.  so lerp.
++					
++					S32 p2 = p1+1;
++					F32 remainder = path_dist * (sizeS-1) - p1;
++					rotation = lerp(remainder, mPathp->mPath[p1].mRot, mPathp->mPath[p2].mRot);
++					position = lerp(mPathp->mPath[p1].mPos, mPathp->mPath[p2].mPos, remainder);
++				}
++				
++				// scale doesn't vary (sculpties ignore taper)
++				scale = mPathp->mPath[0].mScale;
++				
++				pt.mPos[VZ] = 0;
++				pt.mPos[VX] = pt.mPos[VX] * scale.mV[VX];
++				pt.mPos[VY] = pt.mPos[VY] * scale.mV[VY];
++				pt.mPos = pt.mPos * rotation;
++				pt.mPos += position;
++			}
++
+ 		}
+ 		
+ 		line += sizeT;
+@@ -2182,10 +2224,15 @@
+ }
+ 
+ // sculpt replaces generate() for sculpted surfaces
+-void LLVolume::sculpt(U16 sculpt_width, U16 sculpt_height, S8 sculpt_components, const U8* sculpt_data, S32 sculpt_level)
++void LLVolume::sculpt(U16 sculpt_width,
++					  U16 sculpt_height,
++					  S8 sculpt_components,
++					  const U8* sculpt_data,
++					  S32 sculpt_level,
++					  BOOL is_flexible)
+ {
+ 	LLMemType m1(LLMemType::MTYPE_VOLUME);
+-    U8 sculpt_type = mParams.getSculptType();
++	U8 sculpt_type = mParams.getSculptType();
+ 
+ 	BOOL data_is_empty = FALSE;
+ 
+@@ -2226,7 +2273,7 @@
+ 	}	
+ 	else
+ 	{
+-		sculptGenerateMapVertices(sculpt_width, sculpt_height, sculpt_components, sculpt_data, sculpt_type);
++		sculptGenerateMapVertices(sculpt_width, sculpt_height, sculpt_components, sculpt_data, sculpt_type, is_flexible);
+ 	}
+ 
+ 	for (S32 i = 0; i < (S32)mProfilep->mFaces.size(); i++)
+diff -urN linden/indra/llmath/llvolume.h linden-patched/indra/llmath/llvolume.h
+--- linden/indra/llmath/llvolume.h	2009-02-24 22:59:22.000000000 +0100
++++ linden-patched/indra/llmath/llvolume.h	2009-03-02 17:46:21.000000000 +0100
+@@ -940,10 +940,10 @@
+ 	U32					mFaceMask;			// bit array of which faces exist in this volume
+ 	LLVector3			mLODScaleBias;		// vector for biasing LOD based on scale
+ 	
+-	void sculpt(U16 sculpt_width, U16 sculpt_height, S8 sculpt_components, const U8* sculpt_data, S32 sculpt_level);
++	void sculpt(U16 sculpt_width, U16 sculpt_height, S8 sculpt_components, const U8* sculpt_data, S32 sculpt_level, BOOL is_flexible);
+ private:
+ 	F32 sculptGetSurfaceArea(U16 sculpt_width, U16 sculpt_height, S8 sculpt_components, const U8* sculpt_data);
+-	void sculptGenerateMapVertices(U16 sculpt_width, U16 sculpt_height, S8 sculpt_components, const U8* sculpt_data, U8 sculpt_type);
++	void sculptGenerateMapVertices(U16 sculpt_width, U16 sculpt_height, S8 sculpt_components, const U8* sculpt_data, U8 sculpt_type, BOOL is_flexible);
+ 	void sculptGeneratePlaceholder();
+ 	void sculptCalcMeshResolution(U16 width, U16 height, U8 type, S32& s, S32& t);
+ 
+diff -urN linden/indra/newview/llflexibleobject.cpp linden-patched/indra/newview/llflexibleobject.cpp
+--- linden/indra/newview/llflexibleobject.cpp	2009-02-24 22:59:27.000000000 +0100
++++ linden-patched/indra/newview/llflexibleobject.cpp	2009-03-02 17:46:21.000000000 +0100
+@@ -101,14 +101,6 @@
+ 	}
+ }
+ 
+-//-----------------------------------------------------------------------------------------------
+-void LLVolumeImplFlexible::setParentPositionAndRotationDirectly( LLVector3 p, LLQuaternion r )
+-{
+-	mParentPosition = p;
+-	mParentRotation = r;
+-
+-}//-----------------------------------------------------------------------------------------------------
+-
+ void LLVolumeImplFlexible::remapSections(LLFlexibleObjectSection *source, S32 source_sections,
+ 										 LLFlexibleObjectSection *dest, S32 dest_sections)
+ {	
+@@ -208,6 +200,13 @@
+ 		end_rot = F_PI * params.getTwist();
+ 	}
+ 
++	// sculpts have no notion of taper:
++	if (mVO->isSculpted())
++	{
++		bottom_scale = LLVector2(1.f, 1.f);
++		top_scale = LLVector2(1.f, 1.f);
++	}
++
+ 	if (!mVO->mDrawable)
+ 	{
+ 		return;
+@@ -348,17 +347,6 @@
+ 	return force_update;
+ }
+ 
+-inline S32 log2(S32 x)
+-{
+-	S32 ret = 0;
+-	while (x > 1)
+-	{
+-		++ret;
+-		x >>= 1;
+-	}
+-	return ret;
+-}
+-
+ void LLVolumeImplFlexible::doFlexibleUpdate()
+ {
+ 	LLVolume* volume = mVO->getVolume();
+@@ -642,8 +630,16 @@
+ 
+ void LLVolumeImplFlexible::doFlexibleRebuild()
+ {
+-	LLVolume* volume = mVO->getVolume();
+-	volume->regen();
++	if(((LLVOVolume*)mVO)->isSculpted())
++	{
++		LLVOVolume* vovol = (LLVOVolume*)mVO;
++		vovol->sculpt();
++	}
++	else
++	{
++		LLVolume* volume = mVO->getVolume();
++		volume->regen();
++	}
+ 	
+ 	mUpdated = TRUE;
+ }
+@@ -728,51 +724,6 @@
+ 	return TRUE;
+ }
+ 
+-//----------------------------------------------------------------------------------
+-void LLVolumeImplFlexible::setCollisionSphere( LLVector3 p, F32 r )
+-{
+-	mCollisionSpherePosition = p;
+-	mCollisionSphereRadius   = r;
+-
+-}//------------------------------------------------------------------
+-
+-
+-//----------------------------------------------------------------------------------
+-void LLVolumeImplFlexible::setUsingCollisionSphere( bool u )
+-{
+-}//------------------------------------------------------------------
+-
+-
+-//----------------------------------------------------------------------------------
+-void LLVolumeImplFlexible::setRenderingCollisionSphere( bool r )
+-{
+-}//------------------------------------------------------------------
+-
+-//------------------------------------------------------------------
+-LLVector3 LLVolumeImplFlexible::getEndPosition()
+-{
+-	S32 num_sections = 1 << mAttributes->getSimulateLOD();
+-	return mSection[ num_sections ].mPosition;
+-
+-}//------------------------------------------------------------------
+-
+-
+-//------------------------------------------------------------------
+-LLVector3 LLVolumeImplFlexible::getNodePosition( int nodeIndex )
+-{
+-	S32 num_sections = 1 << mAttributes->getSimulateLOD();
+-	if ( nodeIndex > num_sections - 1 )
+-	{
+-		nodeIndex = num_sections - 1;
+-	}
+-	else if ( nodeIndex < 0 ) 
+-	{
+-		nodeIndex = 0;
+-	}
+-
+-	return mSection[ nodeIndex ].mPosition;
+-
+-}//------------------------------------------------------------------
+ 
+ LLVector3 LLVolumeImplFlexible::getPivotPosition() const
+ {
+@@ -791,14 +742,6 @@
+ }//------------------------------------------------------------------
+ 
+ 
+-//------------------------------------------------------------------
+-LLQuaternion LLVolumeImplFlexible::getEndRotation()
+-{
+-	return mLastSegmentRotation;
+-
+-}//------------------------------------------------------------------
+-
+-
+ void LLVolumeImplFlexible::updateRelativeXform()
+ {
+ 	LLQuaternion delta_rot;
+diff -urN linden/indra/newview/llflexibleobject.h linden-patched/indra/newview/llflexibleobject.h
+--- linden/indra/newview/llflexibleobject.h	2009-02-24 22:59:25.000000000 +0100
++++ linden-patched/indra/newview/llflexibleobject.h	2009-03-02 17:46:21.000000000 +0100
+@@ -100,15 +100,6 @@
+ 		void doFlexibleRebuild(); // Called to rebuild the geometry
+ 		void preRebuild();
+ 
+-		//void				setAttributes( LLFlexibleObjectData );
+-		void				setParentPositionAndRotationDirectly( LLVector3 p, LLQuaternion r );
+-		void				setUsingCollisionSphere( bool u );
+-		void				setCollisionSphere( LLVector3 position, F32 radius );
+-		void				setRenderingCollisionSphere( bool r);
+-
+-		LLVector3			getEndPosition();
+-		LLQuaternion		getEndRotation();
+-		LLVector3			getNodePosition( int nodeIndex );
+ 		LLVector3			getAnchorPosition() const;
+ 
+ 	private:
+@@ -131,8 +122,6 @@
+ 		S32							mSimulateRes;
+ 		S32							mRenderRes;
+ 		U32							mFrameNum;
+-		LLVector3					mCollisionSpherePosition;
+-		F32							mCollisionSphereRadius;
+ 		U32							mID;
+ 
+ 		//--------------------------------------
+diff -urN linden/indra/newview/llfloaterimagepreview.cpp linden-patched/indra/newview/llfloaterimagepreview.cpp
+--- linden/indra/newview/llfloaterimagepreview.cpp	2009-02-24 22:59:26.000000000 +0100
++++ linden-patched/indra/newview/llfloaterimagepreview.cpp	2009-03-02 17:46:21.000000000 +0100
+@@ -796,7 +796,7 @@
+ 
+ 	if (imagep)
+ 	{
+-		mVolume->sculpt(imagep->getWidth(), imagep->getHeight(), imagep->getComponents(), imagep->getData(), 0);
++		mVolume->sculpt(imagep->getWidth(), imagep->getHeight(), imagep->getComponents(), imagep->getData(), 0, FALSE);
+ 	}
+ 
+ 	const LLVolumeFace &vf = mVolume->getVolumeFace(0);
+diff -urN linden/indra/newview/llpanelobject.cpp linden-patched/indra/newview/llpanelobject.cpp
+--- linden/indra/newview/llpanelobject.cpp	2009-02-24 22:59:26.000000000 +0100
++++ linden-patched/indra/newview/llpanelobject.cpp	2009-03-02 17:46:21.000000000 +0100
+@@ -1346,7 +1346,7 @@
+ 	}
+ 
+ 
+-	if (path == LL_PCODE_PATH_LINE)
++	if ((path == LL_PCODE_PATH_LINE) || (selected_type == MI_SCULPT))
+ 	{
+ 		LLVOVolume *volobjp = (LLVOVolume *)(LLViewerObject*)(mObject);
+ 		if (volobjp->isFlexible())
+diff -urN linden/indra/newview/llvovolume.cpp linden-patched/indra/newview/llvovolume.cpp
+--- linden/indra/newview/llvovolume.cpp	2009-02-24 22:59:26.000000000 +0100
++++ linden-patched/indra/newview/llvovolume.cpp	2009-03-02 17:46:21.000000000 +0100
+@@ -771,7 +771,7 @@
+ 			return;
+ 		}
+ 
+-		if (current_discard == discard_level)  // no work to do here
++		if (current_discard == discard_level && !isFlexible())  // no work to do here
+ 			return;
+ 		
+ 		LLPointer<LLImageRaw> raw_image = new LLImageRaw();
+@@ -799,7 +799,7 @@
+ 					   
+ 			sculpt_data = raw_image->getData();
+ 		}
+-		getVolume()->sculpt(sculpt_width, sculpt_height, sculpt_components, sculpt_data, discard_level);
++		getVolume()->sculpt(sculpt_width, sculpt_height, sculpt_components, sculpt_data, discard_level, isFlexible());
+ 	}
+ }
+ 
+@@ -1629,7 +1629,8 @@
+ BOOL LLVOVolume::canBeFlexible() const
+ {
+ 	U8 path = getVolume()->getParams().getPathParams().getCurveType();
+-	return (path == LL_PCODE_PATH_FLEXIBLE || path == LL_PCODE_PATH_LINE);
++
++	return (path == LL_PCODE_PATH_FLEXIBLE || path == LL_PCODE_PATH_LINE || isSculpted());
+ }
+ 
+ BOOL LLVOVolume::setIsFlexible(BOOL is_flexible)
+@@ -1660,7 +1661,16 @@
+ 		{
+ 			volume_params = getVolume()->getParams();
+ 			U8 profile_and_hole = volume_params.getProfileParams().getCurveType();
+-			volume_params.setType(profile_and_hole, LL_PCODE_PATH_LINE);
++			
++			if (isSculpted())
++			{
++				volume_params.setType(profile_and_hole, LL_PCODE_PATH_CIRCLE);
++			}
++			else
++			{
++				volume_params.setType(profile_and_hole, LL_PCODE_PATH_LINE);
++			}
++			
+ 			res = TRUE;
+ 			setFlags(FLAGS_PHANTOM, FALSE);
+ 			setParameterEntryInUse(LLNetworkData::PARAMS_FLEXIBLE, FALSE, true);

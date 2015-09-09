@@ -1,0 +1,18 @@
+diff --git a/Makefile b/Makefile
+index fc88058..47c1395 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1048,10 +1048,9 @@ endif
+ 	  $(SED) -e "s*DATADIR*$(DATADIR)*g" < ./inst/$(PROJECT).ini.template > "$(GLOBAL_QMC2_INI)" ; \
+ 	fi
+ ifneq '$(ARCH)' 'Darwin'
+-	@echo "Installing $(TARGET_NAME).desktop to $(GLOBAL_DATADIR)/applications"
+-	@$(MKDIR) $(GLOBAL_DATADIR)/applications
+-	@$(CHMOD) a+rx $(GLOBAL_DATADIR)/applications
+-	@$(SED) -e "s*DATADIR*$(DATADIR)*g; s*EMULATOR*$(QMC2_EMULATOR)*g; s*TARGET*$(TARGET_NAME)*g; s*EMUICO*$(EMUICO)*g; s*GENERICNAME*$(GENERICNAME)*g" < ./inst/$(PROJECT).desktop.template > $(GLOBAL_DATADIR)/applications/$(TARGET_NAME).desktop
++	@echo "Installing $(TARGET_NAME).desktop to $(DESTDIR)/usr/share/applications"
++	@$(MKDIR) $(DESTDIR)/usr/share/applications
++	@$(SED) -e "s*DATADIR*$(DATADIR)*g; s*EMULATOR*$(QMC2_EMULATOR)*g; s*TARGET*$(TARGET_NAME)*g; s*EMUICO*$(EMUICO)*g; s*GENERICNAME*$(GENERICNAME)*g" < ./inst/$(PROJECT).desktop.template > $(DESTDIR)/usr/share/applications/$(TARGET_NAME).desktop
+ endif
+ 	@echo "Installation complete"
+ 

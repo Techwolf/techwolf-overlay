@@ -1,0 +1,572 @@
+diff -urN linden/indra/llcommon/lltimer.cpp linden-patched/indra/llcommon/lltimer.cpp
+--- linden/indra/llcommon/lltimer.cpp	2009-01-28 20:43:55.000000000 +0100
++++ linden-patched/indra/llcommon/lltimer.cpp	2009-02-02 14:19:34.000000000 +0100
+@@ -554,6 +554,24 @@
+ }
+ 
+ 
++void timeToFormattedString(time_t time, std::string format, std::string &timestr)
++{
++	char buffer[256];
++	struct tm *t;
++	t = localtime(&time);
++	strftime(buffer, 255, format.c_str(), t);
++	timestr = (const char*)buffer;
++}
++
++
++void timeStructToFormattedString(struct tm * time, std::string format, std::string &timestr)
++{
++	char buffer[256];
++	strftime(buffer, 255, format.c_str(), time);
++	timestr = (const char*)buffer;
++}
++
++
+ //////////////////////////////////////////////////////////////////////////////
+ //
+ //		LLEventTimer Implementation
+diff -urN linden/indra/llcommon/lltimer.h linden-patched/indra/llcommon/lltimer.h
+--- linden/indra/llcommon/lltimer.h	2009-01-28 20:43:53.000000000 +0100
++++ linden-patched/indra/llcommon/lltimer.h	2009-02-02 14:19:34.000000000 +0100
+@@ -167,6 +167,8 @@
+ 
+ void microsecondsToTimecodeString(U64 current_time, std::string& tcstring);
+ void secondsToTimecodeString(F32 current_time, std::string& tcstring);
++void timeToFormattedString(time_t time, std::string format, std::string &timestr);
++void timeStructToFormattedString(struct tm * time, std::string format, std::string &timestr);
+ 
+ // class for scheduling a function to be called at a given frequency (approximate, inprecise)
+ class LLEventTimer 
+diff -urN linden/indra/newview/app_settings/settings.xml linden-patched/indra/newview/app_settings/settings.xml
+--- linden/indra/newview/app_settings/settings.xml	2009-01-28 20:44:23.000000000 +0100
++++ linden-patched/indra/newview/app_settings/settings.xml	2009-02-02 14:19:34.000000000 +0100
+@@ -2536,6 +2536,50 @@
+       <key>Value</key>
+       <integer>0</integer>
+     </map>
++    <key>LongDateFormat</key>
++    <map>
++      <key>Comment</key>
++      <string>Long date format to use</string>
++      <key>Persist</key>
++      <integer>1</integer>
++      <key>Type</key>
++      <string>String</string>
++      <key>Value</key>
++      <string>%A %d %B %Y</string>
++    </map>
++    <key>ShortDateFormat</key>
++    <map>
++      <key>Comment</key>
++      <string>Short date format to use</string>
++      <key>Persist</key>
++      <integer>1</integer>
++      <key>Type</key>
++      <string>String</string>
++      <key>Value</key>
++      <string>%Y-%m-%d</string>
++    </map>
++    <key>TimeFormat</key>
++    <map>
++      <key>Comment</key>
++      <string>Time format to use</string>
++      <key>Persist</key>
++      <integer>1</integer>
++      <key>Type</key>
++      <string>String</string>
++      <key>Value</key>
++      <string>%H:%M</string>
++    </map>
++    <key>TimestampFormat</key>
++    <map>
++      <key>Comment</key>
++      <string>Timestamp format to use</string>
++      <key>Persist</key>
++      <integer>1</integer>
++      <key>Type</key>
++      <string>String</string>
++      <key>Value</key>
++      <string>%a %d %b %Y %H:%M:%S</string>
++    </map>
+     <key>FloaterAboutRect</key>
+     <map>
+       <key>Comment</key>
+diff -urN linden/indra/newview/lleventinfo.cpp linden-patched/indra/newview/lleventinfo.cpp
+--- linden/indra/newview/lleventinfo.cpp	2009-01-28 20:44:23.000000000 +0100
++++ linden-patched/indra/newview/lleventinfo.cpp	2009-02-02 14:19:34.000000000 +0100
+@@ -35,6 +35,7 @@
+ #include "llappviewer.h"	// for gPacificDaylightTime
+ #include "lluuid.h"
+ #include "message.h"
++#include "llviewercontrol.h"
+ 
+ LLEventInfo::cat_map LLEventInfo::sCategories;
+ 
+@@ -48,7 +49,7 @@
+ 
+ 	msg->getString("EventData", "Category", mCategoryStr);
+ 
+-	msg->getString("EventData", "Date", mTimeStr);
++//	msg->getString("EventData", "Date", mTimeStr);
+ 
+ 	U32 duration;
+ 	msg->getU32("EventData","Duration",duration);
+@@ -58,6 +59,19 @@
+ 	msg->getU32("EventData", "DateUTC", date);
+ 	mUnixTime = date;
+ 
++	// Convert to Pacific, based on server's opinion of whether
++	// it's daylight savings time there.
++	struct tm* t = utc_to_pacific_time(mUnixTime, gPacificDaylightTime);;
++	timeStructToFormattedString(t, gSavedSettings.getString("TimestampFormat"), mTimeStr);
++	if (gPacificDaylightTime)
++	{
++		mTimeStr += " PDT";
++	}
++	else
++	{
++		mTimeStr += " PST";
++	}
++
+ 	msg->getString("EventData", "Desc", mDesc);
+ 
+ 	std::string buffer;
+diff -urN linden/indra/newview/lleventnotifier.cpp linden-patched/indra/newview/lleventnotifier.cpp
+--- linden/indra/newview/lleventnotifier.cpp	2009-01-28 20:44:20.000000000 +0100
++++ linden-patched/indra/newview/lleventnotifier.cpp	2009-02-02 14:19:34.000000000 +0100
+@@ -40,6 +40,8 @@
+ #include "llfloaterdirectory.h"
+ #include "llfloaterworldmap.h"
+ #include "llagent.h"
++#include "llappviewer.h"	// for gPacificDaylightTime
++#include "llviewercontrol.h"
+ 
+ LLEventNotifier gEventNotifier;
+ 
+@@ -239,8 +241,7 @@
+ 	{
+ 		event_ok = FALSE;
+ 	}
+-
+-
++/*
+ 	option_it = response.find("event_date");
+ 	if (option_it != response.end())
+ 	{
+@@ -251,12 +252,25 @@
+ 	{
+ 		event_ok = FALSE;
+ 	}
+-
++*/
+ 	option_it = response.find("event_date_ut");
+ 	if (option_it != response.end())
+ 	{
+ 		llinfos << "EventDate: " << option_it->second << llendl;
+ 		mEventDate = strtoul(option_it->second.c_str(), NULL, 10);
++
++		// Convert to Pacific, based on server's opinion of whether
++		// it's daylight savings time there.
++		struct tm* t = utc_to_pacific_time(mEventDate, gPacificDaylightTime);
++		timeStructToFormattedString(t, gSavedSettings.getString("TimestampFormat"), mEventDateStr);
++		if (gPacificDaylightTime)
++		{
++			mEventDateStr += " PDT";
++		}
++		else
++		{
++			mEventDateStr += " PST";
++		}
+ 	}
+ 	else
+ 	{
+diff -urN linden/indra/newview/llfloaterinspect.cpp linden-patched/indra/newview/llfloaterinspect.cpp
+--- linden/indra/newview/llfloaterinspect.cpp	2009-01-28 20:44:20.000000000 +0100
++++ linden-patched/indra/newview/llfloaterinspect.cpp	2009-02-02 14:19:34.000000000 +0100
+@@ -211,8 +211,7 @@
+ 	{
+ 		LLSelectNode* obj = *iter;
+ 		LLSD row;
+-		char time[MAX_STRING];
+-		std::string owner_name, creator_name;
++		std::string owner_name, creator_name, time;
+ 
+ 		if (obj->mCreationDate == 0)
+ 		{	// Don't have valid information from the server, so skip this one
+@@ -220,8 +219,7 @@
+ 		}
+ 
+ 		time_t timestamp = (time_t) (obj->mCreationDate/1000000);
+-		LLStringUtil::copy(time, ctime(&timestamp), MAX_STRING);
+-		time[24] = '\0';
++		timeToFormattedString(timestamp, gSavedSettings.getString("TimestampFormat"), time);
+ 		gCacheName->getFullName(obj->mPermissions->getOwner(), owner_name);
+ 		gCacheName->getFullName(obj->mPermissions->getCreator(), creator_name);
+ 		row["id"] = obj->getObject()->getID();
+diff -urN linden/indra/newview/llfloaterproperties.cpp linden-patched/indra/newview/llfloaterproperties.cpp
+--- linden/indra/newview/llfloaterproperties.cpp	2009-01-28 20:44:19.000000000 +0100
++++ linden-patched/indra/newview/llfloaterproperties.cpp	2009-02-02 14:19:34.000000000 +0100
+@@ -380,7 +380,9 @@
+ 	}
+ 	else
+ 	{
+-		childSetText("LabelAcquiredDate", std::string(ctime(&time_utc)) );
++		std::string timestr;
++		timeToFormattedString(time_utc, gSavedSettings.getString("TimestampFormat"), timestr);
++		childSetText("LabelAcquiredDate", timestr);
+ 	}
+ 
+ 	///////////////////////
+diff -urN linden/indra/newview/llgroupmgr.cpp linden-patched/indra/newview/llgroupmgr.cpp
+--- linden/indra/newview/llgroupmgr.cpp	2009-01-28 20:44:20.000000000 +0100
++++ linden-patched/indra/newview/llgroupmgr.cpp	2009-02-02 14:19:34.000000000 +0100
+@@ -48,6 +48,7 @@
+ #include "lltransactiontypes.h"
+ #include "llstatusbar.h"
+ #include "lleconomy.h"
++#include "llviewercontrol.h"
+ #include "llviewerwindow.h"
+ #include "llfloaterdirectory.h"
+ #include "llfloatergroupinfo.h"
+@@ -792,20 +793,6 @@
+ 	return NULL;
+ }
+ 
+-// Helper function for LLGroupMgr::processGroupMembersReply
+-// This reformats date strings from MM/DD/YYYY to YYYY/MM/DD ( e.g. 1/27/2008 -> 2008/1/27 )
+-// so that the sorter can sort by year before month before day.
+-static void formatDateString(std::string &date_string)
+-{
+-	using namespace boost;
+-	cmatch result;
+-	const regex expression("([0-9]{1,2})/([0-9]{1,2})/([0-9]{4})");
+-	if (regex_match(date_string.c_str(), result, expression))
+-	{
+-		date_string = result[3]+"/"+result[1]+"/"+result[2];
+-	}
+-}
+-
+ // static
+ void LLGroupMgr::processGroupMembersReply(LLMessageSystem* msg, void** data)
+ {
+@@ -855,7 +842,14 @@
+ 
+ 			if (member_id.notNull())
+ 			{
+-				formatDateString(online_status); // reformat for sorting, e.g. 12/25/2008 -> 2008/12/25
++				tm t;
++				if (sscanf(online_status.c_str(), "%u/%u/%u", &t.tm_mon, &t.tm_mday, &t.tm_year) == 3 && t.tm_year > 1900)
++				{
++					t.tm_year -= 1900;
++					t.tm_mon--;
++					t.tm_hour = t.tm_min = t.tm_sec = 0;
++					timeStructToFormattedString(&t, gSavedSettings.getString("ShortDateFormat"), online_status);
++				}
+ 				
+ 				//llinfos << "Member " << member_id << " has powers " << std::hex << agent_powers << std::dec << llendl;
+ 				LLGroupMemberData* newdata = new LLGroupMemberData(member_id, 
+diff -urN linden/indra/newview/llgroupnotify.cpp linden-patched/indra/newview/llgroupnotify.cpp
+--- linden/indra/newview/llgroupnotify.cpp	2009-01-28 20:44:19.000000000 +0100
++++ linden-patched/indra/newview/llgroupnotify.cpp	2009-02-02 14:19:42.000000000 +0100
+@@ -61,16 +61,6 @@
+ // LLGroupNotifyBox
+ //---------------------------------------------------------------------------
+ 
+-static std::string g_formatted_time(const time_t& the_time)
+-{
+-	char buffer[30];		/*Flawfinder: ignore*/	
+-	time_t t = the_time;
+-	if (!t) time(&t);
+-	LLStringUtil::copy(buffer, ctime(&t), 30);
+-	buffer[24] = '\0';
+-	return std::string(buffer);
+-}
+-
+ // static
+ LLGroupNotifyBox* LLGroupNotifyBox::show(const std::string& subject,
+ 										 const std::string& message,
+@@ -133,8 +123,10 @@
+ 	setFocusRoot(TRUE);
+ 
+ 	time_t timestamp = (time_t)t;
++	if (!timestamp) time(&timestamp);
+ 
+-	std::string time_buf = g_formatted_time(timestamp);
++	std::string time_buf;
++	timeToFormattedString(timestamp, gSavedSettings.getString("TimestampFormat"), time_buf);
+ 
+ 	setFollows(FOLLOWS_TOP|FOLLOWS_RIGHT);
+ 	setBackgroundVisible(TRUE);
+diff -urN linden/indra/newview/llpanelavatar.cpp linden-patched/indra/newview/llpanelavatar.cpp
+--- linden/indra/newview/llpanelavatar.cpp	2009-01-28 20:44:20.000000000 +0100
++++ linden-patched/indra/newview/llpanelavatar.cpp	2009-02-02 14:19:34.000000000 +0100
+@@ -1778,7 +1778,16 @@
+ 		msg->getStringFast(_PREHASH_PropertiesData, _PREHASH_BornOn, born_on);
+ 		msg->getString("PropertiesData","ProfileURL", profile_url);
+ 		msg->getU32Fast(_PREHASH_PropertiesData, _PREHASH_Flags, flags);
+-		
++	
++		tm t;
++		if (sscanf(born_on.c_str(), "%u/%u/%u", &t.tm_mon, &t.tm_mday, &t.tm_year) == 3 && t.tm_year > 1900)
++		{
++			t.tm_year -= 1900;
++			t.tm_mon--;
++			t.tm_hour = t.tm_min = t.tm_sec = 0;
++			timeStructToFormattedString(&t, gSavedSettings.getString("ShortDateFormat"), born_on);
++		}
++
+ 		identified = (flags & AVATAR_IDENTIFIED);
+ 		transacted = (flags & AVATAR_TRANSACTED);
+ 		age_verified = (flags & AVATAR_AGEVERIFIED); // Not currently getting set in dataserver/lldataavatar.cpp for privacy considerations
+diff -urN linden/indra/newview/llpanelclassified.cpp linden-patched/indra/newview/llpanelclassified.cpp
+--- linden/indra/newview/llpanelclassified.cpp	2009-01-28 20:44:21.000000000 +0100
++++ linden-patched/indra/newview/llpanelclassified.cpp	2009-02-02 14:19:34.000000000 +0100
+@@ -668,7 +668,8 @@
+ 			self->mAutoRenewCheck->set(auto_renew);
+ 		}
+ 
+-		std::string datestr = llformat("%02d/%02d/%d", now->tm_mon+1, now->tm_mday, now->tm_year+1900);
++		std::string datestr;
++		timeStructToFormattedString(now, gSavedSettings.getString("ShortDateFormat"), datestr);
+ 		LLStringUtil::format_map_t string_args;
+ 		string_args["[DATE]"] = datestr;
+ 		string_args["[AMT]"] = llformat("%d", price_for_listing);
+diff -urN linden/indra/newview/llpaneldirbrowser.cpp linden-patched/indra/newview/llpaneldirbrowser.cpp
+--- linden/indra/newview/llpaneldirbrowser.cpp	2009-01-28 20:44:19.000000000 +0100
++++ linden-patched/indra/newview/llpaneldirbrowser.cpp	2009-02-02 14:19:34.000000000 +0100
+@@ -46,6 +46,7 @@
+ 
+ // viewer project includes
+ #include "llagent.h"
++#include "llappviewer.h"	// for gPacificDaylightTime
+ #include "llbutton.h"
+ #include "llcheckboxctrl.h"
+ #include "llcombobox.h"
+@@ -643,7 +644,7 @@
+ 		msg->getUUID("QueryReplies", "OwnerID", owner_id, i);
+ 		msg->getString("QueryReplies", "Name", name, i);
+ 		msg->getU32("QueryReplies", "EventID", event_id, i);
+-		msg->getString("QueryReplies", "Date", date, i);
++//		msg->getString("QueryReplies", "Date", date, i);
+ 		msg->getU32("QueryReplies", "UnixTime", unix_time, i);
+ 		msg->getU32("QueryReplies", "EventFlags", event_flags, i);
+ 	
+@@ -690,6 +691,11 @@
+ 		row["columns"][1]["value"] = name;
+ 		row["columns"][1]["font"] = "SANSSERIF";
+ 
++		struct tm* t = utc_to_pacific_time(unix_time, gPacificDaylightTime);
++		std::string format = "%m-%d ";
++		format += gSavedSettings.getString("TimeFormat");
++		timeStructToFormattedString(t, format, date);
++
+ 		row["columns"][2]["column"] = "date";
+ 		row["columns"][2]["value"] = date;
+ 		row["columns"][2]["font"] = "SANSSERIFSMALL";
+diff -urN linden/indra/newview/llpaneldirevents.cpp linden-patched/indra/newview/llpaneldirevents.cpp
+--- linden/indra/newview/llpaneldirevents.cpp	2009-01-28 20:44:22.000000000 +0100
++++ linden-patched/indra/newview/llpaneldirevents.cpp	2009-02-02 14:19:34.000000000 +0100
+@@ -135,11 +135,9 @@
+ 	// Convert to Pacific, based on server's opinion of whether
+ 	// it's daylight savings time there.
+ 	internal_time = utc_to_pacific_time(utc_time, gPacificDaylightTime);
+-
+-	std::string buffer = llformat("%d/%d",
+-			1 + internal_time->tm_mon,		// Jan = 0
+-			internal_time->tm_mday);	// 2001 = 101
+-	childSetValue("date_text", buffer);
++	std::string date;
++	timeStructToFormattedString(internal_time, "%m-%d", date);
++	childSetValue("date_text", date);
+ }
+ 
+ // virtual
+@@ -167,11 +165,9 @@
+ 	// Convert to Pacific, based on server's opinion of whether
+ 	// it's daylight savings time there.
+ 	internal_time = utc_to_pacific_time(utc_time, gPacificDaylightTime);
+-
+-	std::string buffer = llformat("%d/%d",
+-			1 + internal_time->tm_mon,		// Jan = 0
+-			internal_time->tm_mday);	// 2001 = 101
+-	childSetValue("date_text", buffer);
++	std::string date;
++	timeStructToFormattedString(internal_time, "%m-%d", date);
++	childSetValue("date_text", date);
+ 
+ 	// Record the relative day so back and forward buttons
+ 	// offset from this day.
+diff -urN linden/indra/newview/llpanelgroupnotices.cpp linden-patched/indra/newview/llpanelgroupnotices.cpp
+--- linden/indra/newview/llpanelgroupnotices.cpp	2009-01-28 20:44:19.000000000 +0100
++++ linden-patched/indra/newview/llpanelgroupnotices.cpp	2009-02-02 14:19:34.000000000 +0100
+@@ -52,6 +52,7 @@
+ 
+ #include "roles_constants.h"
+ #include "llviewerwindow.h"
++#include "llviewercontrol.h"
+ #include "llviewermessage.h"
+ 
+ const S32 NOTICE_DATE_STRING_SIZE = 30;
+@@ -168,17 +169,6 @@
+ //-----------------------------------------------------------------------------
+ // LLPanelGroupNotices
+ //-----------------------------------------------------------------------------
+-std::string build_notice_date(const time_t& the_time)
+-{
+-	time_t t = the_time;
+-	if (!t) time(&t);
+-	tm* lt = localtime(&t);
+-	//for some reason, the month is off by 1.  See other uses of
+-	//"local" time in the code...
+-	std::string buffer = llformat("%i-%02i-%02i", lt->tm_year + 1900, lt->tm_mon + 1, lt->tm_mday);
+-	return buffer;
+-}
+-
+ LLPanelGroupNotices::LLPanelGroupNotices(const std::string& name,
+ 									const LLUUID& group_id) :
+ 	LLPanelGroupTab(name,group_id),
+@@ -487,7 +477,8 @@
+ 		row["columns"][2]["column"] = "from";
+ 		row["columns"][2]["value"] = name;
+ 
+-		std::string buffer = build_notice_date(t);
++		std::string buffer;
++		timeToFormattedString(t, gSavedSettings.getString("ShortDateFormat"), buffer);
+ 		row["columns"][3]["column"] = "date";
+ 		row["columns"][3]["value"] = buffer;
+ 
+diff -urN linden/indra/newview/llpanelgroupvoting.cpp linden-patched/indra/newview/llpanelgroupvoting.cpp
+--- linden/indra/newview/llpanelgroupvoting.cpp	2009-01-28 20:44:19.000000000 +0100
++++ linden-patched/indra/newview/llpanelgroupvoting.cpp	2009-02-02 14:19:34.000000000 +0100
+@@ -930,6 +930,23 @@
+ //static
+ std::map<LLUUID, LLPanelGroupVoting::impl*> LLPanelGroupVoting::impl::sGroupIDs;
+ 
++static std::string format_date(std::string date)
++{
++	tm t;
++	if (sscanf(date.c_str(), "%u/%u/%u %u:%u",
++		&t.tm_mon, &t.tm_mday, &t.tm_year, &t.tm_hour, &t.tm_min) == 5
++		&& t.tm_year > 1900)
++	{
++		t.tm_year -= 1900;
++		t.tm_mon--;
++		t.tm_sec = 0;
++		std::string format = gSavedSettings.getString("ShortDateFormat");
++		format += " " + gSavedSettings.getString("TimeFormat");
++		timeStructToFormattedString(&t, format, date);
++	}
++	return date;
++}
++
+ //static
+ void LLPanelGroupVoting::impl::processGroupActiveProposalItemReply(LLMessageSystem *msg, void**)
+ {
+@@ -1017,7 +1034,7 @@
+ 		row["columns"][1]["width"] = self->mProposalColumnWidths[index++];
+ 
+ 		row["columns"][2]["column"] = "end_datetime";
+-		row["columns"][2]["value"] = end_datetime;
++		row["columns"][2]["value"] = format_date(end_datetime);
+ 		row["columns"][2]["font"] = "SANSSERIF_SMALL";
+ 		row["columns"][2]["width"] = self->mProposalColumnWidths[index++];
+ 
+@@ -1032,7 +1049,7 @@
+ 		row["columns"][4]["width"] = self->mProposalColumnWidths[index++];
+ 
+ 		row["columns"][5]["column"] = "start_datetime";
+-		row["columns"][5]["value"] = start_datetime;
++		row["columns"][5]["value"] = format_date(start_datetime);
+ 		row["columns"][5]["font"] = "SANSSERIF_SMALL";
+ 		row["columns"][5]["width"] = self->mProposalColumnWidths[index++];
+ 
+@@ -1212,7 +1229,7 @@
+ 			row["columns"][1]["width"] = self->mHistoryColumnWidths[index++];
+ 
+ 			row["columns"][2]["column"] = "end_datetime";
+-			row["columns"][2]["value"] = end_datetime;
++			row["columns"][2]["value"] = format_date(end_datetime);
+ 			row["columns"][2]["font"] = "SANSSERIF_SMALL";
+ 			row["columns"][2]["width"] = self->mHistoryColumnWidths[index++];
+ 
+diff -urN linden/indra/newview/llstatusbar.cpp linden-patched/indra/newview/llstatusbar.cpp
+--- linden/indra/newview/llstatusbar.cpp	2009-01-28 20:44:21.000000000 +0100
++++ linden-patched/indra/newview/llstatusbar.cpp	2009-02-02 14:19:34.000000000 +0100
+@@ -265,36 +265,21 @@
+ 	// it's daylight savings time there.
+ 	internal_time = utc_to_pacific_time(utc_time, gPacificDaylightTime);
+ 
+-	S32 hour = internal_time->tm_hour;
+-	S32 min  = internal_time->tm_min;
+-
+-	std::string am_pm = "AM";
+-	if (hour > 11)
++	std::string t;
++	timeStructToFormattedString(internal_time, gSavedSettings.getString("TimeFormat"), t);
++	if (gPacificDaylightTime)
+ 	{
+-		hour -= 12;
+-		am_pm = "PM";
++		t += " PDT";
+ 	}
+-
+-	std::string tz = "PST";
+-	if (gPacificDaylightTime)
++	else
+ 	{
+-		tz = "PDT";
++		t += " PST";
+ 	}
+-	// Zero hour is 12 AM
+-	if (hour == 0) hour = 12;
+-	std::ostringstream t;
+-	t << std::setfill(' ') << std::setw(2) << hour << ":" 
+-		<< std::setfill('0') << std::setw(2) << min 
+-		<< " " << am_pm << " " << tz;
+-	mTextTime->setText(t.str());
+-
+-	// Year starts at 1900, set the tooltip to have the date
+-	std::ostringstream date;
+-	date	<< sDays[internal_time->tm_wday] << ", "
+-		<< std::setfill('0') << std::setw(2) << internal_time->tm_mday << " "
+-		<< sMonths[internal_time->tm_mon] << " "
+-		<< internal_time->tm_year + 1900;
+-	mTextTime->setToolTip(date.str());
++	mTextTime->setText(t);
++
++	std::string date;
++	timeStructToFormattedString(internal_time, gSavedSettings.getString("LongDateFormat"), date);
++	mTextTime->setToolTip(date);
+ 
+ 	LLRect r;
+ 	const S32 MENU_RIGHT = gMenuBarView->getRightmostMenuEdge();
+diff -urN linden/indra/newview/llviewermessage.cpp linden-patched/indra/newview/llviewermessage.cpp
+--- linden/indra/newview/llviewermessage.cpp	2009-01-28 20:44:19.000000000 +0100
++++ linden-patched/indra/newview/llviewermessage.cpp	2009-02-02 14:19:34.000000000 +0100
+@@ -4658,8 +4658,10 @@
+ // method to format the time.
+ std::string formatted_time(const time_t& the_time)
+ {
++	std::string timestr;
++	timeToFormattedString(the_time, gSavedSettings.getString("TimestampFormat"), timestr);
+ 	char buffer[30]; /* Flawfinder: ignore */
+-	LLStringUtil::copy(buffer, ctime(&the_time), 30);
++	LLStringUtil::copy(buffer, timestr.c_str(), 30);
+ 	buffer[24] = '\0';
+ 	return std::string(buffer);
+ }
+diff -urN linden/indra/newview/llviewertexteditor.cpp linden-patched/indra/newview/llviewertexteditor.cpp
+--- linden/indra/newview/llviewertexteditor.cpp	2009-01-28 20:44:19.000000000 +0100
++++ linden-patched/indra/newview/llviewertexteditor.cpp	2009-02-02 14:19:34.000000000 +0100
+@@ -1257,7 +1257,9 @@
+ 	// it's daylight savings time there.
+ 	timep = utc_to_pacific_time(utc_time, gPacificDaylightTime);
+ 
+-	std::string text = llformat("[%d:%02d]  ", timep->tm_hour, timep->tm_min);
++	std::string text;
++	timeStructToFormattedString(timep, gSavedSettings.getString("TimeFormat"), text);
++	text = "[" + text + "]  ";
+ 	appendColoredText(text, false, prepend_newline, LLColor4::grey);
+ 
+ 	return text;

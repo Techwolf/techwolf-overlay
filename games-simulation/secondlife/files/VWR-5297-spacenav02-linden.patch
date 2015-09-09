@@ -1,0 +1,60 @@
+Index: install.xml
+===================================================================
+--- install.xml	(revision 93680)
++++ install.xml	(revision 95277)
+@@ -773,9 +773,9 @@
+           <key>linux</key>
+           <map>
+             <key>md5sum</key>
+-            <string>489612b246b2f4b2f239611d786c79de</string>
++            <string>9469c3732a33a154fa0a2807b9f36ccc</string>
+             <key>url</key>
+-            <uri>http://s3.amazonaws.com/viewer-source-downloads/install_pkgs/ndofdev-linux-20080618.tar.bz2</uri>
++            <uri>http://s3.amazonaws.com/viewer-source-downloads/install_pkgs/ndofdev-linux-0.2-20080828.tar.bz2</uri>
+           </map>
+           <key>windows</key>
+           <map>
+Index: indra/cmake/NDOF.cmake
+===================================================================
+--- indra/cmake/NDOF.cmake	(revision 93680)
++++ indra/cmake/NDOF.cmake	(revision 95277)
+@@ -3,12 +3,12 @@
+ 
+ use_prebuilt_binary(ndofdev)
+ 
+-if (WINDOWS OR DARWIN)
++if (WINDOWS OR DARWIN OR LINUX)
+   add_definitions(-DLIB_NDOF=1)
+-endif (WINDOWS OR DARWIN)
++endif (WINDOWS OR DARWIN OR LINUX)
+ 
+ if (WINDOWS)
+   set(NDOF_LIBRARY libndofdev)
+-elseif (DARWIN)
++elseif (DARWIN OR LINUX)
+   set(NDOF_LIBRARY ndofdev)
+ endif (WINDOWS)
+Index: indra/newview/llviewerjoystick.cpp
+===================================================================
+--- indra/newview/llviewerjoystick.cpp	(revision 93680)
++++ indra/newview/llviewerjoystick.cpp	(revision 95277)
+@@ -958,7 +958,7 @@
+ // -----------------------------------------------------------------------------
+ void LLViewerJoystick::setSNDefaults()
+ {
+-#if LL_DARWIN 
++#if LL_DARWIN || LL_LINUX
+ #define kPlatformScale	20.f
+ #else
+ #define kPlatformScale	1.f
+@@ -975,8 +975,8 @@
+ 	gSavedSettings.setS32("JoystickAxis5", 5); // yaw
+ 	gSavedSettings.setS32("JoystickAxis6", -1);
+ 	
+-#if LL_DARWIN
+-	// The SpaceNavigator doesn't act as a 3D cursor on OS X. 
++#if LL_DARWIN || LL_LINUX
++	// The SpaceNavigator doesn't act as a 3D cursor on OS X / Linux. 
+ 	gSavedSettings.setBOOL("Cursor3D", false);
+ #else
+ 	gSavedSettings.setBOOL("Cursor3D", true);

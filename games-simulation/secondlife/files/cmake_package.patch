@@ -1,0 +1,20 @@
+--- ./indra/newview/CMakeLists.txt.org	2010-08-22 18:00:24.000000000 -0400
++++ ./indra/newview/CMakeLists.txt	2010-08-22 18:02:53.000000000 -0400
+@@ -1709,7 +1709,6 @@
+     add_dependencies(package linux-crash-logger-target)
+     add_dependencies(package linux-updater-target)
+     check_message_template(package)
+-  endif (PACKAGE)
+ 
+   add_custom_command(
+     OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/.${product}.copy_touched
+@@ -1733,6 +1732,9 @@
+     
+   add_custom_target(copy_l_viewer_manifest ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/.${product}.copy_touched) 
+   add_dependencies(copy_l_viewer_manifest "${VIEWER_BINARY_NAME}" linux-crash-logger-target linux-updater-target)
++  else (PACKAGE)
++    add_dependencies("${VIEWER_BINARY_NAME}" linux-crash-logger-target linux-updater-target)
++  endif (PACKAGE)
+ endif (LINUX)
+ 
+ if (DARWIN)

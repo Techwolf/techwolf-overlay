@@ -1,0 +1,33 @@
+diff -urN linden/indra/newview/skins/default/xui/en-us/notify.xml linden-patched/indra/newview/skins/default/xui/en-us/notify.xml
+--- linden/indra/newview/skins/default/xui/en-us/notify.xml	2009-01-22 16:27:51.000000000 +0100
++++ linden-patched/indra/newview/skins/default/xui/en-us/notify.xml	2009-01-27 23:41:47.000000000 +0100
+@@ -579,6 +579,9 @@
+ 		<option name="Decline">
+ 			Decline
+ 		</option>
++		<option name="Ignore">
++			Ignore
++		</option>
+ 	</notify>
+ 	<notify name="OfferFriendshipNoMessage" tip="false">
+ 		<message name="message">
+@@ -593,6 +596,9 @@
+ 		<option name="Decline">
+ 			Decline
+ 		</option>
++		<option name="Ignore">
++			Ignore
++		</option>
+ 	</notify>
+ 	<notify name="FriendshipAccepted" tip="false">
+ 		<message name="message">
+@@ -616,6 +622,9 @@
+ 		<option name="Decline">
+ 			Decline
+ 		</option>
++		<option name="Ignore">
++			Ignore
++		</option>
+ 	</notify>
+ 	<notify name="RegionRestartMinutes" tip="false">
+ 		<message name="message">

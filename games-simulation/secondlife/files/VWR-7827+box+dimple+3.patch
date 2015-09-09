@@ -1,0 +1,101 @@
+--- linden/indra/newview/llpanelobject.cpp	2008-06-12 15:55:56.000000000 -0700
++++ linden/indra/newview/llpanelobject.cpp	2008-06-26 22:39:01.312500000 -0700
+@@ -827,7 +827,7 @@
+ 	BOOL top_shear_x_visible		= TRUE;
+ 	BOOL top_shear_y_visible		= TRUE;
+ 	BOOL twist_visible				= TRUE;
+-	BOOL advanced_cut_visible		= FALSE;
++	BOOL advanced_cut_visible		= TRUE;
+ 	BOOL taper_visible				= FALSE;
+ 	BOOL skew_visible				= FALSE;
+ 	BOOL radius_offset_visible		= FALSE;
+@@ -838,6 +838,7 @@
+ 	F32	 twist_inc					= OBJECT_TWIST_LINEAR_INC;
+ 
+ 	BOOL advanced_is_dimple = FALSE;
++	BOOL advanced_is_slice = FALSE;
+ 	BOOL size_is_hole = FALSE;
+ 
+ 	// Tune based on overall volume type
+@@ -851,6 +852,7 @@
+ 		//twist_visible			= FALSE;
+ 		advanced_cut_visible	= TRUE;
+ 		advanced_is_dimple		= TRUE;
++		advanced_is_slice		= FALSE;
+ 		twist_min				= OBJECT_TWIST_MIN;
+ 		twist_max				= OBJECT_TWIST_MAX;
+ 		twist_inc				= OBJECT_TWIST_INC;
+@@ -864,6 +866,7 @@
+ 	  	size_is_hole 			= TRUE;
+ 		skew_visible			= TRUE;
+ 		advanced_cut_visible	= TRUE;
++		advanced_is_slice		= FALSE;
+ 		taper_visible			= TRUE;
+ 		radius_offset_visible	= TRUE;
+ 		revolutions_visible		= TRUE;
+@@ -891,8 +894,20 @@
+ 		break;
+ 		
+ 	case MI_BOX:
++		advanced_cut_visible	= TRUE;
++		advanced_is_slice		= TRUE;
++		break;
++
+ 	case MI_CYLINDER:
++		advanced_cut_visible	= TRUE;
++		advanced_is_slice		= TRUE;
++		break;
++
+ 	case MI_PRISM:
++		advanced_cut_visible	= TRUE;
++		advanced_is_slice		= TRUE;
++		break;
++
+ 	default:
+ 		break;
+ 	}
+@@ -984,6 +999,8 @@
+ 
+ 	childSetVisible("advanced_cut", FALSE);
+ 	childSetVisible("advanced_dimple", FALSE);
++	childSetVisible("advanced_slice", FALSE);
++
+ 	if (advanced_cut_visible)
+ 	{
+ 		if (advanced_is_dimple)
+@@ -991,6 +1008,12 @@
+ 			childSetVisible("advanced_dimple", TRUE);
+ 			childSetEnabled("advanced_dimple", enabled);
+ 		}
++
++		else if (advanced_is_slice)
++		{
++			childSetVisible("advanced_slice", TRUE);
++			childSetEnabled("advanced_slice", enabled);
++		}
+ 		else
+ 		{
+ 			childSetVisible("advanced_cut", TRUE);
+@@ -1823,6 +1846,7 @@
+ 	childSetEnabled("scale_taper", FALSE);
+ 	childSetEnabled( "advanced_cut", FALSE );
+ 	childSetEnabled( "advanced_dimple", FALSE );
++	childSetVisible("advanced_slice", FALSE);
+ }
+ 
+ //
+--- linden/indra/newview/skins/default/xui/en-us/floater_tools.xml	2008-06-12 15:55:58.000000000 -0700
++++ linden/indra/newview/skins/default/xui/en-us/floater_tools.xml	2008-06-26 21:59:23.640625000 -0700
+@@ -800,6 +800,12 @@
+ 			     mouse_opaque="true" name="advanced_dimple" v_pad="0" width="141">
+ 				Dimple Begin and End
+ 			</text>
++			<text bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
++			     bottom_delta="0" drop_shadow_visible="true" follows="left|top"
++			     font="SansSerifSmall" h_pad="0" halign="left" height="10" left_delta="0"
++			     mouse_opaque="true" name="advanced_slice" v_pad="0" width="141">
++				Slice Begin and End
++			</text>
+ 			<spinner bottom_delta="-19" decimal_digits="3" follows="left|top" height="16"
+ 			     increment="0.05" initial_val="0" label="B" label_width="10" left="121"
+ 			     max_val="0.95" min_val="0" mouse_opaque="true" name="Path Limit Begin"

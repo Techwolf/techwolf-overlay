@@ -1,0 +1,43 @@
+diff -rub old/indra/llui/llmenugl.cpp new/indra/llui/llmenugl.cpp
+--- old/indra/llui/llmenugl.cpp	2008-10-17 08:39:24.000000000 -0400
++++ new/indra/llui/llmenugl.cpp	2008-12-13 13:48:49.671875000 -0500
+@@ -2288,6 +2288,9 @@
+ 			mItems.push_back(itemp);
+ 			addChild(itemp);
+ 		}
++
++		delete mSpilloverMenu;
++		mSpilloverMenu = NULL;
+ 	}
+ }
+ 
+@@ -2432,6 +2435,11 @@
+ // Add the menu item to this menu.
+ BOOL LLMenuGL::append( LLMenuItemGL* item )
+ {
++	if (mSpilloverMenu)
++	{
++		return mSpilloverMenu->append(item);
++	}
++
+ 	mItems.push_back( item );
+ 	addChild( item );
+ 	arrange();
+@@ -2722,11 +2730,17 @@
+ 		getParent()->removeChild(this);
+ 	}
+ 	parentp->addChild(this);
++
+ 	item_list_t::iterator item_iter;
+ 	for (item_iter = mItems.begin(); item_iter != mItems.end(); ++item_iter)
+ 	{
+ 		(*item_iter)->updateBranchParent(parentp);
+ 	}
++
++	if (mSpilloverMenu)
++	{
++		mSpilloverMenu->updateParent(parentp);
++	}
+ }
+ 
+ BOOL LLMenuGL::handleAcceleratorKey(KEY key, MASK mask)

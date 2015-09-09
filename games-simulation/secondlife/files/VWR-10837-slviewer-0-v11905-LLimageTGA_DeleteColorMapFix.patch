@@ -1,0 +1,12 @@
+diff -urN linden/indra/llimage/llimagetga.cpp linden-patched/indra/llimage/llimagetga.cpp
+--- linden/indra/llimage/llimagetga.cpp	2008-02-29 19:47:38.000000000 +0100
++++ linden-patched/indra/llimage/llimagetga.cpp	2008-12-09 23:13:10.000000000 +0100
+@@ -80,7 +80,7 @@
+ 
+ LLImageTGA::~LLImageTGA()
+ {
+-	delete mColorMap;
++	delete [] mColorMap;
+ }
+ 
+ BOOL LLImageTGA::updateData()

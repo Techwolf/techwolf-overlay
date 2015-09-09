@@ -1,0 +1,35 @@
+diff -urN linden/indra/newview/llfloateractivespeakers.cpp linden-patched/indra/newview/llfloateractivespeakers.cpp
+--- linden/indra/newview/llfloateractivespeakers.cpp	2007-11-08 03:18:13.000000000 +0100
++++ linden-patched/indra/newview/llfloateractivespeakers.cpp	2007-11-11 13:59:14.000000000 +0100
+@@ -807,7 +807,7 @@
+ 	for(avatar_it = LLCharacter::sInstances.begin(); avatar_it != LLCharacter::sInstances.end(); ++avatar_it)
+ 	{
+ 		LLVOAvatar* avatarp = (LLVOAvatar*)*avatar_it;
+-		if (dist_vec(avatarp->getPositionAgent(), gAgent.getPositionAgent()) <= CHAT_NORMAL_RADIUS)
++		if (!avatarp->isDead() &&  dist_vec(avatarp->getPositionAgent(), gAgent.getPositionAgent()) <= CHAT_NORMAL_RADIUS)
+ 		{
+ 			setSpeaker(avatarp->getID());
+ 		}
+@@ -821,7 +821,7 @@
+ 		if (speakerp->mStatus == LLSpeaker::STATUS_TEXT_ONLY)
+ 		{
+ 			LLVOAvatar* avatarp = (LLVOAvatar*)gObjectList.findObject(speaker_id);
+-			if (!avatarp || dist_vec(avatarp->getPositionAgent(), gAgent.getPositionAgent()) > CHAT_NORMAL_RADIUS)
++			if (!avatarp || avatarp->isDead() || dist_vec(avatarp->getPositionAgent(), gAgent.getPositionAgent()) > CHAT_NORMAL_RADIUS)
+ 			{
+ 				speakerp->mStatus = LLSpeaker::STATUS_NOT_IN_CHANNEL;
+ 				speakerp->mDotColor = INACTIVE_COLOR;
+diff -urN linden/indra/newview/llviewerobjectlist.cpp linden-patched/indra/newview/llviewerobjectlist.cpp
+--- linden/indra/newview/llviewerobjectlist.cpp	2007-11-08 03:18:13.000000000 +0100
++++ linden-patched/indra/newview/llviewerobjectlist.cpp	2007-11-11 13:59:14.000000000 +0100
+@@ -874,6 +874,10 @@
+ 		if (objectp->mRegionp == regionp)
+ 		{
+ 			killObject(objectp);
++
++			// invalidate region pointer. region will become invalid, but 
++			// refcounted objects may survive the cleanDeadObjects() call below
++			objectp->mRegionp = NULL;	 
+ 		}
+ 	}
+ 

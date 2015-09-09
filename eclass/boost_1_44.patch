@@ -1,0 +1,49 @@
+
+# HG changeset patch
+# User Nicky
+# Date 1335989640 -7200
+# Node ID 96b14bc3e23e88306f5ee2b85508875672d37e14
+# Parent  afa77316837313143610f0138df6eb9c250097c1
+FIRE-6193; fix for newer boost versions.
+
+diff -r afa773168373 -r 96b14bc3e23e indra/llvfs/lldiriterator.cpp
+--- a/indra/llvfs/lldiriterator.cpp	Wed May 02 22:11:11 2012 +0200
++++ b/indra/llvfs/lldiriterator.cpp	Wed May 02 22:14:00 2012 +0200
+@@ -59,7 +59,11 @@
+ 	{
+ 		is_dir = fs::is_directory(dir_path);
+ 	}
++#if BOOST_FILESYSTEM_VERSION == 3
++	catch (fs::filesystem_error& e)
++#else
+ 	catch (fs::basic_filesystem_error<fs::path>& e)
++#endif
+ 	{
+ 		llwarns << e.what() << llendl;
+ 		return;
+@@ -76,7 +80,11 @@
+ 	{
+ 		mIter = fs::directory_iterator(dir_path);
+ 	}
++#if BOOST_FILESYSTEM_VERSION == 3
++	catch (fs::filesystem_error& e)
++#else
+ 	catch (fs::basic_filesystem_error<fs::path>& e)
++#endif
+ 	{
+ 		llwarns << e.what() << llendl;
+ 		return;
+@@ -121,7 +129,12 @@
+ 	while (mIter != end_itr && !found)
+ 	{
+ 		boost::smatch match;
++
++#if BOOST_FILESYSTEM_VERSION == 3
++		std::string name = mIter->path().filename().string();
++#else
+ 		std::string name = mIter->path().filename();
++#endif
+ 		if (found = boost::regex_match(name, match, mFilterExp))
+ 		{
+ 			fname = name;
+

@@ -1,0 +1,74 @@
+Index: llfloaterstats.cpp
+===================================================================
+--- indra/newview/llfloaterstats.cpp	(revision 1583)
++++ indra/newview/llfloaterstats.cpp	(working copy)
+@@ -34,6 +34,7 @@
+ #include "llviewerprecompiledheaders.h"
+ 
+ #include "llfloaterstats.h"
++#include "llviewercontrol.h"
+ #include "llcontainerview.h"
+ #include "llfloater.h"
+ #include "llstatview.h"
+@@ -64,6 +65,8 @@
+ 
+ LLFloaterStats::~LLFloaterStats()
+ {
++	// save position of floater
++	gSavedSettings.setRect("FloaterStatsRect", getRect());
+ }
+ 
+ void LLFloaterStats::reshape(S32 width, S32 height, BOOL called_from_parent)
+Index: lldebugview.cpp
+===================================================================
+--- indra/newview/lldebugview.cpp	(revision 1583)
++++ indra/newview/lldebugview.cpp	(working copy)
+@@ -34,6 +34,7 @@
+ #include "lldebugview.h"
+ 
+ // library includes
++#include "llviewercontrol.h"
+ #include "llframestatview.h"
+ #include "llfasttimerview.h"
+ #include "llmemoryview.h"
+@@ -100,11 +101,8 @@
+ 	//
+ 	// Debug statistics
+ 	//
+-	r.set(rect.getWidth() - 250,
+-		  rect.getHeight() - 50,
+-		  rect.getWidth(),
+-		  rect.getHeight() - 450);
+-	mFloaterStatsp = new LLFloaterStats(r);
++	LLRect statsrect = gSavedSettings.getRect("FloaterStatsRect");
++	mFloaterStatsp = new LLFloaterStats(statsrect);
+ 
+ 	mFloaterStatsp->setFollowsTop();
+ 	mFloaterStatsp->setFollowsRight();
+Index: app_settings/settings.xml
+===================================================================
+--- indra/newview/app_settings/settings.xml	(revision 1583)
++++ indra/newview/app_settings/settings.xml	(working copy)
+@@ -3422,6 +3422,22 @@
+         <integer>400</integer>
+       </array>
+     </map>
++    <key>FloaterStatsRect</key>
++    <map>
++      <key>Comment</key>
++      <string>Rectangle for statistics bar</string>
++      <key>Persist</key>
++      <integer>1</integer>
++      <key>Type</key>
++      <string>Rect</string>
++      <key>Value</key>
++      <array>
++        <integer>0</integer>
++        <integer>450</integer>
++        <integer>250</integer>
++        <integer>50</integer>
++      </array>
++    </map>
+     <key>FloaterViewBottom</key>
+     <map>
+       <key>Comment</key>

@@ -1,0 +1,27 @@
+diff -r 9ac70401cf0b indra/cmake/FindJsonCpp.cmake
+--- a/indra/cmake/FindJsonCpp.cmake	Fri Sep 23 14:33:32 2011 -0400
++++ b/indra/cmake/FindJsonCpp.cmake	Tue Sep 27 14:10:21 2011 -0400
+@@ -9,9 +9,8 @@
+ #  also defined, but not for general use are
+ #  JSONCPP_LIBRARY, where to find the jsoncpp library.
+ 
+-FIND_PATH(JSONCPP_INCLUDE_DIR jsoncpp/json.h
+-/usr/local/include
+-/usr/include
++FIND_PATH(JSONCPP_INCLUDE_DIR json.h
++    PATH_SUFFIXES jsoncpp
+ )
+ 
+ # Get the GCC compiler version
+diff -r 9ac70401cf0b indra/newview/lltranslate.cpp
+--- a/indra/newview/lltranslate.cpp	Fri Sep 23 14:33:32 2011 -0400
++++ b/indra/newview/lltranslate.cpp	Tue Sep 27 14:10:21 2011 -0400
+@@ -35,7 +35,7 @@
+ #include "llversioninfo.h"
+ #include "llviewercontrol.h"
+ 
+-#include "reader.h"
++#include "jsoncpp/reader.h"
+ 
+ // These two are concatenated with the language specifiers to form a complete Google Translate URL
+ const char* LLTranslate::m_GoogleURL = "http://ajax.googleapis.com/ajax/services/language/translate?v=1.0&q=";

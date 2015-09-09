@@ -1,0 +1,14 @@
+diff -up ./src/osd/sdl/sdl.mak.org ./src/osd/sdl/sdl.mak
+--- ./src/osd/sdl/sdl.mak.org	2013-12-28 18:45:03.000000000 -0500
++++ ./src/osd/sdl/sdl.mak	2013-12-28 19:26:06.000000000 -0500
+@@ -592,10 +592,8 @@ endif
+ ifeq ($(SUPPORTSM32M64),1)
+ ifeq ($(PTR64),1)
+ CCOMFLAGS += -m64
+-LDFLAGS += -m64
+ else
+ CCOMFLAGS += -m32
+-LDFLAGS += -m32
+ endif
+ endif
+ 

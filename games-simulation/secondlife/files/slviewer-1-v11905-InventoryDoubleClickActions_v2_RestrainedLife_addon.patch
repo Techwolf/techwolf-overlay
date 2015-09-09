@@ -1,0 +1,16 @@
+diff -urN linden/indra/newview/llinventorybridge.cpp linden-patched/indra/newview/llinventorybridge.cpp
+--- linden/indra/newview/llinventorybridge.cpp	2009-02-11 11:38:01.000000000 +0100
++++ linden-patched/indra/newview/llinventorybridge.cpp	2009-02-11 11:40:37.000000000 +0100
+@@ -3240,6 +3240,12 @@
+ 	{
+ 		return;
+ 	}
++//MK
++	if (RRenabled && gAgent.mRRInterface.mContainsDetach)
++	{
++		return;
++	}
++//mk
+ 	if (avatar->isWearingAttachment(mUUID))
+ 	{
+ 		performAction(NULL, NULL, "detach");

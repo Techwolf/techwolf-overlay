@@ -1,0 +1,18 @@
+Only in slitechat-1.6.3-ori/LLChatLib/llcommon: .llsdserialize.cpp.swp
+diff -aurb slitechat-1.6.3-ori/LLChatLib/llcommon/llsdserialize.cpp slitechat-1.6.3/LLChatLib/llcommon/llsdserialize.cpp
+--- slitechat-1.6.3-ori/LLChatLib/llcommon/llsdserialize.cpp	2010-07-09 03:54:46.000000000 -0300
++++ slitechat-1.6.3/LLChatLib/llcommon/llsdserialize.cpp	2013-09-06 11:30:19.128905974 -0300
+@@ -1537,8 +1537,12 @@
+ 	}
+ 
+ 	case LLSD::TypeUUID:
++		{
++			LLSD::UUID uuid = data.asUUID();
++
+ 		ostr.put('u');
+-		ostr.write((const char*)(&(data.asUUID().mData)), UUID_BYTES);
++			ostr.write((const char*)(&uuid.mData), UUID_BYTES);
++		}
+ 		break;
+ 
+ 	case LLSD::TypeString:

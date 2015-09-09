@@ -1,0 +1,41 @@
+--- linden/branches/maint-viewer/maint-viewer-12/indra/llwindow/llwindowsdl.cpp	2008/12/08 22:23:38	105094
++++ linden/branches/maint-viewer/maint-viewer-12/indra/llwindow/llwindowsdl.cpp	2008/12/08 22:25:33	105095
+@@ -896,7 +896,6 @@
+ 	return (TRUE);
+     }
+ 
+-    llwarns << "LLWindowSDL::getPosition(): no window and not fullscreen!" << llendl;
+     return (FALSE);
+ }
+ 
+@@ -909,7 +908,6 @@
+ 	return (TRUE);
+     }
+ 
+-    llwarns << "LLWindowSDL::getPosition(): no window and not fullscreen!" << llendl;
+     return (FALSE);
+ }
+ 
+@@ -926,11 +926,18 @@
+ {
+ 	if(mWindow)
+ 	{
+-        // *FIX: (???)
+-		//SizeWindow(mWindow, size.mX, size.mY, true);
+-	}
++		// Push a resize event onto SDL's queue - we'll handle it
++		// when it comes out again.
++		SDL_Event event;
++		event.type = SDL_VIDEORESIZE;
++		event.resize.w = size.mX;
++		event.resize.h = size.mY;
++		SDL_PushEvent(&event); // copied into queue
+ 
+-	return TRUE;
++		return TRUE;
++	}
++		
++	return FALSE;
+ }
+ 
+ void LLWindowSDL::swapBuffers()

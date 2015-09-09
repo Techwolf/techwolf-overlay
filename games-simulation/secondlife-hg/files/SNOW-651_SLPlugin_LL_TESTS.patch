@@ -1,0 +1,10 @@
+--- ./indra/llplugin/slplugin/CMakeLists.txt.org	2010-05-11 02:34:10.000000000 -0400
++++ ./indra/llplugin/slplugin/CMakeLists.txt	2010-05-12 00:16:43.000000000 -0400
+@@ -62,4 +62,6 @@
+   )
+ endif (DARWIN)
+ 
+-ll_deploy_sharedlibs_command(SLPlugin)
++if (LL_TESTS)
++  ll_deploy_sharedlibs_command(SLPlugin)
++endif (LL_TESTS)

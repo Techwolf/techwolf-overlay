@@ -1,0 +1,114 @@
+diff -urN linden/indra/newview/app_settings/settings.xml linden-patched/indra/newview/app_settings/settings.xml
+--- linden/indra/newview/app_settings/settings.xml	2008-11-21 16:58:24.000000000 +0100
++++ linden-patched/indra/newview/app_settings/settings.xml	2008-11-21 23:05:41.000000000 +0100
+@@ -7067,6 +7067,17 @@
+       <key>Value</key>
+       <integer>0</integer>
+     </map>
++    <key>UseOldTrackingDots</key>
++    <map>
++      <key>Comment</key>
++      <string>Use old T-like tracking dots in mini-map (takes effect after viewer restart)</string>
++      <key>Persist</key>
++      <integer>1</integer>
++      <key>Type</key>
++      <string>Boolean</string>
++      <key>Value</key>
++      <integer>0</integer>
++    </map>
+     <key>ShowMovementControls</key>
+     <map>
+       <key>Comment</key>
+diff -urN linden/indra/newview/llworldmapview.cpp linden-patched/indra/newview/llworldmapview.cpp
+--- linden/indra/newview/llworldmapview.cpp	2008-11-21 16:58:24.000000000 +0100
++++ linden-patched/indra/newview/llworldmapview.cpp	2008-11-21 23:06:14.000000000 +0100
+@@ -69,6 +69,7 @@
+ const S32 SCROLL_HINT_WIDTH = 65;
+ const F32 BIG_DOT_RADIUS = 5.f;
+ BOOL LLWorldMapView::sHandledLastClick = FALSE;
++BOOL UseOldTrackingDots = FALSE;
+ 
+ LLUIImagePtr LLWorldMapView::sAvatarYouSmallImage = NULL;
+ LLUIImagePtr LLWorldMapView::sAvatarSmallImage = NULL;
+@@ -131,6 +132,8 @@
+ 	
+ 	sStringsMap["loading"] = LLTrans::getString("texture_loading");
+ 	sStringsMap["offline"] = LLTrans::getString("worldmap_offline");
++
++ 	UseOldTrackingDots = gSavedSettings.getBOOL("UseOldTrackingDots");
+ }
+ 
+ // static
+@@ -1208,18 +1211,63 @@
+ {
+ 	const F32 HEIGHT_THRESHOLD = 7.f;
+ 	LLUIImagePtr dot_image = sAvatarSmallImage;
+-	if(relative_z < -HEIGHT_THRESHOLD) 
++	if (UseOldTrackingDots)
+ 	{
+-		dot_image = sAvatarBelowImage; 
++		F32 left =		x_pixels - dot_radius;
++		F32 right =		x_pixels + dot_radius;
++		F32 center = (left + right) * 0.5f;
++		F32 top =		y_pixels + dot_radius;
++		F32 bottom =	y_pixels - dot_radius;
++
++		if (relative_z > HEIGHT_THRESHOLD)
++		{
++			gGL.getTexUnit(0)->unbind(LLTexUnit::TT_TEXTURE);
++			glColor4fv( color.mV );
++			LLUI::setLineWidth(1.5f);
++			glBegin( GL_LINES );
++				glVertex2f(left, top);
++				glVertex2f(right, top);
++				glVertex2f(center, top);
++				glVertex2f(center, bottom);
++			glEnd();
++			LLUI::setLineWidth(1.0f);
++		}
++		else if (relative_z > -HEIGHT_THRESHOLD)
++		{
++			dot_image->draw(
++				llround(x_pixels) - dot_image->getWidth()/2,
++				llround(y_pixels) - dot_image->getHeight()/2, 
++				color);
++		}
++		else
++		{
++			gGL.getTexUnit(0)->unbind(LLTexUnit::TT_TEXTURE);
++			glColor4fv( color.mV );
++			LLUI::setLineWidth(1.5f);
++			glBegin( GL_LINES );
++				glVertex2f(center, top);
++				glVertex2f(center, bottom);
++				glVertex2f(left, bottom);
++				glVertex2f(right, bottom);
++			glEnd();
++			LLUI::setLineWidth(1.0f);
++		}
+ 	}
+-	else if(relative_z > HEIGHT_THRESHOLD) 
+-	{ 
+-		dot_image = sAvatarAboveImage;
++	else
++	{
++		if(relative_z < -HEIGHT_THRESHOLD) 
++		{
++			dot_image = sAvatarBelowImage; 
++		}
++		else if(relative_z > HEIGHT_THRESHOLD) 
++		{ 
++			dot_image = sAvatarAboveImage;
++		}
++		dot_image->draw(
++			llround(x_pixels) - dot_image->getWidth()/2,
++			llround(y_pixels) - dot_image->getHeight()/2, 
++			color);
+ 	}
+-	dot_image->draw(
+-		llround(x_pixels) - dot_image->getWidth()/2,
+-		llround(y_pixels) - dot_image->getHeight()/2, 
+-		color);
+ }
+ 
+ // Pass relative Z of 0 to draw at same level.
