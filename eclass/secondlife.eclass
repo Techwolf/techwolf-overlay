@@ -555,6 +555,7 @@ secondlife_cmake_prep() {
 
 	[[ "${MY_LLCODEBASE}" -ge "200" ]] && mycmakeargs="${mycmakeargs} $(cmake-utils_use unit_test LL_TESTS)"
 	[[ "${MY_LLCODEBASE}" -ge "210" ]] && mycmakeargs="${mycmakeargs} $(cmake-utils_use pulseaudio PULSEAUDIO)"
+	[[ "${MY_LLCODEBASE}" -ge "250" ]] && mycmakeargs="${mycmakeargs} $(cmake-utils_use crash-reporting NON_RELEASE_CRASH_REPORTING)"
 
 	if use fmod && ! use amd64 ; then
 	  mycmakeargs="${mycmakeargs} -DFMOD:BOOL=TRUE"
