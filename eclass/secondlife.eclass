@@ -86,7 +86,8 @@ QA_TEXTRELS="usr/share/games/${PN}/lib/libvivoxsdk.so usr/share/games/${PN}/lib/
 # 130 - LL snowglobe based code that switch to webkit instead of mozilla
 # 200 - LL added some google tools and boost coroutine
 # 210 - LL added pulseaudio support for linux
-# 263 - LL v2.6.3 (227447) switch to autobuild for building the client instead of just the 3p-* packages.
+# 250 - LL v2.5.0 (220251) February 10, 2011: Added cmake option NON_RELEASE_CRASH_REPORTING
+# 263 - LL v2.6.3 (227447) April 26, 2011: switch to autobuild and VS2010 for building the client instead of just the 3p-* packages.
 # 271 - LL release mesh to the viewer (this version number currentelly not used)
 # 334 - LL v3.3.4 (264214) with spell checker.
 # 340 - LL v3.4.0 (264911) with pathfinding (this version number currentelly not used)
@@ -95,6 +96,7 @@ QA_TEXTRELS="usr/share/games/${PN}/lib/libvivoxsdk.so usr/share/games/${PN}/lib/
 # 360 - LL v3.6.0 (277516) with Materials (this version number currentelly not used)
 # 371 - LL v3.7.16 (299021) added uriparser depends, droped the 6 number for now. May have to refactor to four digit version number.
 # 372 - LL v3.7.20 (296094) added packages-info.txt and depends on autobuild, but not all autobuilds will work with all clients (this version number currentelly not used)
+# 372 - LL v3.7.28 (300847) May 08, 2015: Last version to support windows XP. Next version has autobuild VS2013 changes.
 #
 if [[ "${MY_LLCODEBASE}" -ge "130" ]] ; then
   IUSE="${IUSE} unit_test"
@@ -113,6 +115,12 @@ fi
 
 if [[ "${MY_LLCODEBASE}" -ge "210" ]] ; then
   IUSE="${IUSE} pulseaudio"
+fi
+
+if [[ "${MY_LLCODEBASE}" -ge "250" ]] ; then
+  IUSE="${IUSE} crash-reporting"
+  DEPEND="${DEPEND}
+	  crash-reporting? ( dev-util/google-breakpad-hg )"
 fi
 
 if [[ "${MY_LLCODEBASE}" -ge "334" ]] ; then
