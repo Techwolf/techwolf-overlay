@@ -18,3 +18,9 @@ IUSE=""
 src_unpack() {
 	mercurial_src_unpack
 }
+
+src_install() {
+	cmake-utils_src_install
+	# LL changed to libGLOD, so make a copy of both for either LL or TPV viewers.
+	cp -p ${D}/usr/lib/libglod.so ${D}/usr/lib/libGLOD.so
+}
