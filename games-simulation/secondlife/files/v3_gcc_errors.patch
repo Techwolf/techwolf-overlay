@@ -1,0 +1,24 @@
+diff -r 827a910542a9 indra/newview/llfloaterbump.cpp
+--- a/indra/newview/llfloaterbump.cpp	Mon Aug 17 14:54:41 2015 -0400
++++ b/indra/newview/llfloaterbump.cpp	Mon Sep 21 20:00:42 2015 -0400
+@@ -175,7 +175,7 @@
+ 
+ 			std::string mute_msg = (LLMuteList::getInstance()->isMuted(mItemUUID, mNames[mItemUUID])) ? "UnmuteAvatar" : "MuteAvatar";
+ 			mPopupMenu->getChild<LLUICtrl>("Avatar Mute")->setValue(LLTrans::getString(mute_msg));
+-			mPopupMenu->setItemEnabled(std::string("Zoom In"), (BOOL)gObjectList.findObject(mItemUUID));
++			mPopupMenu->setItemEnabled(std::string("Zoom In"), (gObjectList.findObject(mItemUUID) != NULL));
+ 
+ 			((LLContextMenu*)mPopupMenu)->show(x, y);
+ 			LLMenuGL::showPopup(ctrl, mPopupMenu, x, y);
+diff -r 827a910542a9 indra/newview/llfloaterimnearbychat.cpp
+--- a/indra/newview/llfloaterimnearbychat.cpp	Mon Aug 17 14:54:41 2015 -0400
++++ b/indra/newview/llfloaterimnearbychat.cpp	Mon Sep 21 20:00:42 2015 -0400
+@@ -282,7 +282,7 @@
+ 	LLFloaterIMSessionTab::onTearOffClicked();
+ 
+ 	// see CHUI-170: Save torn-off state of the nearby chat between sessions
+-	BOOL in_the_multifloater = (BOOL)getHost();
++	BOOL in_the_multifloater = (getHost() != NULL);
+ 	gSavedPerAccountSettings.setBOOL("NearbyChatIsNotTornOff", in_the_multifloater);
+ }
+ 

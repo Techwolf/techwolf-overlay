@@ -88,10 +88,11 @@ QA_TEXTRELS="usr/share/games/${PN}/lib/libvivoxsdk.so usr/share/games/${PN}/lib/
 # 210 - LL added pulseaudio support for linux
 # 250 - LL v2.5.0 (220251) February 10, 2011: Added cmake option NON_RELEASE_CRASH_REPORTING
 # 263 - LL v2.6.3 (227447) April 26, 2011: switch to autobuild and VS2010 for building the client instead of just the 3p-* packages.
-# 271 - LL release mesh to the viewer (this version number currentelly not used)
+# 271 - LL v2.7.1 (232828) June 14, 2011: mesh release. new depends: llcolladadom, glod, llconvexdecomposition or llconvexdecompositionstub or llhacdconvexdecomposition
 # 334 - LL v3.3.4 (264214) with spell checker.
 # 340 - LL v3.4.0 (264911) with pathfinding (this version number currentelly not used)
 # 350 - LL v3.5.0 (273444) with CHUI (this version number currentelly not used)
+# 352 - LL v3.5.2 (276129) May 20, 2013: coroutine moved to dcoroutine
 # 351 - LL release SSA, Server Side Appearence (this version number currentelly not used)
 # 360 - LL v3.6.0 (277516) with Materials (this version number currentelly not used)
 # 371 - LL v3.7.16 (299021) added uriparser depends, droped the 6 number for now. May have to refactor to four digit version number.
@@ -109,8 +110,14 @@ fi
 
 if [[ "${MY_LLCODEBASE}" -ge "200" ]] ; then
   DEPEND="${DEPEND}
-	  unit_test? ( dev-util/gmock )
-	  dev-libs/boost-coroutine"
+	  unit_test? ( dev-util/gmock )"
+  if [[ "${MY_LLCODEBASE}" -ge "352" ]] ; then
+    DEPEND="${DEPEND}
+	    dev-libs/boost-dcoroutine"
+   else
+    DEPEND="${DEPEND}
+	    dev-libs/boost-coroutine"
+  fi
 fi
 
 if [[ "${MY_LLCODEBASE}" -ge "210" ]] ; then
@@ -121,6 +128,13 @@ if [[ "${MY_LLCODEBASE}" -ge "250" ]] ; then
   IUSE="${IUSE} crash-reporting"
   DEPEND="${DEPEND}
 	  crash-reporting? ( dev-util/google-breakpad-hg )"
+fi
+
+if [[ "${MY_LLCODEBASE}" -ge "271" ]] ; then
+  DEPEND="${DEPEND}
+          dev-libs/glod-hg
+	  media-libs/llcolladadom-hg
+	  dev-libs/llhacdconvexdecomposition-hg"
 fi
 
 if [[ "${MY_LLCODEBASE}" -ge "334" ]] ; then
@@ -647,6 +661,7 @@ secondlife_viewer_manifest() {
 	
 	# check for and intall crashlogger
 	if [[ ( ! -f "${GAMES_DATADIR}/${PN}/linux-crash-logger.bin" ) && ( -f "${CMAKE_BUILD_DIR}/linux_crash_logger/linux-crash-logger" ) ]] ; then
+	  einfo "Installing crash logger..."
 	  exeinto "${GAMES_DATADIR}/${PN}"
 	  newexe "${CMAKE_BUILD_DIR}/linux_crash_logger/linux-crash-logger" linux-crash-logger.bin || die
 	fi
@@ -655,6 +670,7 @@ secondlife_viewer_manifest() {
 	# libopenal due to to old a version supplied with amd64 32-bit libopenal. "undefined symbol: alcGetMixedBuffer"
 	# in that case, use the vivox supplied one.
 	if use vivox ; then
+	  einfo "Installing voice files..."
 	  if [[ -f "${WORKDIR}/linden/lib/release/SLVoice" ]] ; then
 	    exeinto "${GAMES_DATADIR}/${PN}/bin"
 	    doexe ../../lib/release/SLVoice || die
@@ -781,7 +797,7 @@ secondlife_src_prepare() {
 	  find "${WORKDIR}/linden" -name "CMakeLists.txt" -exec sed -i -e 's:include(Tut):#include(Tut):' {} \;
 	  find "${WORKDIR}/linden" -name "CMakeLists.txt" -exec sed -i -e 's:include(LLAddBuildTest):#include(LLAddBuildTest):' {} \;
 	  
-	  # added in 3.2.5
+	  # added in 3.2.5, fixes "Unknown CMake command "SET_TEST_PATH"."
 	  find "${WORKDIR}/linden" -name "CMakeLists.txt" -exec sed -i -e 's:add_subdirectory(${VIEWER_PREFIX}test):# add_subdirectory(${VIEWER_PREFIX}test):' {} \;
 	  
 	  if grep -q "LL_ADD_PROJECT_UNIT_TESTS" "${WORKDIR}/linden/indra/cmake/LLAddBuildTest.cmake" ; then
@@ -874,7 +890,7 @@ secondlife_src_prepare() {
 	# fix bug in BuildVersion.cmake for out of source builds
 	sed -i -e 's:COMMAND ${MERCURIAL}:COMMAND ${MERCURIAL} --cwd ${CMAKE_SOURCE_DIR}:' ${WORKDIR}/linden/indra/cmake/BuildVersion.cmake
 	
-	# work around autobuild depends. Started around LL v3.7.20
+	# work around autobuild depends. Started at LL v3.7.28
 	if [[ -f "${WORKDIR}/linden/indra/cmake/BuildPackagesInfo.cmake" ]]; then
 	  einfo "Working around autobuild depend."
 	  sed -i -e 's:include(BuildPackagesInfo)::' "${WORKDIR}/linden/indra/newview/CMakeLists.txt"

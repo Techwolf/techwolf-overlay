@@ -1,0 +1,16 @@
+diff -r 60572f718879 indra/CMakeLists.txt
+--- a/indra/CMakeLists.txt	Tue Aug 04 20:44:28 2015 +0300
++++ b/indra/CMakeLists.txt	Fri Sep 18 20:35:24 2015 -0400
+@@ -51,8 +51,10 @@
+ add_subdirectory(${LIBS_OPEN_PREFIX}llui)
+ add_subdirectory(${LIBS_OPEN_PREFIX}viewer_components)
+ 
+-# Legacy C++ tests. Build always, run if LL_TESTS is true.
+-add_subdirectory(${VIEWER_PREFIX}test)
++if (LL_TESTS OR USESYSTEMLIBS)
++  # Legacy C++ tests. Build always, run if LL_TESTS is true.
++  add_subdirectory(${VIEWER_PREFIX}test)
++endif (LL_TESTS OR USESYSTEMLIBS)
+ 
+ if (ENABLE_MEDIA_PLUGINS)
+ # viewer media plugins
