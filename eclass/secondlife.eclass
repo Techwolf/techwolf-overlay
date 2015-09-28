@@ -19,8 +19,6 @@ RESTRICT="mirror"
 
 IUSE="${IUSE} +vivox +openal +gstreamer +elfio dbus fmod tcmalloc"
 
-# There are problems with curl if built with gnutls. http://jira.secondlife.com/browse/VWR-5601 
-# There is DNS lookup problems with curl if built without c-ares.
 RDEPEND="dev-libs/apr
 	dev-libs/apr-util
 	dev-libs/boost
@@ -44,7 +42,7 @@ RDEPEND="dev-libs/apr
 	gstreamer? ( media-plugins/gst-plugins-meta
 		    media-plugins/gst-plugins-soup )
 	net-dns/c-ares
-	|| ( net-misc/curl[-curl_ssl_nss,-curl_ssl_gnutls] net-misc/curl[-nss,-gnutls,ares] )
+	net-misc/curl
 	sys-libs/zlib
 	vivox? (
 	         amd64? (

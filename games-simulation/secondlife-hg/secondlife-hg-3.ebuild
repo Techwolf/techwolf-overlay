@@ -1,9 +1,9 @@
-# Copyright 2010 Techwolf Lupindo
+# Copyright 2010-2015 Techwolf Lupindo
 # Distributed under the terms of the GNU General Public License v2
 # $Header: $
 # Nonofficial ebuild by Techwolf. Lastest version at http://gentoo.techwolf.net/
 
-EAPI="2"
+EAPI="5"
 MY_LLCODEBASE="263"
 inherit mercurial secondlife
 
