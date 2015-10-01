@@ -30,24 +30,25 @@ src_unpack() {
 	  # need glh/glh_linear.h that is not aviable in portage.
 	  # http://jira.secondlife.com/browse/VWR-9005
 	  get_install_xml_value "glh-linear"
-	  unpack ${SLASSET##*/} || die "Problem with unpacking ${SLASSET##*/}"
+	  secondlife_unpack "/usr/portage/distfiles/hg-src/${SLASSET##*/}" || die "Problem with unpacking ${SLASSET##*/}"
 	 else
 	  einfo "glh_linear.h found, not downloading glh package."
 	fi
 	if use vivox ; then
 	  get_install_xml_value "slvoice"
-	  unpack ${SLASSET##*/} || die "Problem with unpacking ${SLASSET##*/}"
+	  secondlife_unpack "/usr/portage/distfiles/hg-src/${SLASSET##*/}" || die "Problem with unpacking ${SLASSET##*/}"
 	fi
 
 	EHG_REVISION=""
 	S="${WORKDIR}/colladadom"
-	EHG_REPO_URI="https://bitbucket.org/lindenlab/colladadom"
+	EHG_REPO_URI="https://bitbucket.org/lindenlab/3p-colladadom"
 	mercurial_src_unpack
 	S="${WORKDIR}/llconvexdecomposition"
 	EHG_REPO_URI="https://bitbucket.org/lindenlab/llconvexdecomposition"
 	mercurial_src_unpack
+
 	S="${WORKDIR}/glod"
-	EHG_REPO_URI="https://bitbucket.org/lindenlab/glod"
+	EHG_REPO_URI="https://bitbucket.org/lindenlab/3p-glod"
 	mercurial_src_unpack
 
 	S="${WORKDIR}/linden"
@@ -56,8 +57,9 @@ src_unpack() {
 src_prepare() {
 	secondlife_src_prepare
 
+	#TODO
 	# viewer 3 standalone build fixes, one missing include and cmake webkit fix.
-	epatch "${FILESDIR}"/v3_standalone.patch
+	#epatch "${FILESDIR}"/v3_standalone.patch
 
 	# OPEN-38 patch
 	# epatch "${FILESDIR}"/v3_OPEN-36.patch
