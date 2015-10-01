@@ -9,8 +9,7 @@ inherit mercurial secondlife
 
 DESCRIPTION="A 3D MMORPG virtual world entirely built and owned by its residents"
 HOMEPAGE="http://secondlife.com/"
-
-EHG_REPO_URI="https://hg.secondlife.com/viewer-development"
+EHG_REPO_URI="https://bitbucket.org/lindenlab/viewer-release"
 
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
