@@ -29,7 +29,7 @@ src_unpack() {
 	if [[ ! -f "${WORKDIR}/linden/indra/llwindow/glh/glh_linear.h" ]] ; then
 	  # need glh/glh_linear.h that is not aviable in portage.
 	  # http://jira.secondlife.com/browse/VWR-9005
-	  get_install_xml_value "glh_linear"
+	  get_install_xml_value "glh-linear"
 	  unpack ${SLASSET##*/} || die "Problem with unpacking ${SLASSET##*/}"
 	 else
 	  einfo "glh_linear.h found, not downloading glh package."

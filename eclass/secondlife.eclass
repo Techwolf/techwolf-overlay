@@ -225,6 +225,7 @@ get_install_xml_value() {
 	use amd64 && xpath_get_value "$1" "linux64"
 	[[ -z "${SLASSET}" ]] && xpath_get_value "$1" "linux"
 	[[ -z "${SLASSET}" ]] && xpath_get_value "$1" "linux32"
+	[[ -z "${SLASSET}" ]] && xpath_get_value "$1" "common"
 	if [[ -z "${SLASSET}" ]] ; then
 	  die "failed to get $1 from install.xml"
 	 else
