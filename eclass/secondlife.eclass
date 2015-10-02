@@ -36,6 +36,7 @@ RDEPEND="dev-libs/apr
 	media-libs/libsdl[X,opengl]
 	media-libs/libvorbis
 	media-libs/openjpeg:0
+	x11-libs/pangox-compat
 	!=media-libs/openjpeg-1.5.1
 	openal? ( media-libs/openal
 		media-libs/freealut )
