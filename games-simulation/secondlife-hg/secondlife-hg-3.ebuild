@@ -129,7 +129,9 @@ src_compile() {
 
 	S="${WORKDIR}/colladadom"
 	cd "${S}"
-	emake CXX=g++ || die "emake failed"
+	append-cflags "-I/usr/include/minizip -I/usr/include/libxml2"
+	append-cxxflags "-I/usr/include/minizip -I/usr/include/libxml2"
+	emake CXX=g++ conf=release project=dom || die "emake failed"
 
 	einfo "Done building colladadom"
 
