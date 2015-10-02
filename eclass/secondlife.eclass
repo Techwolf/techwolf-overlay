@@ -19,7 +19,10 @@ RESTRICT="mirror"
 
 IUSE="${IUSE} +vivox +openal +gstreamer +elfio dbus fmod tcmalloc"
 
-RDEPEND="dev-libs/apr
+#currently secondlife will fail with 3.3 cmake
+#source: http://stackoverflow.com/questions/32888617/cant-find-ogg-with-pkgconfig
+RDEPEND="<dev-util/cmake-3.3
+	dev-libs/apr
 	dev-libs/apr-util
 	dev-libs/boost
 	elfio? ( dev-libs/elfio )
