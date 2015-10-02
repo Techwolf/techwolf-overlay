@@ -1,0 +1,70 @@
+
+# HG changeset patch
+# User Tonya Souther <tonya.souther@gmail.com>
+# Date 1350239636 18000
+# Node ID 60e6ef631abb69d59de11b6244aedc7767fd1095
+# Parent  c868e289e17a8174a841bfb3579ccbea364f3907
+Allow colladadom library to be built standalone.
+
+diff -r c868e289e17a -r 60e6ef631abb indra/cmake/ColladaDom.cmake
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ b/indra/cmake/ColladaDom.cmake	Sun Oct 14 13:33:56 2012 -0500
+@@ -0,0 +1,15 @@
++# -*- cmake -*-
++include (Prebuilt)
++
++if (USESYSTEMLIBS)
++  find_path(COLLADA_INCLUDE_DIRS 1.4/dom/domConstants.h
++    PATH_SUFFIXES collada)
++  set(COLLADA_INCLUDE_DIRS
++    ${COLLADA_INCLUDE_DIRS} ${COLLADA_INCLUDE_DIRS}/1.4
++    )
++else (USESYSTEMLIBS)
++  set(COLLADA_INCLUDE_DIRS
++    ${LIBS_PREBUILT_DIR}/include/collada
++    ${LIBS_PREBUILT_DIR}/include/collada/1.4
++    )
++endif (USESYSTEMLIBS)
+diff --git a/indra/llprimitive/CMakeLists.txt b/indra/llprimitive/CMakeLists.txt
+index d2ccb12..3cf2e7a 100755
+--- a/indra/llprimitive/CMakeLists.txt
++++ b/indra/llprimitive/CMakeLists.txt
+@@ -8,6 +8,7 @@ include(LLMath)
+ include(LLMessage)
+ include(LLXML)
+ include(LLPhysicsExtensions)
++include(ColladaDom)
+ include(LLCharacter)
+ 
+ include_directories(
+@@ -16,8 +17,7 @@ include_directories(
+     ${LLMESSAGE_INCLUDE_DIRS}
+     ${LLXML_INCLUDE_DIRS}
+     ${LIBS_PREBUILT_DIR}/include
+-    ${LIBS_PREBUILT_DIR}/include/collada
+-    ${LIBS_PREBUILT_DIR}/include/collada/1.4
++    ${COLLADA_INCLUDE_DIRS}
+     ${LLCHARACTER_INCLUDE_DIRS}
+     )
+ include_directories(SYSTEM
+diff --git a/indra/newview/CMakeLists.txt b/indra/newview/CMakeLists.txt
+index 8f040b4..e19c810 100755
+--- a/indra/newview/CMakeLists.txt
++++ b/indra/newview/CMakeLists.txt
+@@ -7,6 +7,7 @@ include(Boost)
+ 
+ include(BuildVersion)
+ include(CMakeCopyIfDifferent)
++include(ColladaDom)
+ include(DBusGlib)
+ include(DirectX)
+ include(DragDrop)
+@@ -93,7 +94,7 @@ include_directories(
+     ${LIBS_PREBUILT_DIR}/include/collada
+     ${LIBS_PREBUILD_DIR}/include/hunspell
+     ${OPENAL_LIB_INCLUDE_DIRS}
+-    ${LIBS_PREBUILT_DIR}/include/collada/1.4
++    ${COLLADA_INCLUDE_DIRS}
+     ${LLAPPEARANCE_INCLUDE_DIRS}
+     ${CMAKE_CURRENT_SOURCE_DIR}
+     )

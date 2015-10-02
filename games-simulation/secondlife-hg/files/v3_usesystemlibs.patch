@@ -1,0 +1,19 @@
+diff -r 827a910542a9 indra/cmake/WebKitLibPlugin.cmake
+--- a/indra/cmake/WebKitLibPlugin.cmake	Mon Aug 17 14:54:41 2015 -0400
++++ b/indra/cmake/WebKitLibPlugin.cmake	Fri Sep 18 20:15:25 2015 -0400
+@@ -63,7 +63,9 @@
+        )
+ elseif (LINUX)
+     # *HUH:  What does this do?
++  if (USESYSTEMLIBS)
+     set(WEBKIT_PLUGIN_LIBRARIES ${LLQTWEBKIT_LIBRARY} ${QT_LIBRARIES} ${QT_PLUGIN_LIBRARIES})
++  else (USESYSTEMLIBS)
+     set(WEBKIT_PLUGIN_LIBRARIES
+         llqtwebkit
+ #        qico
+@@ -90,4 +92,5 @@
+ #        Xi
+ #        SM
+         )
++  endif (USESYSTEMLIBS)
+ endif (WINDOWS)

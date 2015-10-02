@@ -1,0 +1,108 @@
+
+# HG changeset patch
+# User Nicky
+# Date 1319838221 -7200
+# Node ID 326cc5af628241fb80684fc44e67f9a9514df5ac
+# Parent  d4141d8faada50bff9b9812b95c4ea1e476baf79
+Fix casts that are invalid for 64 bit compilations.
+
+diff -r d4141d8faada -r 326cc5af6282 indra/llcommon/llmemory.cpp
+--- a/indra/llcommon/llmemory.cpp	Fri Oct 28 21:26:40 2011 +0200
++++ b/indra/llcommon/llmemory.cpp	Fri Oct 28 23:43:41 2011 +0200
+@@ -721,7 +721,12 @@
+ void  LLPrivateMemoryPool::LLMemoryBlock::freeMem(void* addr) 
+ {
+ 	//bit index
+-	U32 idx = ((U32)addr - (U32)mBuffer - mDummySize) / mSlotSize ;
++	//	U32 idx = ((U32)addr - (U32)mBuffer - mDummySize) / mSlotSize ;
++	//<ND> 64 bit fix
++	unsigned char *p1 = reinterpret_cast<unsigned char*>(addr);
++	unsigned char *p2 = reinterpret_cast<unsigned char*>(mBuffer);
++	U32 idx = ( p1 - p2 - mDummySize) / mSlotSize ;
++	//</ND>
+ 
+ 	U32* bits = &mUsageBits ;
+ 	if(idx >= 32)
+@@ -903,7 +908,7 @@
+ 
+ void LLPrivateMemoryPool::LLMemoryChunk::freeMem(void* addr)
+ {	
+-	U32 blk_idx = getPageIndex((U32)addr) ;
++	U32 blk_idx = getPageIndex(/*<ND/> 64 bit fix (U32)*/addr) ;
+ 	LLMemoryBlock* blk = (LLMemoryBlock*)(mMetaBuffer + blk_idx * sizeof(LLMemoryBlock)) ;
+ 	blk = blk->mSelf ;
+ 
+@@ -928,7 +933,13 @@
+ 
+ bool LLPrivateMemoryPool::LLMemoryChunk::containsAddress(const char* addr) const
+ {
+-	return (U32)mBuffer <= (U32)addr && (U32)mBuffer + mBufferSize > (U32)addr ;
++	//return (U32)mBuffer <= (U32)addr && (U32)mBuffer + mBufferSize > (U32)addr ;
++	//<ND> 64 bit fix
++	unsigned char const *pBuffer = reinterpret_cast<unsigned char const*>( mBuffer );
++	unsigned char const *pAddr = reinterpret_cast<unsigned char const*>( addr );
++
++	return pBuffer <= pAddr && pBuffer + mBufferSize > pAddr ;
++	//</ND>
+ }
+ 
+ //debug use
+@@ -1285,9 +1296,16 @@
+ 	return ;
+ }
+ 
+-U32 LLPrivateMemoryPool::LLMemoryChunk::getPageIndex(U32 addr)
++//U32 LLPrivateMemoryPool::LLMemoryChunk::getPageIndex(U32 addr)
++U32 LLPrivateMemoryPool::LLMemoryChunk::getPageIndex(void * addr) // <ND/> 64 bit fix
+ {
+-	return (addr - (U32)mDataBuffer) / mMinBlockSize ;
++	//	return (addr - (U32)mDataBuffer) / mMinBlockSize ;
++	//<ND> 64 bit fix
++	unsigned char *pAddr = reinterpret_cast< unsigned char* >( addr );
++	unsigned char *pBuffer = reinterpret_cast< unsigned char* >( mDataBuffer );
++
++	return (pAddr - pBuffer) / mMinBlockSize ;
++	//</ND>
+ }
+ 
+ //for mAvailBlockList
+@@ -1625,7 +1643,13 @@
+ 
+ U16 LLPrivateMemoryPool::findHashKey(const char* addr)
+ {
+-	return (((U32)addr) / CHUNK_SIZE) % mHashFactor ;
++	// return (((U32)addr) / CHUNK_SIZE) % mHashFactor ;
++	//<ND> 64 bit fix
++	unsigned char const *pAddr = reinterpret_cast< unsigned char const *>( addr );
++	U64 nAddr = reinterpret_cast<U64>(pAddr);
++
++	return ( nAddr / CHUNK_SIZE) % mHashFactor ;
++	//</ND>
+ }
+ 
+ LLPrivateMemoryPool::LLMemoryChunk* LLPrivateMemoryPool::findChunk(const char* addr)
+diff -r d4141d8faada -r 326cc5af6282 indra/llcommon/llmemory.h
+--- a/indra/llcommon/llmemory.h	Fri Oct 28 21:26:40 2011 +0200
++++ b/indra/llcommon/llmemory.h	Fri Oct 28 23:43:41 2011 +0200
+@@ -237,7 +237,9 @@
+ 		{
+ 			bool operator()(const LLMemoryBlock* const& lhs, const LLMemoryBlock* const& rhs)
+ 			{
+-				return (U32)lhs->getBuffer() < (U32)rhs->getBuffer();
++				//return (U32)lhs->getBuffer() < (U32)rhs->getBuffer();
++				//<ND/> 64 bit fix
++				return reinterpret_cast<unsigned char*>(lhs->getBuffer()) < reinterpret_cast<unsigned char*>(rhs->getBuffer());
+ 			}
+ 		};
+ 	};
+@@ -268,7 +270,8 @@
+ 		void dump() ;
+ 
+ 	private:
+-		U32 getPageIndex(U32 addr) ;
++//		U32 getPageIndex(U32 addr) ;
++		U32 getPageIndex(void* addr) ; // <ND/> 64 bit fix
+ 		U32 getBlockLevel(U32 size) ;
+ 		U16 getPageLevel(U32 size) ;
+ 		LLMemoryBlock* addBlock(U32 blk_idx) ;
+

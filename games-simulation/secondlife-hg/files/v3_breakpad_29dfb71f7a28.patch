@@ -1,0 +1,34 @@
+
+# HG changeset patch
+# User Techwolf Lupindo
+# Date 1433982881 14400
+# Node ID 29dfb71f7a28037c15d292f9fc034bf7ccd9501d
+# Parent  f38b2ba7bfc441e52b0a1cf5142c86070349740f
+Fix linux standalone google breakpad builds.
+LL code uses google_breakpad prefix while google headers don't use a prefix, causing "headers not found" errors.
+Find both paths and set the correct variable used in LL code.
+This patch does not affect builds using prebuilt libs.
+
+diff -r f38b2ba7bfc4 -r 29dfb71f7a28 indra/cmake/FindGoogleBreakpad.cmake
+--- a/indra/cmake/FindGoogleBreakpad.cmake	Wed Jun 10 15:55:43 2015 +0200
++++ b/indra/cmake/FindGoogleBreakpad.cmake	Wed Jun 10 20:34:41 2015 -0400
+@@ -9,7 +9,10 @@
+ # also defined, but not for general use are
+ #  BREAKPAD_EXCEPTION_HANDLER_LIBRARY, where to find the Google BreakPad library.
+ 
++# LL code uses "google_breakpad" path prefix, while google breakpad headers don't use a prefix. Find and add both paths to the correct variable.
+ FIND_PATH(BREAKPAD_EXCEPTION_HANDLER_INCLUDE_DIR google_breakpad/exception_handler.h)
++FIND_PATH(BREAKPAD_EXCEPTION_HANDLER_INCLUDE_DIRS exception_handler.h PATH_SUFFIXES google_breakpad)
++SET(BREAKPAD_INCLUDE_DIRECTORIES ${BREAKPAD_EXCEPTION_HANDLER_INCLUDE_DIR} ${BREAKPAD_EXCEPTION_HANDLER_INCLUDE_DIRS})
+ 
+ SET(BREAKPAD_EXCEPTION_HANDLER_NAMES ${BREAKPAD_EXCEPTION_HANDLER_NAMES} breakpad_client)
+ FIND_LIBRARY(BREAKPAD_EXCEPTION_HANDLER_LIBRARY
+@@ -27,6 +30,7 @@
+ IF (BREAKPAD_EXCEPTION_HANDLER_FOUND)
+    IF (NOT BREAKPAD_EXCEPTION_HANDLER_FIND_QUIETLY)
+       MESSAGE(STATUS "Found Google BreakPad: ${BREAKPAD_EXCEPTION_HANDLER_LIBRARIES}")
++      MESSAGE(STATUS "Found Google BreakPad headers in: ${BREAKPAD_INCLUDE_DIRECTORIES}")
+    ENDIF (NOT BREAKPAD_EXCEPTION_HANDLER_FIND_QUIETLY)
+ ELSE (BREAKPAD_EXCEPTION_HANDLER_FOUND)
+    IF (BREAKPAD_EXCEPTION_HANDLER_FIND_REQUIRED)
+

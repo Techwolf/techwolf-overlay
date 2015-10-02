@@ -1,0 +1,90 @@
+diff -r 827a910542a9 indra/cmake/00-Common.cmake
+--- a/indra/cmake/00-Common.cmake	Mon Aug 17 14:54:41 2015 -0400
++++ b/indra/cmake/00-Common.cmake	Sat Sep 19 10:33:25 2015 -0400
+@@ -122,6 +122,10 @@
+       OUTPUT_VARIABLE CXX_VERSION
+       OUTPUT_STRIP_TRAILING_WHITESPACE)
+ 
++  #<FS:ND> Gentoo defines _FORTIFY_SOURCE by default
++  if (NOT ${GXX_VERSION} MATCHES "Gentoo 4.[789].*")
++  #</FS:ND>
++
+   if (${GXX_VERSION} STREQUAL ${CXX_VERSION})
+     add_definitions(-D_FORTIFY_SOURCE=2)
+   else (${GXX_VERSION} STREQUAL ${CXX_VERSION})
+@@ -130,6 +134,10 @@
+     endif (NOT ${GXX_VERSION} MATCHES " 4.1.*Red Hat")
+   endif (${GXX_VERSION} STREQUAL ${CXX_VERSION})
+ 
++  #<FS:ND> Gentoo defines _FORTIFY_SOURCE by default
++  endif (NOT ${GXX_VERSION} MATCHES "Gentoo 4.[789].*")
++  #</FS:ND>
++
+   # Let's actually get a numerical version of gxx's version
+   STRING(REGEX REPLACE ".* ([0-9])\\.([0-9])\\.([0-9]).*" "\\1\\2\\3" CXX_VERSION_NUMBER ${CXX_VERSION})
+ 
+@@ -151,6 +159,22 @@
+     set(CMAKE_CXX_FLAGS "-Wno-deprecated ${CMAKE_CXX_FLAGS}")
+   endif (${CXX_VERSION_NUMBER} GREATER 429)
+ 
++  #<FS:ND> Disable unused-but-set-variable for GCC >= 4.6. It causes a lot of warning/errors all over the source. Fixing that would result in changing a good amount of files.
++  if(${CXX_VERSION_NUMBER} GREATER 460)
++    set(CMAKE_CXX_FLAGS "-Wno-unused-but-set-variable ${CMAKE_CXX_FLAGS}")
++  endif (${CXX_VERSION_NUMBER} GREATER 460)
++  #</FS:ND>
++  #<FS:ND> Disable attribute warnings for GCC >= 4.7. It causes a lot of warning/errors in boost.
++  if(${CXX_VERSION_NUMBER} GREATER 470)
++    set(CMAKE_CXX_FLAGS "-Wno-attributes ${CMAKE_CXX_FLAGS}")
++  endif (${CXX_VERSION_NUMBER} GREATER 470)
++  #</FS:ND>
++  #<FS:ND> Disable unsed local typedef warnings for GCC >= 4.8. It causes a lot of warning/errors in boost.
++  if(${CXX_VERSION_NUMBER} GREATER 480)
++    set(CMAKE_CXX_FLAGS "-Wno-unused-local-typedefs ${CMAKE_CXX_FLAGS}")
++  endif (${CXX_VERSION_NUMBER} GREATER 480)
++  #</FS:ND>
++
+   # End of hacks.
+ 
+   add_definitions(
+diff -r 827a910542a9 indra/llcommon/llallocator_heap_profile.cpp
+--- a/indra/llcommon/llallocator_heap_profile.cpp	Mon Aug 17 14:54:41 2015 -0400
++++ b/indra/llcommon/llallocator_heap_profile.cpp	Sat Sep 19 10:33:25 2015 -0400
+@@ -25,6 +25,17 @@
+  * $/LicenseInfo$
+  */
+ 
++// <FS:ND> Disable some warnings on newer GCC versions.
++// This might also trigger on something like 4.8, but I did not such a GCC to test anything lower than 4.9 and higher than 4.6
++//<FS:TS> It does trigger on 4.8. Not sure about 4.7.
++#if LL_LINUX
++ #pragma GCC diagnostic ignored "-Wuninitialized"
++ #if (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__ ) >= 40800
++  #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
++ #endif
++#endif
++// </FS:ND>
++
+ #include "linden_common.h"
+ #include "llallocator_heap_profile.h"
+ 
+diff -r 827a910542a9 indra/newview/llgroupmgr.cpp
+--- a/indra/newview/llgroupmgr.cpp	Mon Aug 17 14:54:41 2015 -0400
++++ b/indra/newview/llgroupmgr.cpp	Sat Sep 19 10:33:25 2015 -0400
+@@ -31,6 +31,17 @@
+ 
+ #include "llviewerprecompiledheaders.h"
+ 
++// <FS:ND> Disable some warnings on newer GCC versions.
++// This might also trigger on something like 4.8, but I did not suchh a GCC to test anything lower than 4.9 and higher than 4.6
++//<FS:TS? This breaks on gcc 4.8, too. Dunno about 4.7.
++#if LL_LINUX
++ #if (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__ ) >= 40800
++   #pragma GCC diagnostic ignored "-Wuninitialized"
++   #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
++ #endif
++#endif
++// </FS:ND>
++
+ #include "llgroupmgr.h"
+ 
+ #include <vector>

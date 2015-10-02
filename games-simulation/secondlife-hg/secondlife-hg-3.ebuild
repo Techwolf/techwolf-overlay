@@ -38,28 +38,17 @@ src_unpack() {
 	  get_install_xml_value "slvoice"
 	  secondlife_unpack "/usr/portage/distfiles/hg-src/${SLASSET##*/}" || die "Problem with unpacking ${SLASSET##*/}"
 	fi
-
-	EHG_REVISION=""
-	S="${WORKDIR}/colladadom"
-	EHG_REPO_URI="https://bitbucket.org/lindenlab/3p-colladadom"
-	mercurial_src_unpack
-	S="${WORKDIR}/llconvexdecomposition"
-	EHG_REPO_URI="https://bitbucket.org/lindenlab/llconvexdecomposition"
-	mercurial_src_unpack
-
-	S="${WORKDIR}/glod"
-	EHG_REPO_URI="https://bitbucket.org/lindenlab/3p-glod"
-	mercurial_src_unpack
-
-	S="${WORKDIR}/linden"
 }
 
 src_prepare() {
 	secondlife_src_prepare
 
+	# cmake standalone webkit fix.
+	epatch "${FILESDIR}"/v3_usesystemlibs.patch
+
 	# viewer 3 standalone build fixes, one missing include and cmake webkit fix.
 	epatch "${FILESDIR}"/v3_llprimitive.patch
-	epatch "${FILESDIR}"/cmake_webkitlib.patch
+	#epatch "${FILESDIR}"/cmake_webkitlib.patch
 
 	# correct paths for FindOpenjpeg
 	epatch "${FILESDIR}"/cmake_openjpeg.patch
@@ -69,9 +58,6 @@ src_prepare() {
 	sed -i -e 's:include(GLH)::g' "${WORKDIR}/linden/indra/cmake/LLRender.cmake"
 	sed -i -e 's:include(GLH)::g' "${WORKDIR}/linden/indra/linux_crash_logger/CMakeLists.txt"
 
-	# jsoncpp fixes, note that open-54 causes build errors, so different custom fix is used here.
-	# epatch "${FILESDIR}"/v3_jsoncpp.patch
-
 	# ndPhysicsstub
 	epatch "${FILESDIR}"/ndPhysicsstub_ef260ca4432a.patch
 	sed -i -e 's:add_subdirectory(${LLPHYSICSEXTENSIONS_SRC_DIR} llphysicsextensions):# add_subdirectory(${LLPHYSICSEXTENSIONS_SRC_DIR} llphysicsextensions):' "${WORKDIR}/linden/indra/newview/CMakeLists.txt"
@@ -79,31 +65,25 @@ src_prepare() {
 	# fix permission
 	chmod +x "${WORKDIR}/linden/indra/newview/viewer_manifest.py"
 
-	# fixes to LL colladadom, remove hardcoded flags and make standalone compatiable.
-	sed -i -e 's/ccFlags += -m32//' "${WORKDIR}/colladadom/make/common.mk"
-	sed -i -e 's/ccFlags += -m32//' "${WORKDIR}/colladadom/make/minizip.mk"
-	sed -i -e 's:includeOpts += -Istage/packages/include/pcre::' "${WORKDIR}/colladadom/make/dom.mk"
-	sed -i -e 's:libOpts += $(addprefix stage/packages/lib/release/,libpcrecpp.a libpcre.a )::' "${WORKDIR}/colladadom/make/dom.mk"
-	sed -i -e 's:includeOpts += -Istage/packages/include::' "${WORKDIR}/colladadom/make/dom.mk"
-	sed -i -e 's:libOpts += stage/packages/lib/$(conf)/libboost_system.a::' "${WORKDIR}/colladadom/make/dom.mk"
-	sed -i -e 's:libOpts += stage/packages/lib/$(conf)/libboost_filesystem.a::' "${WORKDIR}/colladadom/make/dom.mk"
-
-	# fix for llconvexdecomposition, missing #include and api fix.
-	sed -i -e "s:#include <memory>:#include <memory>\n#include <string.h>:" "${WORKDIR}/llconvexdecomposition/Source/lib/LLConvexDecompositionStubImpl.cpp"
-	sed -i -e 's:bool vertex_based:bool vertex_based = false:' "${WORKDIR}/llconvexdecomposition/Source/lib/LLConvexDecompositionStubImpl.h"
-	sed -i -e 's:bool vertex_based:bool vertex_based = false:' "${WORKDIR}/llconvexdecomposition/Source/lib/LLConvexDecomposition.h"
-
-	# fixes to glod, remove LL hardcoded flags.
-	sed -i -e 's:cc=gcc-4.1::g' "${WORKDIR}/glod/Makefile.conf"
-	sed -i -e 's:CC=g++-4.1::g' "${WORKDIR}/glod/Makefile.conf"
-	sed -i -e 's:-m32::g' "${WORKDIR}/glod/src/Makefile"
-	sed -i -e "s:-m32:${CFLAGS} -fPIC:g" "${WORKDIR}/glod/src/vds/Makefile"
-	sed -i -e 's:-fno-stack-protector::g' "${WORKDIR}/glod/src/Makefile"
-	sed -i -e 's:-fno-stack-protector::g' "${WORKDIR}/glod/src/vds/Makefile"
-	sed -i -e 's:-fno-stack-protector::g' "${WORKDIR}/glod/src/xbs/Makefile"
-
-	# fix permission
-	chmod +x "${WORKDIR}/linden/indra/newview/viewer_manifest.py"
+	# uniparser fix for standalone
+	epatch "${FILESDIR}"/v3_uniparser_cdde5dd542b5.patch
+	
+	# 64 bit fixes
+	epatch "${FILESDIR}"/v3_64bit_326cc5af6282.patch
+	epatch "${FILESDIR}"/v3_64bit_2409c7e101b1.patch
+	epatch "${FILESDIR}"/v3_64bit_fixes.patch
+	
+	# LL code uses google_breakpad prefix while google headers don't use a prefix, causing "headers not found" errors.
+	epatch "${FILESDIR}"/v3_breakpad_29dfb71f7a28.patch
+	
+	# gcc warnings
+	epatch "${FILESDIR}"/v3_gcc_warnings.patch
+	
+	# gcc errors
+	epatch "${FILESDIR}"/v3_gcc_errors.patch
+	
+	# usesystemlibs colladadom
+	epatch "${FILESDIR}"/v3_colladadom_standalone_60e6ef631abb.patch
 
 	# allow users to try out patches
 	# put patches in /etc/portage/patches/{${CATEGORY}/${PF},${CATEGORY}/${P},${CATEGORY}/${PN}}/feature.patch
@@ -113,68 +93,14 @@ src_prepare() {
 # Linden Labs use autobuild to configure/build, but it is just a wrapper around cmake and does not take in
 # account for gentoo querks/features of multi-libs of different versions installed at same time.
 src_configure() {
-	return
-}
-src_compile() {
-	# do cmake confure so we get CMAKE_BUILD_DIR defined, Linden Lab code expects packages to be in the cmake build directory. (Yea, it was a WTF moment when debugging this problem)
 	S="${WORKDIR}/linden/indra"
 	cd "${S}"
 	secondlife_cmake_prep
-	mycmakeargs="${mycmakeargs} $(cmake-utils_use pulseaudio PULSEAUDIO)"
-	append-flags "-I${WORKDIR}/linden/include"
-	append-ldflags "-L${CMAKE_BUILD_DIR}/packages/lib/release"
+	export revision=$(get_version_component_range 4)
 	cmake-utils_src_configure
-	filter-ldflags "-L${CMAKE_BUILD_DIR}/packages/lib/release"
-	filter-flags "-I${WORKDIR}/linden/include"
+}
 
-	S="${WORKDIR}/colladadom"
-	cd "${S}"
-	append-cflags "-I/usr/include/minizip -I/usr/include/libxml2"
-	append-cxxflags "-I/usr/include/minizip -I/usr/include/libxml2"
-	emake CXX=g++ conf=release project=dom || die "emake failed"
-
-	einfo "Done building colladadom"
-
-	mkdir -p "${CMAKE_BUILD_DIR}"/packages/lib/{debug,release}
-	MY_STAGE="${CMAKE_BUILD_DIR}"/packages/lib/release
-	cp "build/linux-1.4/libcollada14dom.so" "${MY_STAGE}/libcollada14dom.so"
-        cp "build/linux-1.4/libcollada14dom.so.2" "${MY_STAGE}/libcollada14dom.so.2"
-        cp "build/linux-1.4/libcollada14dom.so.2.2" "${MY_STAGE}/libcollada14dom.so.2.2"
-        cp "build/linux-1.4/libminizip.so" "${MY_STAGE}/libminizip.so"
-
-	MY_STAGE="${CMAKE_BUILD_DIR}"/packages/lib/debug
-        cp "build/linux-1.4-d/libcollada14dom-d.so" "${MY_STAGE}/libcollada14dom-d.so"
-        cp "build/linux-1.4-d/libcollada14dom-d.so.2" "${MY_STAGE}/libcollada14dom-d.so.2"
-        cp "build/linux-1.4-d/libcollada14dom-d.so.2.2" "${MY_STAGE}/libcollada14dom-d.so.2.2"
-        cp "build/linux-1.4-d/libminizip-d.so" "${MY_STAGE}/libminizip-d.so"
-	
-	mkdir -p "${CMAKE_BUILD_DIR}/packages/include/collada"
-	MY_STAGE="${CMAKE_BUILD_DIR}/packages/include"
-	cp -R include/* "${MY_STAGE}/collada"
-
-	einfo "Done staging colladadom"
-
-	S="${WORKDIR}/llconvexdecomposition"
-	cd "${S}/Source"
-	emake RELEASE_CXXFLAGS="${CXXFLAGS}" DEBUG_CXXFLAGS="${CXXFLAGS}" -C lib -f Makefile_stub || die "emake failed"
-	einfo "Done building llconvexdecomposition"
-	cp "lib/debug_stub/libllconvexdecompositionstub.a" "${CMAKE_BUILD_DIR}/packages/lib/debug/libllconvexdecompositionstub.a" || die "copying libllconvexdecompositionstub.a failed"
-        cp "lib/release_stub/libllconvexdecompositionstub.a" "${CMAKE_BUILD_DIR}/packages/lib/release/libllconvexdecompositionstub.a" || die "copying libllconvexdecompositionstub.a failed"
-	cp "lib/LLConvexDecomposition.h" "${CMAKE_BUILD_DIR}/packages/include/llconvexdecomposition.h" || die "copying llconvexdecomposition.h failed"
-	einfo "Done staging llconvexdecomposition"
-
-	S="${WORKDIR}/glod"
-	cd "${S}"
-	append-flags "-fPIC"
-	make -C src clean
-	make -j1 -C src release || die "emake failed"
-	filter-flags "-fPIC"
-	einfo "Done building glod"
-	cp "lib/libGLOD.so" "${CMAKE_BUILD_DIR}/packages/lib/release/libglod.so" || die "copying libGLOD.so failed"
-	mkdir -p "${CMAKE_BUILD_DIR}/packages/include/glod"
-	cp "include/glod.h" "${CMAKE_BUILD_DIR}/packages/include/glod/glod.h" || die "copying glod.h failed"
-	einfo "Done staging glod"
-
+src_compile() {
 	S="${WORKDIR}/linden/indra"
 	cmake-utils_src_compile
 }
@@ -186,12 +112,6 @@ src_install() {
 	epatch "${FILESDIR}"/viewer_manifest_package.patch
 
 	secondlife_viewer_manifest "--buildtype=${CMAKE_BUILD_TYPE}"
-
-	# include the stuff from the extra packages built during src_compile
-	cd "${CMAKE_BUILD_DIR}/packages/lib/release/"
-	exeinto "${GAMES_DATADIR}/${PN}/lib"
-	doexe lib*
-	cd "${WORKDIR}"/linden/indra/newview/
 	
 	# gentoo specific stuff
 	games_make_wrapper "${PN}" ./secondlife "${GAMES_DATADIR}/${PN}"
