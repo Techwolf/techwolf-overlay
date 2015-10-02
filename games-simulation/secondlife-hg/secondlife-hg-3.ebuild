@@ -46,6 +46,9 @@ src_prepare() {
 	# cmake standalone webkit fix.
 	epatch "${FILESDIR}"/v3_usesystemlibs.patch
 
+	# jsoncpp fixes, note that open-54 causes build errors, so different custom fix is used here.
+	epatch "${FILESDIR}"/v3_jsoncpp.patch
+
 	# viewer 3 standalone build fixes, one missing include and cmake webkit fix.
 	epatch "${FILESDIR}"/v3_llprimitive.patch
 	#epatch "${FILESDIR}"/cmake_webkitlib.patch
