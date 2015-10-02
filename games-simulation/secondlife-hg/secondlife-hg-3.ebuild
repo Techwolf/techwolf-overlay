@@ -57,10 +57,11 @@ src_unpack() {
 src_prepare() {
 	secondlife_src_prepare
 
-	#TODO
 	# viewer 3 standalone build fixes, one missing include and cmake webkit fix.
-	#epatch "${FILESDIR}"/v3_standalone.patch
+	epatch "${FILESDIR}"/v3_llprimitive.patch
+	epatch "${FILESDIR}"/cmake_webkitlib.patch
 
+	# correct paths for FindOpenjpeg
 	epatch "${FILESDIR}"/cmake_openjpeg.patch
 
 	# OPEN-38 patch

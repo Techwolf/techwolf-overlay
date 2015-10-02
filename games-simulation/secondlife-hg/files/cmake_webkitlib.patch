@@ -1,0 +1,62 @@
+--- a/indra/cmake/WebKitLibPlugin.cmake
++++ b/indra/cmake/WebKitLibPlugin.cmake
+@@ -63,31 +63,33 @@
+        )
+ elseif (LINUX)
+     # *HUH:  What does this do?
+-    set(WEBKIT_PLUGIN_LIBRARIES ${LLQTWEBKIT_LIBRARY} ${QT_LIBRARIES} ${QT_PLUGIN_LIBRARIES})
+-    set(WEBKIT_PLUGIN_LIBRARIES
+-        llqtwebkit
+-#        qico
+-#        qpng
+-#        qtiff
+-#        qsvg
+-#        QtSvg
+-        QtWebKit
+-        QtOpenGL
+-        QtNetwork
+-        ${OPENSSL_LIBRARIES}
+-        QtGui
+-        QtCore
+-#        jscore
+-#        qgif
+-#        qjpeg
+-#        jpeg
+-        fontconfig
+-        X11
+-        Xrender
+-        GL
+-
+-#        sqlite3
+-#        Xi
+-#        SM
++    if (STANDALONE)
++        set(WEBKIT_PLUGIN_LIBRARIES ${LLQTWEBKIT_LIBRARY} ${QT_LIBRARIES} ${QT_PLUGIN_LIBRARIES})
++    else (STANDALONE)
++        set(WEBKIT_PLUGIN_LIBRARIES
++            llqtwebkit
++#            qico
++#            qpng
++#            qtiff
++#            qsvg
++#            QtSvg
++            QtWebKit
++            QtOpenGL
++            QtNetwork
++            ${OPENSSL_LIBRARIES}
++            QtGui
++            QtCore
++#            jscore
++#            qgif
++#            qjpeg
++#            jpeg
++            fontconfig
++            X11
++            Xrender
++            GL
++#            sqlite3
++#            Xi
++#            SM
+         )
++    endif (STANDALONE)
+ endif (WINDOWS)
