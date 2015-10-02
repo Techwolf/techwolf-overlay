@@ -61,6 +61,8 @@ src_prepare() {
 	# viewer 3 standalone build fixes, one missing include and cmake webkit fix.
 	#epatch "${FILESDIR}"/v3_standalone.patch
 
+	epatch "${FILESDIR}"/cmake_openjpeg.patch
+
 	# OPEN-38 patch
 	# epatch "${FILESDIR}"/v3_OPEN-36.patch
 	sed -i -e 's:include(GLH)::g' "${WORKDIR}/linden/indra/cmake/LLRender.cmake"
