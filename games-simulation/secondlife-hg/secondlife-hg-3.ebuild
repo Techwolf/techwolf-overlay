@@ -97,11 +97,20 @@ src_configure() {
 	cd "${S}"
 	secondlife_cmake_prep
 	export revision=$(get_version_component_range 4)
+	mycmakeargs="${mycmakeargs} $(cmake-utils_use pulseaudio PULSEAUDIO)"
 	cmake-utils_src_configure
 }
 
 src_compile() {
+	#copy glh into right folder
+	cp -rf "${WORKDIR}"/linden/include/glh "${WORKDIR}"/linden/indra/llwindow
+	cp -rf "${WORKDIR}"/linden/include/glh "${WORKDIR}"/linden/indra/llprimitive
+
 	S="${WORKDIR}/linden/indra"
+	append-flags "-I${WORKDIR}/linden/include"
+	append-ldflags "-L${CMAKE_BUILD_DIR}/packages/lib/release"
+	filter-ldflags "-L${CMAKE_BUILD_DIR}/packages/lib/release"
+	filter-flags "-I${WORKDIR}/linden/include"
 	cmake-utils_src_compile
 }
 
