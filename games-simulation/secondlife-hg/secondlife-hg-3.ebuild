@@ -71,6 +71,10 @@ src_prepare() {
 	# jsoncpp fixes, note that open-54 causes build errors, so different custom fix is used here.
 	# epatch "${FILESDIR}"/v3_jsoncpp.patch
 
+	# ndPhysicsstub
+	epatch "${FILESDIR}"/ndPhysicsstub_ef260ca4432a.patch
+	sed -i -e 's:add_subdirectory(${LLPHYSICSEXTENSIONS_SRC_DIR} llphysicsextensions):# add_subdirectory(${LLPHYSICSEXTENSIONS_SRC_DIR} llphysicsextensions):' "${WORKDIR}/linden/indra/newview/CMakeLists.txt"
+
 	# fix permission
 	chmod +x "${WORKDIR}/linden/indra/newview/viewer_manifest.py"
 

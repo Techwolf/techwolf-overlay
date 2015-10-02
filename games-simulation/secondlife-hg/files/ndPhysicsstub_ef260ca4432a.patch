@@ -1,0 +1,44 @@
+
+# HG changeset patch
+# User Nicky
+# Date 1344449823 -7200
+# Node ID ef260ca4432a19ba7d1170faf2b9743d78bd4551
+# Parent  f5ea1ea6750cc22fbefd6d444f6a92ebfa7bf465
+Enable ndPhysicsstub so we get mesh upload again.
+
+diff -r f5ea1ea6750c -r ef260ca4432a indra/cmake/LLPhysicsExtensions.cmake
+--- a/indra/cmake/LLPhysicsExtensions.cmake	Wed Aug 08 20:13:19 2012 +0200
++++ b/indra/cmake/LLPhysicsExtensions.cmake	Wed Aug 08 20:17:03 2012 +0200
+@@ -17,11 +17,25 @@
+    set(LLPHYSICSEXTENSIONS_SRC_DIR ${LIBS_PREBUILT_DIR}/llphysicsextensions/src)
+    set(LLPHYSICSEXTENSIONS_LIBRARIES    llphysicsextensions)
+ 
++   # <FS:ND> include paths for LLs version and ours are different.
++   set(LLPHYSICSEXTENSIONS_INCLUDE_DIRS ${LIBS_PREBUILT_DIR}/include/llphysicsextensions)
++   # </FS:ND>
++
+ else (HAVOK)
+-   use_prebuilt_binary(llphysicsextensions_stub)
+-   set(LLPHYSICSEXTENSIONS_SRC_DIR ${LIBS_PREBUILT_DIR}/llphysicsextensions/stub)
+-   set(LLPHYSICSEXTENSIONS_LIBRARIES    llphysicsextensionsstub)
++   # use_prebuilt_binary( ndPhysicsStub )
++
++# <FS:ND> Don't set this variable, there is no need to build any stub source if using ndPhysicsStub
++#   set(LLPHYSICSEXTENSIONS_SRC_DIR ${LIBS_PREBUILT_DIR}/llphysicsextensions/stub)
++# </FS:ND>
++
++   set(LLPHYSICSEXTENSIONS_LIBRARIES nd_hacdConvexDecomposition hacd nd_Pathing )
++
++   # <FS:ND> include paths for LLs version and ours are different.
++   set(LLPHYSICSEXTENSIONS_INCLUDE_DIRS ${LIBS_PREBUILT_DIR}/include/ )
++   # </FS:ND>
+ 
+ endif (HAVOK)
+ 
+-set(LLPHYSICSEXTENSIONS_INCLUDE_DIRS ${LIBS_PREBUILT_DIR}/include/llphysicsextensions)
++# <FS:ND> include paths for LLs version and ours are different.
++#set(LLPHYSICSEXTENSIONS_INCLUDE_DIRS ${LIBS_PREBUILT_DIR}/include/llphysicsextensions) 
++# </FS:ND>
+\ No newline at end of file
+
+
