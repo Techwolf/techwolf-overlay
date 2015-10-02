@@ -35,7 +35,7 @@ RDEPEND="dev-libs/apr
 	media-libs/libpng
 	media-libs/libsdl[X,opengl]
 	media-libs/libvorbis
-	media-libs/openjpeg
+	media-libs/openjpeg:0
 	!=media-libs/openjpeg-1.5.1
 	openal? ( media-libs/openal
 		media-libs/freealut )
