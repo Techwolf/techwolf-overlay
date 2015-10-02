@@ -4,7 +4,7 @@
 # Nonofficial ebuild by Techwolf. Lastest version at http://gentoo.techwolf.net/
 
 EAPI="5"
-MY_LLCODEBASE="263"
+MY_LLCODEBASE="9999"
 inherit mercurial secondlife
 
 DESCRIPTION="A 3D MMORPG virtual world entirely built and owned by its residents"
