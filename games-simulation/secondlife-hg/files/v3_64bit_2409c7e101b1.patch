@@ -1,0 +1,26 @@
+
+# HG changeset patch
+# User Nicky
+# Date 1355620635 -3600
+# Node ID 2409c7e101b11c0235cdb45627bc89d459156ed8
+# Parent  022ce2b93812d237a50f2fb07a4d1c482d760abf
+Fix for 64 bit compilation.
+
+diff -r 022ce2b93812 -r 2409c7e101b1 indra/llmessage/llcurl.h
+--- a/indra/llmessage/llcurl.h	Sun Dec 16 02:03:44 2012 +0100
++++ b/indra/llmessage/llcurl.h	Sun Dec 16 02:17:15 2012 +0100
+@@ -460,7 +460,12 @@
+ 			}
+ 			else
+ 			{
+-				return (U32)lhs < (U32)rhs;
++				// <FS:ND> 64 bit fix. do not truncate a pointer down to 32 bit
++
++				// return (U32)lhs < (U32)rhs;
++				return lhs < rhs;
++
++				// </FS:ND>
+ 			}
+ 		}
+ 	};
+

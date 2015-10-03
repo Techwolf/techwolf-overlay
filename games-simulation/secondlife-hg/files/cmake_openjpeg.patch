@@ -1,0 +1,9 @@
+--- a/indra/cmake/FindOpenJPEG.cmake
++++ b/indra/cmake/FindOpenJPEG.cmake
+@@ -13,6 +13,7 @@
+ /usr/local/include/openjpeg
+ /usr/local/include
+ /usr/include/openjpeg
++/usr/include/openjpeg-1.5
+ /usr/include
+ )

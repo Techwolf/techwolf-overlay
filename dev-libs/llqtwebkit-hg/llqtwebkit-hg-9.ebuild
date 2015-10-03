@@ -17,9 +17,9 @@ SLOT="0"
 KEYWORDS="~amd64 ~x86"
 IUSE=""
 
-DEPEND="dev-qt/qtcore
-	dev-qt/qtopengl
-	dev-qt/qtwebkit"
+DEPEND="dev-qt/qtcore:4
+	dev-qt/qtopengl:4
+	dev-qt/qtwebkit:4"
 RDEPEND="${DEPEND}"
 
 src_unpack() {

@@ -25,15 +25,3 @@ diff -r 9ac70401cf0b indra/newview/lltranslate.cpp
  
  // These two are concatenated with the language specifiers to form a complete Google Translate URL
  const char* LLTranslate::m_GoogleURL = "http://ajax.googleapis.com/ajax/services/language/translate?v=1.0&q=";
-diff -r 014f5d917117 indra/newview/kvflickr.cpp
---- a/indra/newview/kvflickr.cpp	Sun Oct 02 23:08:09 2011 -0400
-+++ b/indra/newview/kvflickr.cpp	Mon Oct 03 01:51:13 2011 -0400
-@@ -25,7 +25,7 @@
- #include "llmd5.h"
- #include "llhttpclient.h"
- #include "llxmltree.h"
--#include "json.h"
-+#include "jsoncpp/json.h"
- 
- #include "kvflickr.h"
- 

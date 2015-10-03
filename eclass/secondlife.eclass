@@ -19,9 +19,10 @@ RESTRICT="mirror"
 
 IUSE="${IUSE} +vivox +openal +gstreamer +elfio dbus fmod tcmalloc"
 
-# There are problems with curl if built with gnutls. http://jira.secondlife.com/browse/VWR-5601 
-# There is DNS lookup problems with curl if built without c-ares.
-RDEPEND="dev-libs/apr
+#currently secondlife will fail with 3.3 cmake
+#source: http://stackoverflow.com/questions/32888617/cant-find-ogg-with-pkgconfig
+RDEPEND="<dev-util/cmake-3.3
+	dev-libs/apr
 	dev-libs/apr-util
 	dev-libs/boost
 	elfio? ( dev-libs/elfio )
@@ -37,14 +38,15 @@ RDEPEND="dev-libs/apr
 	media-libs/libpng
 	media-libs/libsdl[X,opengl]
 	media-libs/libvorbis
-	media-libs/openjpeg
+	media-libs/openjpeg:0
+	x11-libs/pangox-compat
 	!=media-libs/openjpeg-1.5.1
 	openal? ( media-libs/openal
 		media-libs/freealut )
 	gstreamer? ( media-plugins/gst-plugins-meta
 		    media-plugins/gst-plugins-soup )
 	net-dns/c-ares
-	|| ( net-misc/curl[-curl_ssl_nss,-curl_ssl_gnutls] net-misc/curl[-nss,-gnutls,ares] )
+	net-misc/curl
 	sys-libs/zlib
 	vivox? (
 	         amd64? (
@@ -227,6 +229,7 @@ get_install_xml_value() {
 	use amd64 && xpath_get_value "$1" "linux64"
 	[[ -z "${SLASSET}" ]] && xpath_get_value "$1" "linux"
 	[[ -z "${SLASSET}" ]] && xpath_get_value "$1" "linux32"
+	[[ -z "${SLASSET}" ]] && xpath_get_value "$1" "common"
 	if [[ -z "${SLASSET}" ]] ; then
 	  die "failed to get $1 from install.xml"
 	 else
