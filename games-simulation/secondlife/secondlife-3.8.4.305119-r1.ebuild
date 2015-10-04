@@ -11,11 +11,9 @@ DESCRIPTION="A 3D MMORPG virtual world entirely built and owned by its residents
 HOMEPAGE="http://secondlife.com/"
 
 MY_SOURCE="https://bitbucket.org/lindenlab/viewer-release/get/3.8.4-release.tar.bz2"
-MY_GLH="http://automated-builds-secondlife-com.s3.amazonaws.com/hg/repo/glh-linear_3p-update-glh-linear/rev/297692/arch/Linux/installer/glh_linear-0.0.0-common-297692.tar.bz2"
 MY_VIVOX="http://automated-builds-secondlife-com.s3.amazonaws.com/hg/repo/slvoice_3p-update-slvoice/rev/298329/arch/Linux/installer/slvoice-3.2.0002.10426.298329-linux-298329.tar.bz2"
 
 SRC_URI="${MY_SOURCE}
-	${MY_GLH}
 	vivox? ( ${MY_VIVOX} )"
 
 SLOT="0"
@@ -29,7 +27,6 @@ src_unpack() {
 	mv lindenlab-viewer-release-27e3cf444c4c linden || die "renaming to \"linden\" failed"
 	S="${WORKDIR}/linden"
 	cd "${S}"
-	unpack ${MY_GLH##*/}
 	use vivox && unpack ${MY_VIVOX##*/}
 }
 
