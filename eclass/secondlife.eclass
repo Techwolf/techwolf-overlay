@@ -91,7 +91,7 @@ QA_TEXTRELS="usr/share/games/${PN}/lib/libvivoxsdk.so usr/share/games/${PN}/lib/
 # 340 - LL v3.4.0 (264911) with pathfinding (this version number currentelly not used)
 # 350 - LL v3.5.0 (273444) with CHUI (this version number currentelly not used)
 # 352 - LL v3.5.2 (276129) May 20, 2013: coroutine moved to dcoroutine
-# 351 - LL release SSA, Server Side Appearence (this version number currentelly not used)
+# 351 - LL v3.5.1 (274821) release SSA, Server Side Appearence
 # 360 - LL v3.6.0 (277516) with Materials (this version number currentelly not used)
 # 371 - LL v3.7.16 (299021) added uriparser depends, droped the 6 number for now. May have to refactor to four digit version number.
 # 372 - LL v3.7.20 (296094) added packages-info.txt and depends on autobuild, but not all autobuilds will work with all clients (this version number currentelly not used)
@@ -895,6 +895,13 @@ secondlife_src_prepare() {
 	  sed -i -e 's:include(BuildPackagesInfo)::' "${WORKDIR}/linden/indra/newview/CMakeLists.txt"
 	  touch "${WORKDIR}/linden/indra/newview/packages-info.txt"
 	fi
+	
+	# Fix a cmake 3.3.x bug, don't overide a cmake variable. 
+	if [[ "${MY_LLCODEBASE}" -ge "351" ]]; then
+	  einfo "Working around viewer cmake bug"
+	  sed -i -e 's:include(ConfigurePkgConfig)::' "${WORKDIR}/linden/indra/cmake/Variables.cmake"
+	fi
+	
 }
 
 secondlife_pkg_postinst() {
