@@ -71,7 +71,7 @@ Non-3D GUI clients, for when you just need to chat and other things that don't n
 
 There is several mercurial branches from Linden Labs and third party viewers. They are:
 
-*   secondlife-hg is a live hg pull from a viewer development or release repro. This repro is being maintained by LL and the open source community.
+*   secondlife-hg is a live hg pull from a viewer development or release canidate repro. This repro is being maintained by LL and the open source community.
 *   firestorm-hg is a live hg pull from the phoenix viewer project of Linden Labs viewer 2/3.x based code.
 *   All branches do a live pull from the hg repository, to update, just re-emerge them.
 *   All can be installed at the same time.
