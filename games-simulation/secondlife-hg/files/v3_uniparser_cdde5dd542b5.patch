@@ -1,0 +1,23 @@
+
+# HG changeset patch
+# User Techwolf Lupindo
+# Date 1425250328 18000
+# Node ID cdde5dd542b5940ef790da3f501b99fe5080db9b
+# Parent  ddf396b0c2e77476b19fbb9166b581c6200a41d7
+Fix linux standalone build, Uri.h != uri.h
+
+diff -r ddf396b0c2e7 -r cdde5dd542b5 indra/cmake/FindURIPARSER.cmake
+--- a/indra/cmake/FindURIPARSER.cmake	Sun Mar 01 21:47:09 2015 +0100
++++ b/indra/cmake/FindURIPARSER.cmake	Sun Mar 01 17:52:08 2015 -0500
+@@ -14,9 +14,7 @@
+ # Note: Since this file is only used for standalone, the windows
+ # specific parts were left out.
+ 
+-FIND_PATH(URIPARSER_INCLUDE_DIR uriparser/uri.h
+-  NO_SYSTEM_ENVIRONMENT_PATH
+-  )
++FIND_PATH(URIPARSER_INCLUDE_DIR uriparser/Uri.h)
+ 
+ FIND_LIBRARY(URIPARSER_LIBRARY uriparser)
+ 
+
