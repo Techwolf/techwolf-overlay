@@ -87,11 +87,12 @@ QA_TEXTRELS="usr/share/games/${PN}/lib/libvivoxsdk.so usr/share/games/${PN}/lib/
 # 250 - LL v2.5.0 (220251) February 10, 2011: Added cmake option NON_RELEASE_CRASH_REPORTING
 # 263 - LL v2.6.3 (227447) April 26, 2011: switch to autobuild and VS2010 for building the client instead of just the 3p-* packages.
 # 271 - LL v2.7.1 (232828) June 14, 2011: mesh release. new depends: llcolladadom, glod, llconvexdecomposition or llconvexdecompositionstub or llhacdconvexdecomposition
+# 320 - LL v3.2.0 (244443) November 08, 2011: STORM-1524 Fixes for viewer-autobuild for standalone. Most notiably, glh_linear
 # 334 - LL v3.3.4 (264214) with spell checker.
 # 340 - LL v3.4.0 (264911) with pathfinding (this version number currentelly not used)
 # 350 - LL v3.5.0 (273444) with CHUI (this version number currentelly not used)
 # 352 - LL v3.5.2 (276129) May 20, 2013: coroutine moved to dcoroutine
-# 351 - LL v3.5.1 (274821) release SSA, Server Side Appearence
+# 351 - LL v3.5.1 (274821) April 29, 2013: Server Side Appearence (SSA)
 # 360 - LL v3.6.0 (277516) with Materials (this version number currentelly not used)
 # 371 - LL v3.7.16 (299021) added uriparser depends, droped the 6 number for now. May have to refactor to four digit version number.
 # 372 - LL v3.7.20 (296094) added packages-info.txt and depends on autobuild, but not all autobuilds will work with all clients (this version number currentelly not used)
@@ -133,6 +134,11 @@ if [[ "${MY_LLCODEBASE}" -ge "271" ]] ; then
           dev-libs/glod-hg
 	  media-libs/llcolladadom-hg
 	  dev-libs/llhacdconvexdecomposition-hg"
+fi
+
+if [[ "${MY_LLCODEBASE}" -ge "320" ]] ; then
+  DEPEND="${DEPEND}
+	  dev-libs/glh-hg"
 fi
 
 if [[ "${MY_LLCODEBASE}" -ge "334" ]] ; then
