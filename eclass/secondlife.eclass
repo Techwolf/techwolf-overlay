@@ -142,7 +142,8 @@ fi
 
 if [[ "${MY_LLCODEBASE}" -ge "371" ]] ; then
   DEPEND="${DEPEND}
-	  dev-libs/uriparser"
+	  dev-libs/uriparser
+	  dev-libs/glh-hg"
 fi
 
 # Internial function to take one file and convert it from DOS to UNIX if text file.
