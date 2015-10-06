@@ -6,7 +6,8 @@ EAPI=5
 
 inherit qmake-utils
 
-MY_PV=${PV}-stable
+MY_PV=${PV}
+# -stable
 
 DESCRIPTION="A fork of libqtelegram by Aseman Team"
 HOMEPAGE="https://github.com/Aseman-Land/libqtelegram-aseman-edition"
@@ -46,7 +47,8 @@ src_prepare(){
 }
 
 src_configure(){
-	eqmake5 PREFIX="${EPREFIX}/usr"
+                                        # workaround a typo bug that was fixed upstream, but not released yet.
+	eqmake5 PREFIX="${EPREFIX}/usr" INSTALL_HEADERS_PREFIX="${EPREFIX}/usr/include"
 }
 
 src_install(){
