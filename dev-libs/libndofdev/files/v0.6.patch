@@ -143,7 +143,7 @@ index c9bfe11..0b0a858 100644
 +                axes_count += (evtype_mask[idx] & (1 << bit)) > 0;
 +            }
 +        } else {
-+            fprintf(stderr, "%s\n", explain_ioctl(fd, EVIOCGBIT(EV_REL, sizeof evtype_mask), evtype_mask));
++            fprintf( stderr, "%s\n", "ioctl error" );
 +        }
 +
 +
