@@ -4,6 +4,8 @@
 
 EAPI="5"
 
+inherit eutils
+
 DESCRIPTION="Replacement for the libndofdev library used by the Second Life client to handle joysticks and the 6DOF devices on Windows and Macs."
 HOMEPAGE="https://github.com/janoc/libndofdev"
 SRC_URI="https://github.com/janoc/libndofdev/archive/0.5.zip -> libndofdev-0.5.zip"
@@ -16,6 +18,10 @@ RESTRICT="mirror"
 
 RDEPEND="media-libs/libsdl"
 DEPEND="${RDEPEND}"
+
+src_prepare() {
+    epatch_user
+}
 
 src_compile() {
     # add SpaceExplorer support

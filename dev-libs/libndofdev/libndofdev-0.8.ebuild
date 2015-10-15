@@ -8,7 +8,7 @@ inherit eutils
 
 DESCRIPTION="Replacement for the libndofdev library used by the Second Life client to handle joysticks and the 6DOF devices on Windows and Macs."
 HOMEPAGE="https://github.com/janoc/libndofdev"
-SRC_URI="https://github.com/janoc/libndofdev/archive/0.5.zip -> libndofdev-0.5.zip"
+SRC_URI="https://github.com/janoc/libndofdev/archive/0.8.tar.gz -> libndofdev-0.8.tar.gz"
 
 LICENSE="BSD"
 SLOT="0"
@@ -19,10 +19,10 @@ RESTRICT="mirror"
 RDEPEND="media-libs/libsdl"
 DEPEND="${RDEPEND}"
 
-S="${WORKDIR}/"libndofdev-0.5
+S="${WORKDIR}/"libndofdev-0.8
 
 src_prepare() {
-    epatch "${FILESDIR}"/v0.6.patch
+    epatch_user
 }
 
 src_compile() {
@@ -30,6 +30,7 @@ src_compile() {
 }
 
 src_install() {
+    dobin ndofdev_test
     dolib.a libndofdev.a || die "install failed"
     insinto usr/include
     doins ndofdev_external.h
