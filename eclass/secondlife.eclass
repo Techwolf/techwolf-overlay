@@ -212,11 +212,12 @@ distfile_check_download() {
 # requires dev-perl/XML-XPath
 # Many thanks to Cron Stardust that posted this example to the SLDev list.
 xpath_get_value() {
-	if [[ "${MY_LLCODEBASE}" -ge "263" ]] ; then
+	if [[ -f "${S}/autobuild.xml" ]] ; then
 	  einfo "Getting $2 $1 from ${S}/autobuild.xml"
 	  SLASSET=$(xpath "${S}/autobuild.xml" "//key[text()=\"$1\"]/following-sibling::map[1]/key[text()=\"platforms\"]/following-sibling::map[1]/key[text()=\"$2\"]/following-sibling::map[1]/key[text()=\"archive\"]/following-sibling::map[1]/string[2]/text()")
 	  SLASSET_MD5SUM=$(xpath "${S}/autobuild.xml" "//key[text()=\"$1\"]/following-sibling::map[1]/key[text()=\"platforms\"]/following-sibling::map[1]/key[text()=\"$2\"]/following-sibling::map[1]/key[text()=\"archive\"]/following-sibling::map[1]/string[1]/text()")
 	 else
+	  # some TPVs still use pre 2.6.3 build system parts.
 	  einfo "Getting $2 $1 from ${S}/install.xml"
 	  SLASSET=$(xpath "${S}/install.xml" "//key[text()=\"$1\"]/following-sibling::map[1]/key[text()=\"packages\"]/following-sibling::map[1]/key[text()=\"$2\"]/following-sibling::map[1]/uri/text()")
 	  SLASSET_MD5SUM=$(xpath "${S}/install.xml" "//key[text()=\"$1\"]/following-sibling::map[1]/key[text()=\"packages\"]/following-sibling::map[1]/key[text()=\"$2\"]/following-sibling::map[1]/string/text()")
@@ -448,6 +449,7 @@ secondlife_unpack() {
 		${XARGS} -0 chmod -fR a+rX,u+w,g-w,o-w
 }
 
+# snowglobe based viewers used doc/asset_urls.txt
 secondlife_asset_unpack() {
 	# source downloads URL variables and download suppemential packages.
 	. "${S}"/doc/asset_urls.txt
@@ -717,10 +719,10 @@ secondlife_pkg_setup() {
 secondlife_src_prepare() {
 	# strip out any hardcoded cflags. We are not cross compiling. Use gento supplied flags.
 	einfo "Striping out hardcoded cflags options so that ebuild supplied cflags are used."
-	sed -i -e 's:-march=.*):):' "${WORKDIR}/linden/indra/cmake/00-Common.cmake"
+	sed -i -e 's:-march=[a-zA-Z0-9]*::' "${WORKDIR}/linden/indra/cmake/00-Common.cmake"
 	sed -i -e 's:-m32::' "${WORKDIR}/linden/indra/cmake/00-Common.cmake"
 	sed -i -e 's:-m64::' "${WORKDIR}/linden/indra/cmake/00-Common.cmake"
-	sed -i -e 's:-O2::' "${WORKDIR}/linden/indra/cmake/00-Common.cmake"
+	sed -i -e 's:-O[23]::' "${WORKDIR}/linden/indra/cmake/00-Common.cmake"
 	
 	# reenable an optimization due to no longer using gcc 3.x that crash on it.
 	einfo "Re-enabling tree-vectorize optimization."
@@ -876,7 +878,7 @@ secondlife_src_prepare() {
 	fi
 	
 	# newer boost defaults to version 3 filesystem.
-	if has_version '>=dev-libs/boost-1.46'; then
+	if has_version '>=dev-libs/boost-1.46' && [[ -f "${WORKDIR}/linden/indra/llvfs/lldiriterator.cpp" ]]; then
 	  if ! ( grep -q 'BOOST_FILESYSTEM_VERSION == 3' "${WORKDIR}/linden/indra/llvfs/lldiriterator.cpp" || grep -q 'catch (const fs::filesystem_error' "${WORKDIR}/linden/indra/llvfs/lldiriterator.cpp"); then
 	    einfo "Patching for boost filesystem version 3"
 	    epatch "${EBUILD%/*}/../../eclass/boost_1_44.patch"
