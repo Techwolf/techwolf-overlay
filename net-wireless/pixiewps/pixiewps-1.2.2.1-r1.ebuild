@@ -20,5 +20,5 @@ S="${WORKDIR}"/pixiewps-1448fff39f01f66151a35f46c2c66739c84119cc/src
 
 
 src_prepare() {
-        sed -i 's:$(PREFIX)/local/bin:$(PREFIX)/usr/bin:' Makefile || die "sed Makefile failed"
+        sed -i 's:$(PREFIX)/local/bin:$(PREFIX)/bin:' Makefile || die "sed Makefile failed"
 }
