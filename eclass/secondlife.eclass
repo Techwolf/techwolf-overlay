@@ -638,6 +638,13 @@ secondlife_cmake_prep() {
 
 	# upstream set this to on, let turn it off untill they fix it. This will override any users setting. :-(
 	CMAKE_VERBOSE="OFF"
+	
+	# if gcc >=5.x.x, set -fpermissive flags
+	if tc-is-gcc && [[ $(gcc-version) > 5.0 ]]; then
+	  einfo "Adding -fpermissive to gcc flags"
+	  append-cflags '-fpermissive'
+          append-cxxflags '-fpermissive'
+        fi
 }
 
 secondlife_viewer_manifest() {
@@ -736,6 +743,12 @@ secondlife_src_prepare() {
 	sed -i -e 's:-m32::' "${WORKDIR}/linden/indra/cmake/00-Common.cmake"
 	sed -i -e 's:-m64::' "${WORKDIR}/linden/indra/cmake/00-Common.cmake"
 	sed -i -e 's:-O[23]::' "${WORKDIR}/linden/indra/cmake/00-Common.cmake"
+	
+	# Gentoo defines _FORTIFY_SOURCE by default for gcc 4.7 and up
+	if tc-is-gcc && [[ $(gcc-version) > 4.6 ]]; then
+	  einfo "Removing \"add_definitions(-D_FORTIFY_SOURCE=2)\" from 00-Common.cmake"
+	  sed -i -e 's:add_definitions(-D_FORTIFY_SOURCE=2):#add_definitions(-D_FORTIFY_SOURCE=2):g' "${WORKDIR}/linden/indra/cmake/00-Common.cmake"
+        fi
 	
 	# reenable an optimization due to no longer using gcc 3.x that crash on it.
 	einfo "Re-enabling tree-vectorize optimization."
@@ -922,6 +935,17 @@ secondlife_src_prepare() {
 	  sed -i -e 's:include(ConfigurePkgConfig)::' "${WORKDIR}/linden/indra/cmake/Variables.cmake"
 	fi
 	
+        # gcc 4.6.3 and up has problems with boost 1.57 and up.
+	if has_version '>=dev-libs/boost-1.57' && grep -q ' bind(&LLCalcParser' "${WORKDIR}/linden/indra/llmath/llcalcparser.h" ; then
+	  einfo "Updating LLCalcParser to use phoenix::bind"
+	  sed -i -e 's/bind(&/phoenix::bind(\&/g' "${WORKDIR}/linden/indra/llmath/llcalcparser.h"
+	fi
+	
+	# fix for boost 1.59
+	if has_version '>=dev-libs/boost-1.59' && ! grep -q 'adjacent_tokens_only' "${WORKDIR}/linden/indra/newview/llcommandlineparser.cpp" ; then
+	  einfo "Patching LLCLPValue for boost > 1.57"
+	  epatch "${EBUILD%/*}/../../eclass/boost_1.59.patch"
+	fi
 }
 
 secondlife_pkg_postinst() {

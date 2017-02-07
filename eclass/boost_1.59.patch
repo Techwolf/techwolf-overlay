@@ -1,0 +1,15 @@
+diff --git a/indra/newview/llcommandlineparser.cpp b/indra/newview/llcommandlineparser.cpp
+--- a/indra/newview/llcommandlineparser.cpp
++++ b/indra/newview/llcommandlineparser.cpp
+@@ -180,6 +180,11 @@
+            mNotifyCallback(*value);
+         }
+     }
++
++       virtual bool adjacent_tokens_only() const
++       {
++               return false;
++       }
+ 
+ protected:
+     void xparse(boost::any& value_store,
