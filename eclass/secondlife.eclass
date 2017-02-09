@@ -38,8 +38,7 @@ RDEPEND="dev-libs/apr
 	<=media-libs/openjpeg-1.5.0:0
 	openal? ( media-libs/openal
 		media-libs/freealut )
-	gstreamer? ( media-plugins/gst-plugins-meta
-		    media-plugins/gst-plugins-soup )
+	gstreamer? ( media-plugins/gst-plugins-meta:0.10[http] )
 	net-dns/c-ares
 	net-misc/curl
 	sys-libs/zlib
