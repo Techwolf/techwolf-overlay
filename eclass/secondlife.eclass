@@ -64,6 +64,7 @@ RDEPEND="dev-libs/apr
 	        )
 	x11-libs/gtk+:2
 	x11-libs/pango[X]
+	x11-libs/pangox-compat
 	x11-libs/libXinerama
 	virtual/opengl
 	media-libs/freeglut"
