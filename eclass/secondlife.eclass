@@ -73,7 +73,7 @@ DEPEND="${RDEPEND}
 	dev-util/pkgconfig
 	sys-devel/flex
 	sys-devel/bison
-	dev-lang/python
+	${PYTHON_DEPS}
 	dev-libs/libndofdev"
 
 # Prevent warning on binary only files
