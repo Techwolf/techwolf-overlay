@@ -97,6 +97,9 @@ QA_TEXTRELS="usr/share/games/${PN}/lib/libvivoxsdk.so usr/share/games/${PN}/lib/
 # 372 - LL v3.7.20 (296094) added packages-info.txt and depends on autobuild, but not all autobuilds will work with all clients (this version number currentelly not used)
 # 372 - LL v3.7.28 (300847) May 08, 2015: Last version to support windows XP. Next version has autobuild VS2013 changes.
 #
+# 411 - added libvlc depends.
+
+
 if [[ "${MY_LLCODEBASE}" -ge "130" ]] ; then
   IUSE="${IUSE} unit_test"
   DEPEND="${DEPEND}
@@ -148,6 +151,11 @@ fi
 if [[ "${MY_LLCODEBASE}" -ge "371" ]] ; then
   DEPEND="${DEPEND}
 	  dev-libs/uriparser"
+fi
+
+if [[ "${MY_LLCODEBASE}" -ge "411" ]] ; then
+  DEPEND="${DEPEND}
+	  media-video/vlc"
 fi
 
 # Internial function to take one file and convert it from DOS to UNIX if text file.
@@ -856,16 +864,22 @@ secondlife_src_prepare() {
 	  
 	fi
 
+	# dcoroutine is currenty broken on boost >= 1.61. Fallback to older coroutine that works on newer boost.
 	if [[ "${MY_LLCODEBASE}" -ge "200" ]] ; then
 	  # fix includes due to coroutine could not be packaged within boost package path due to gentoo uses a sybolic link.
 	  # UPDATE: Gentoo DE-slotted boost, but LL is changing things around to support the new API comming out in Boost 1.53
 	  #   So is keeping the seperate libs to handle the two different APIs.
 	  einfo "Fixing \"include\" files to point to gentoo overlay packaged coroutine headers"
-	  sed -i -e 's/#include <boost\/coroutine\//#include <boost-coroutine\//g' "${WORKDIR}/linden/indra/viewer_components/login/lllogin.cpp"
-	  sed -i -e 's/#include <boost\/coroutine\//#include <boost-coroutine\//g' "${WORKDIR}/linden/indra/llcommon/llcoros.h"
-	  sed -i -e 's/#include <boost\/coroutine\//#include <boost-coroutine\//g' "${WORKDIR}/linden/indra/llcommon/lleventcoro.h"
-	  sed -i -e 's/#include <boost\/coroutine\//#include <boost-coroutine\//g' "${WORKDIR}/linden/indra/llcommon/tests/lleventcoro_test.cpp"
-	  sed -i -e 's/#include <boost\/coroutine\//#include <boost-coroutine\//g' "${WORKDIR}/linden/indra/newview/llviewerprecompiledheaders.h"
+	  sed -i -e 's/#include <boost\/d\?coroutine\//#include <boost-coroutine\//g' "${WORKDIR}/linden/indra/viewer_components/login/lllogin.cpp"
+	  sed -i -e 's/#include <boost\/d\?coroutine\//#include <boost-coroutine\//g' "${WORKDIR}/linden/indra/llcommon/llcoros.h"
+	  sed -i -e 's/#include <boost\/d\?coroutine\//#include <boost-coroutine\//g' "${WORKDIR}/linden/indra/llcommon/lleventcoro.h"
+	  sed -i -e 's/#include <boost\/d\?coroutine\//#include <boost-coroutine\//g' "${WORKDIR}/linden/indra/llcommon/tests/lleventcoro_test.cpp"
+	  sed -i -e 's/#include <boost\/d\?coroutine\//#include <boost-coroutine\//g' "${WORKDIR}/linden/indra/newview/llviewerprecompiledheaders.h"
+	  
+	  sed -i -e 's/boost::dcoroutines/boost::coroutines/g' "${WORKDIR}/linden/indra/llcommon/llcoros.h"
+	  sed -i -e 's/boost::dcoroutines/boost::coroutines/g' "${WORKDIR}/linden/indra/llcommon/llcoros.cpp"
+	  sed -i -e 's/boost::dcoroutines/boost::coroutines/g' "${WORKDIR}/linden/indra/llcommon/lleventcoro.h"
+	  sed -i -e 's/boost::dcoroutines/boost::coroutines/g' "${WORKDIR}/linden/indra/llcommon/tests/lleventcoro_test.cpp" 
 	fi
 
 	# append Gentoo to viewer channel name. LL is now publishing stats.
@@ -945,6 +959,35 @@ secondlife_src_prepare() {
 	if has_version '>=dev-libs/boost-1.59' && ! grep -q 'adjacent_tokens_only' "${WORKDIR}/linden/indra/newview/llcommandlineparser.cpp" ; then
 	  einfo "Patching LLCLPValue for boost > 1.57"
 	  epatch "${EBUILD%/*}/../../eclass/boost_1.59.patch"
+	fi
+	
+	# fix jsoncpp include bugs. Some viewers fix this.
+	# Note: Can not be fixed via cmake findpath as features.h will be picked up on system instead of jsoncpp/feature.h
+	if [[ "${MY_LLCODEBASE}" -ge "263" ]] ; then
+            einfo "(v2.6.3)Fixing jsoncpp includes"
+            sed -i -e 's:#include "reader.h":#include "jsoncpp/reader.h":' "${WORKDIR}/linden/indra/newview/lltranslate.cpp"
+        fi
+        if [[ "${MY_LLCODEBASE}" -ge "382" ]] ; then
+            einfo "(v3.8.2)Fixing jsoncpp includes"
+            sed -i -e 's:#include "reader.h":#include "jsoncpp/reader.h":' "${WORKDIR}/linden/indra/newview/llmarketplacefunctions.cpp"
+            sed -i -e 's:#include "writer.h":#include "jsoncpp/writer.h":' "${WORKDIR}/linden/indra/newview/llmarketplacefunctions.cpp"
+        fi
+        if [[ "${MY_LLCODEBASE}" -ge "403" ]] ; then
+            einfo "(v4.0.3)Fixing jsoncpp includes"
+            sed -i -e 's:#include "value.h":#include "jsoncpp/value.h":' "${WORKDIR}/linden/indra/llcommon/llsdjson.h"
+            sed -i -e 's:#include "reader.h":#include "jsoncpp/reader.h":' "${WORKDIR}/linden/indra/llmessage/llcorehttputil.cpp"
+            sed -i -e 's:#include "writer.h":#include "jsoncpp/writer.h":' "${WORKDIR}/linden/indra/llmessage/llcorehttputil.cpp"
+        fi
+        if [[ "${MY_LLCODEBASE}" -ge "477" ]] ; then
+            einfo "(v4.7.7)Fixing firestorm jsoncpp includes"
+            sed -i -e 's:#include "reader.h":#include "jsoncpp/reader.h":' "${WORKDIR}/linden/indra/newview/llappviewerlinux.cpp"
+	fi
+	
+	# add findpkg for vlc for USESYSTEMLIBS
+	if [[ -f "${WORKDIR}/linden/indra/cmake/LibVLCPlugin.cmake" ]] && ! grep -q 'pkg_check_modules' "${WORKDIR}/linden/indra/cmake/LibVLCPlugin.cmake"; then
+            einfo "Adding pkg_check_modules for vlc."
+            sed -i -e 's:else (USESYSTEMLIBS):include(FindPkgConfig)\npkg_check_modules(VLC REQUIRED vlc-plugin)\nset(VLC_INCLUDE_DIR ${VLC_INCLUDE_DIRS})\nset(VLC_PLUGIN_LIBRARIES ${VLC_LIBRARIES})\nelse (USESYSTEMLIBS):' "${WORKDIR}/linden/indra/cmake/LibVLCPlugin.cmake"
+            sed -i -e 's:elseif (LINUX):elseif (LINUX AND NOT USESYSTEMLIBS):' "${WORKDIR}/linden/indra/cmake/LibVLCPlugin.cmake"
 	fi
 }
 
