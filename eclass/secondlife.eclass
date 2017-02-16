@@ -682,7 +682,7 @@ secondlife_viewer_manifest() {
 	    --login_channel="${MY_VIEWER_LOGIN_CHANNEL} Gentoo" \
 	    --arch="${MY_ARCH}" \
 	    --build="${CMAKE_BUILD_DIR}/newview" \
-	    --dest="${D}/${GAMES_DATADIR}/${PN}" \
+	    --dest="${D%/}/${GAMES_DATADIR}/${PN}" \
 	    --grid="default" $1 || die
 	else
 	  "${WORKDIR}"/linden/indra/newview/viewer_manifest.py  --actions="copy" \
@@ -690,7 +690,7 @@ secondlife_viewer_manifest() {
 	    --versionfile=${CMAKE_BUILD_DIR}/newview/viewer_version.txt \
 	    --arch="${MY_ARCH}" \
 	    --build="${CMAKE_BUILD_DIR}/newview" \
-	    --dest="${D}/${GAMES_DATADIR}/${PN}" \
+	    --dest="${D%/}/${GAMES_DATADIR}/${PN}" \
 	    --grid="default" $1 || die
 	fi
 	
@@ -723,10 +723,10 @@ secondlife_viewer_manifest() {
 
 	  # from Linden Lab commets in viewer_manifest.py, "no - we'll re-use the viewer's own OpenAL lib"
 	  if use amd64 ; then
-	    # ln -s ../../../../lib32/libopenal.so "${D}/${GAMES_DATADIR}/${PN}/lib/libvivoxoal.so.1"
+	    # ln -s ../../../../lib32/libopenal.so "${D%/}/${GAMES_DATADIR}/${PN}/lib/libvivoxoal.so.1"
 	    einfo "" # bash requires something to do.
 	  else
-	    ln -s ../../../../lib/libopenal.so "${D}/${GAMES_DATADIR}/${PN}/lib/libvivoxoal.so.1"
+	    ln -s ../../../../lib/libopenal.so "${D%/}/${GAMES_DATADIR}/${PN}/lib/libvivoxoal.so.1"
 	  fi
 	fi
 }
