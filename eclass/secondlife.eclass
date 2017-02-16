@@ -74,7 +74,8 @@ DEPEND="${RDEPEND}
 	sys-devel/flex
 	sys-devel/bison
 	${PYTHON_DEPS}
-	dev-libs/libndofdev"
+	dev-libs/libndofdev
+	dev-python/llbase"
 
 # Prevent warning on binary only files
 QA_TEXTRELS="usr/share/games/${PN}/lib/libvivoxsdk.so usr/share/games/${PN}/lib/libvivoxplatform.so usr/share/games/${PN}/lib/libortp.so"
@@ -703,6 +704,7 @@ secondlife_viewer_manifest() {
 	# vivox will work with a 64 bit build with 32 bit emul libs, except for
 	# libopenal due to to old a version supplied with amd64 32-bit libopenal. "undefined symbol: alcGetMixedBuffer"
 	# in that case, use the vivox supplied one.
+	# FIRE-16605 BUG-8471 MAINT-4876 https://jira.phoenixviewer.com/browse/FIRE-16605
 	if use vivox ; then
 	  einfo "Installing voice files..."
 	  if [[ -f "${WORKDIR}/linden/lib/release/SLVoice" ]] ; then
