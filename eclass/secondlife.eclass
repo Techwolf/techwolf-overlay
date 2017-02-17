@@ -106,7 +106,7 @@ if [[ "${MY_LLCODEBASE}" -ge "130" ]] ; then
   DEPEND="${DEPEND}
 	  unit_test? ( || ( dev-libs/tut dev-libs/tut-svn ) )
 	  dev-libs/llqtwebkit-hg
-	  || ( dev-libs/jsoncpp dev-libs/jsoncpp-svn dev-libs/jsoncpp-hg )
+	  dev-libs/jsoncpp-ll
 	  >=dev-libs/boost-1.39"
 fi
 

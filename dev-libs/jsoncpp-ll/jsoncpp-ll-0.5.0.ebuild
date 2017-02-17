@@ -1,22 +1,23 @@
 # Copyright 1999-2007 Gentoo Foundation
+# Copyright 2012-2017 Techwolf Lupindo
 # Distributed under the terms of the GNU General Public License v2
-# $Header: $
-# ebuild by Techwolf Lupindo
+# $Id$
 
-inherit eutils mercurial
+inherit eutils
 
-DESCRIPTION="JSON (JavaScript Object Notation) is a lightweight data-interchange format. It can represents integer, real number, string, an ordered sequence of value, and a collection of name/value pairs. This is the Linden Lab clone of the project with Linden Lab mods"
-HOMEPAGE="http://jsoncpp.sourceforge.net/"
+DESCRIPTION="Linden Lab fork of jsoncpp from sourceforge"
+HOMEPAGE="https://bitbucket.org/lindenlab/3p-jsoncpp"
 
-EHG_REPO_URI="https://bitbucket.org/lindenlab/3p-jsoncpp"
+SRC_URI="https://bitbucket.org/lindenlab/3p-jsoncpp/get/5dce1c1d278d.tar.bz2"
+RESTRICT="mirror"
 
 LICENSE="public-domain"
 SLOT="0"
-# KEYWORDS=""
 KEYWORDS="~amd64 ~x86"
-IUSE=""
 
 DEPEND="dev-util/scons"
+
+S="${WORKDIR}/lindenlab-3p-jsoncpp-5dce1c1d278d"
 
 src_compile() {
 	cd "${S}/jsoncpp-src-0.5.0"
