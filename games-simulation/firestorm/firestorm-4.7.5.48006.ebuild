@@ -1,56 +1,44 @@
-# Copyright 2010 Techwolf Lupindo
+# Copyright 2010-2017 Techwolf Lupindo
 # Distributed under the terms of the GNU General Public License v2
-# $Header: $
+# $Id$
 # Nonofficial ebuild by Techwolf. Lastest version at http://gentoo.techwolf.net/
 
 EAPI="5"
-MY_LLCODEBASE="371"
-inherit mercurial secondlife versionator
+MY_LLCODEBASE="386"
+inherit secondlife versionator
 
 DESCRIPTION="A 3D MMORPG virtual world entirely built and owned by its residents"
-HOMEPAGE="http://www.phoenixviewer.com/"
+HOMEPAGE="http://www.firestormviewer.org/"
 
-EHG_REPO_URI="http://hg.phoenixviewer.com/phoenix-firestorm-lgpl/"
+MY_SOURCE="https://bitbucket.org/NickyD/phoenix-firestorm-lgpl/get/a27ad24ed750.tar.bz2"
+MY_VIVOX="http://automated-builds-secondlife-com.s3.amazonaws.com/hg/repo/slvoice_3p-update-slvoice/rev/298329/arch/Linux/installer/slvoice-3.2.0002.10426.298329-linux-298329.tar.bz2"
+
+SRC_URI="${MY_SOURCE}
+	vivox? ( ${MY_VIVOX} )"
 
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
 IUSE="opensim avx crash-reporting openjpeg2 kdu"
 
 DEPEND="${DEPEND}
-	dev-perl/XML-XPath
 	crash-reporting? ( dev-util/google-breakpad-hg )
 	dev-libs/llhacdconvexdecomposition-hg
 	dev-libs/glod-hg
 	media-libs/llcolladadom-hg
 	dev-libs/glh-hg
-	openjpeg2? ( >=media-libs/openjpeg-2.0 )
+	openjpeg2? ( media-libs/openjpeg:2 )
 	kdu? ( media-libs/kdu )"
 
 src_unpack() {
-	# When using svc, S is the directory the checkout is copied into.
-	# Set it so it matches src tarballs.
+	unpack ${MY_SOURCE##*/}
+	mv NickyD-phoenix-firestorm-lgpl-a27ad24ed750 linden || die "renaming to \"linden\" failed"
 	S="${WORKDIR}/linden"
-	mercurial_src_unpack
-	MY_STORE_DIR="${EHG_STORE_DIR}"
-	cd "${WORKDIR}"/linden
-
-	if use vivox ; then
-	  get_install_xml_value "slvoice"
-	  # unpack ${SLASSET##*/} || die "Problem with unpacking ${SLASSET##*/}"
-	  secondlife_unpack ${MY_STORE_DIR}/${SLASSET##*/} || die "Problem with unpacking ${MY_STORE_DIR}/${SLASSET##*/}"
-	fi
+	cd "${S}"
+	use vivox && unpack ${MY_VIVOX##*/}
 }
 
 src_prepare() {
 	secondlife_src_prepare
-
-	# fix permission
-	chmod +x "${WORKDIR}/linden/indra/newview/viewer_manifest.py"
-	
-	if use openjpeg2 ; then
-	  epatch "${FILESDIR}/NickyD_openjpeg2.patch"
-	  epatch "${FILESDIR}/standalone_openjpeg2.patch"
-	fi
 	
 	# set the channel name due to not calling the script that normally sets it.
 	sed -i -e 's:@VIEWER_CHANNEL@:Firestorm Gentoo:' "${WORKDIR}/linden/indra/newview/fsversionvalues.h.in"
@@ -63,10 +51,7 @@ src_prepare() {
 # Linden Labs use autobuild to configure/build, but it is just a wrapper around cmake and does not take in
 # account for gentoo querks/features of multi-libs of different versions installed at same time.
 src_configure() {
-	return
-}
-src_compile() {
-	S="${WORKDIR}/linden/indra"
+        S="${WORKDIR}/linden/indra"
 	cd "${S}"
 	secondlife_cmake_prep
 
@@ -89,12 +74,17 @@ src_compile() {
 	use crash-reporting && mycmakeargs="${mycmakeargs} -DNON_RELEASE_CRASH_REPORTING:BOOL=TRUE"
 	
 	# openjpeg2 suppport
-	mycmakeargs="${mycmakeargs} $(cmake-utils_use openjpeg2 OPENJPEG2)"
+	mycmakeargs="${mycmakeargs} $(cmake-utils_use openjpeg2 ND_USE_OPENJPEG2)"
 	
 	# kdu support.
 	use kdu && mycmakeargs="${mycmakeargs} -DUSE_KDU:BOOL=ON"
+	
+	export revision=$(get_version_component_range 4)
 
 	cmake-utils_src_configure
+}
+src_compile() {
+        S="${WORKDIR}/linden/indra"
 	cmake-utils_src_compile
 }
 

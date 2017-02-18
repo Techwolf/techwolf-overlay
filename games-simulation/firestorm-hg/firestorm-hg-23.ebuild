@@ -4,7 +4,7 @@
 # Nonofficial ebuild by Techwolf. Lastest version at http://gentoo.techwolf.net/
 
 EAPI="5"
-MY_LLCODEBASE="371"
+MY_LLCODEBASE="501"
 inherit mercurial secondlife versionator
 
 DESCRIPTION="A 3D MMORPG virtual world entirely built and owned by its residents"
@@ -45,15 +45,18 @@ src_prepare() {
 	secondlife_src_prepare
 
 	# fix permission
-	chmod +x "${WORKDIR}/linden/indra/newview/viewer_manifest.py"
-	
-	if use openjpeg2 ; then
-	  epatch "${FILESDIR}/NickyD_openjpeg2.patch"
-	  epatch "${FILESDIR}/standalone_openjpeg2.patch"
-	fi
+	# chmod +x "${WORKDIR}/linden/indra/newview/viewer_manifest.py"
 	
 	# set the channel name due to not calling the script that normally sets it.
 	sed -i -e 's:@VIEWER_CHANNEL@:Firestorm Gentoo:' "${WORKDIR}/linden/indra/newview/fsversionvalues.h.in"
+	
+	# add back webkit.
+	epatch "${FILESDIR}/webkit06_ND_CEF_VLC_version.patch"
+	epatch "${FILESDIR}/webkit10_ND_LL_merge_add.patch"
+	epatch "${FILESDIR}/webkit11_ND_linux.patch"
+	sed -i -e 's:#include "cef/llceflib.h"::' "${WORKDIR}/linden/indra/newview/llappviewer.cpp"
+	sed -i -e 's:info\["LLCEFLIB_VERSION"\] = LLCEFLIB_VERSION:info\["LLCEFLIB_VERSION"\] = "Undefined":' "${WORKDIR}/linden/indra/newview/llappviewer.cpp"
+	sed -i -e 's:media_plugin_cef:media_plugin_webkit:g' "${WORKDIR}/linden/indra/newview/llviewermedia.cpp"
 
 	# allow users to try out patches
 	# put patches in /etc/portage/patches/{${CATEGORY}/${PF},${CATEGORY}/${P},${CATEGORY}/${PN}}/feature.patch
@@ -63,10 +66,7 @@ src_prepare() {
 # Linden Labs use autobuild to configure/build, but it is just a wrapper around cmake and does not take in
 # account for gentoo querks/features of multi-libs of different versions installed at same time.
 src_configure() {
-	return
-}
-src_compile() {
-	S="${WORKDIR}/linden/indra"
+        S="${WORKDIR}/linden/indra"
 	cd "${S}"
 	secondlife_cmake_prep
 
@@ -89,12 +89,15 @@ src_compile() {
 	use crash-reporting && mycmakeargs="${mycmakeargs} -DNON_RELEASE_CRASH_REPORTING:BOOL=TRUE"
 	
 	# openjpeg2 suppport
-	mycmakeargs="${mycmakeargs} $(cmake-utils_use openjpeg2 OPENJPEG2)"
+	mycmakeargs="${mycmakeargs} $(cmake-utils_use openjpeg2 ND_USE_OPENJPEG2)"
 	
 	# kdu support.
 	use kdu && mycmakeargs="${mycmakeargs} -DUSE_KDU:BOOL=ON"
 
 	cmake-utils_src_configure
+}
+src_compile() {
+	S="${WORKDIR}/linden/indra"
 	cmake-utils_src_compile
 }
 

@@ -98,7 +98,8 @@ QA_TEXTRELS="usr/share/games/${PN}/lib/libvivoxsdk.so usr/share/games/${PN}/lib/
 # 372 - LL v3.7.20 (296094) added packages-info.txt and depends on autobuild, but not all autobuilds will work with all clients (this version number currentelly not used)
 # 372 - LL v3.7.28 (300847) May 08, 2015: Last version to support windows XP. Next version has autobuild VS2013 changes.
 #
-# 411 - added libvlc depends.
+# 400 - LL v4.0.0 (309247) December 17, 2015 Replace LLQtWebKit based media plugin with CEF based one
+# 411 - LL v4.1.1 (320331) October 06, 2016 QuickTime replace with LibVLC on windows, added libvlc depends to both Win and Linux.
 
 
 if [[ "${MY_LLCODEBASE}" -ge "130" ]] ; then
@@ -980,12 +981,12 @@ secondlife_src_prepare() {
             sed -i -e 's:#include "reader.h":#include "jsoncpp/reader.h":' "${WORKDIR}/linden/indra/llmessage/llcorehttputil.cpp"
             sed -i -e 's:#include "writer.h":#include "jsoncpp/writer.h":' "${WORKDIR}/linden/indra/llmessage/llcorehttputil.cpp"
         fi
-        if [[ "${MY_LLCODEBASE}" -ge "477" ]] ; then
+        if [[ "${MY_LLCODEBASE}" -ge "401" ]] ; then
             einfo "(v4.7.7)Fixing firestorm jsoncpp includes"
             sed -i -e 's:#include "reader.h":#include "jsoncpp/reader.h":' "${WORKDIR}/linden/indra/newview/llappviewerlinux.cpp"
 	fi
 	
-	# add findpkg for vlc for USESYSTEMLIBS
+	# add findpkg for vlc for USESYSTEMLIBS. LL v4.1.1 and FS >v4.7.9 (v5.0.1)
 	if [[ -f "${WORKDIR}/linden/indra/cmake/LibVLCPlugin.cmake" ]] && ! grep -q 'pkg_check_modules' "${WORKDIR}/linden/indra/cmake/LibVLCPlugin.cmake"; then
             einfo "Adding pkg_check_modules for vlc."
             sed -i -e 's:else (USESYSTEMLIBS):include(FindPkgConfig)\npkg_check_modules(VLC REQUIRED vlc-plugin)\nset(VLC_INCLUDE_DIR ${VLC_INCLUDE_DIRS})\nset(VLC_PLUGIN_LIBRARIES ${VLC_LIBRARIES})\nelse (USESYSTEMLIBS):' "${WORKDIR}/linden/indra/cmake/LibVLCPlugin.cmake"

@@ -1,0 +1,216 @@
+diff -r fb6c69c16016 -r 8996cdfcbc11 indra/media_plugins/CMakeLists.txt
+--- a/indra/media_plugins/CMakeLists.txt	Tue Sep 08 21:20:36 2015 +0200
++++ b/indra/media_plugins/CMakeLists.txt	Thu Sep 03 14:38:13 2015 +0200
+@@ -3,7 +3,7 @@
+ 
+ if (LINUX)
+     add_subdirectory(gstreamer010)
+-    add_subdirectory(cef)
++    add_subdirectory(webkit)
+     add_subdirectory(libvlc)
+ endif (LINUX)
+ 
+diff -r fb6c69c16016 -r 8996cdfcbc11 indra/newview/CMakeLists.txt
+--- a/indra/newview/CMakeLists.txt	Tue Sep 08 21:20:36 2015 +0200
++++ b/indra/newview/CMakeLists.txt	Thu Sep 03 14:38:13 2015 +0200
+@@ -2403,7 +2403,7 @@
+     ${VIEWER_BINARY_NAME}
+     linux-crash-logger
+     SLPlugin
+-    media_plugin_cef
++    media_plugin_webkit
+     media_plugin_gstreamer010
+     media_plugin_libvlc
+     llcommon
+@@ -2412,7 +2412,7 @@
+     ${VIEWER_BINARY_NAME}
+     linux-crash-logger
+     SLPlugin
+-    media_plugin_cef
++    media_plugin_webkit
+     media_plugin_gstreamer010
+     media_plugin_gstreamer10
+     llcommon
+diff -r fb6c69c16016 -r 8996cdfcbc11 indra/newview/skins/default/xui/en/mime_types_linux.xml
+--- a/indra/newview/skins/default/xui/en/mime_types_linux.xml	Tue Sep 08 21:20:36 2015 +0200
++++ b/indra/newview/skins/default/xui/en/mime_types_linux.xml	Thu Sep 03 14:38:13 2015 +0200
+@@ -7,7 +7,7 @@
+ 		none
+ 	</defaultwidget>
+ 	<defaultimpl>
+-		media_plugin_cef
++		media_plugin_webkit
+ 	</defaultimpl>
+ 	<widgetset name="web">
+ 		<label name="web_label">
+@@ -141,7 +141,7 @@
+ 			none
+ 		</widgettype>
+ 		<impl>
+-			media_plugin_cef
++			media_plugin_webkit
+ 		</impl>
+ 	</mimetype>
+ 	<mimetype name="none/none">
+@@ -152,7 +152,7 @@
+ 			none
+ 		</widgettype>
+ 		<impl>
+-			media_plugin_cef
++			media_plugin_webkit
+ 		</impl>
+ 	</mimetype>
+ 	<mimetype name="audio/*">
+@@ -185,7 +185,7 @@
+ 			image
+ 		</widgettype>
+ 		<impl>
+-			media_plugin_cef
++			media_plugin_webkit
+ 		</impl>
+ 	</mimetype>
+ 	<mimetype menu="1" name="video/vnd.secondlife.qt.legacy">
+@@ -207,7 +207,7 @@
+ 			web
+ 		</widgettype>
+ 		<impl>
+-			media_plugin_cef
++			media_plugin_webkit
+ 		</impl>
+ 	</mimetype>
+ 	<mimetype name="application/ogg">
+@@ -229,7 +229,7 @@
+ 			image
+ 		</widgettype>
+ 		<impl>
+-			media_plugin_cef
++			media_plugin_webkit
+ 		</impl>
+ 	</mimetype>
+ 	<mimetype name="application/postscript">
+@@ -240,7 +240,7 @@
+ 			image
+ 		</widgettype>
+ 		<impl>
+-			media_plugin_cef
++			media_plugin_webkit
+ 		</impl>
+ 	</mimetype>
+ 	<mimetype name="application/rtf">
+@@ -251,7 +251,7 @@
+ 			image
+ 		</widgettype>
+ 		<impl>
+-			media_plugin_cef
++			media_plugin_webkit
+ 		</impl>
+ 	</mimetype>
+ 	<mimetype name="application/smil">
+@@ -262,7 +262,7 @@
+ 			movie
+ 		</widgettype>
+ 		<impl>
+-			media_plugin_cef
++			media_plugin_webkit
+ 		</impl>
+ 	</mimetype>
+ 	<mimetype name="application/xhtml+xml">
+@@ -273,7 +273,7 @@
+ 			web
+ 		</widgettype>
+ 		<impl>
+-			media_plugin_cef
++			media_plugin_webkit
+ 		</impl>
+ 	</mimetype>
+ 	<mimetype name="application/x-director">
+@@ -284,7 +284,7 @@
+ 			image
+ 		</widgettype>
+ 		<impl>
+-			media_plugin_cef
++			media_plugin_webkit
+ 		</impl>
+ 	</mimetype>
+ 	<mimetype name="audio/mid">
+@@ -339,7 +339,7 @@
+ 			image
+ 		</widgettype>
+ 		<impl>
+-			media_plugin_cef
++			media_plugin_webkit
+ 		</impl>
+ 	</mimetype>
+ 	<mimetype menu="1" name="image/gif">
+@@ -350,7 +350,7 @@
+ 			image
+ 		</widgettype>
+ 		<impl>
+-			media_plugin_cef
++			media_plugin_webkit
+ 		</impl>
+ 	</mimetype>
+ 	<mimetype menu="1" name="image/jpeg">
+@@ -361,7 +361,7 @@
+ 			image
+ 		</widgettype>
+ 		<impl>
+-			media_plugin_cef
++			media_plugin_webkit
+ 		</impl>
+ 	</mimetype>
+ 	<mimetype menu="1" name="image/png">
+@@ -372,7 +372,7 @@
+ 			image
+ 		</widgettype>
+ 		<impl>
+-			media_plugin_cef
++			media_plugin_webkit
+ 		</impl>
+ 	</mimetype>
+ 	<mimetype name="image/svg+xml">
+@@ -383,7 +383,7 @@
+ 			image
+ 		</widgettype>
+ 		<impl>
+-			media_plugin_cef
++			media_plugin_webkit
+ 		</impl>
+ 	</mimetype>
+ 	<mimetype menu="1" name="image/tiff">
+@@ -394,7 +394,7 @@
+ 			image
+ 		</widgettype>
+ 		<impl>
+-			media_plugin_cef
++			media_plugin_webkit
+ 		</impl>
+ 	</mimetype>
+ 	<mimetype menu="1" name="text/html">
+@@ -405,7 +405,7 @@
+ 			web
+ 		</widgettype>
+ 		<impl>
+-			media_plugin_cef
++			media_plugin_webkit
+ 		</impl>
+ 	</mimetype>
+ 	<mimetype menu="1" name="text/plain">
+@@ -416,7 +416,7 @@
+ 			text
+ 		</widgettype>
+ 		<impl>
+-			media_plugin_cef
++			media_plugin_webkit
+ 		</impl>
+ 	</mimetype>
+ 	<mimetype name="text/xml">
+@@ -427,7 +427,7 @@
+ 			text
+ 		</widgettype>
+ 		<impl>
+-			media_plugin_cef
++			media_plugin_webkit
+ 		</impl>
+ 	</mimetype>
+ 	<mimetype menu="1" name="video/mpeg">
