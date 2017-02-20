@@ -43,21 +43,11 @@ RDEPEND="dev-libs/apr
 	net-misc/curl
 	sys-libs/zlib
 	vivox? (
-	         amd64? (
-	              || (
-	                     (
-	                          sys-libs/zlib[abi_x86_32(-)]
-	                          sys-apps/util-linux[abi_x86_32(-)]
-	                          net-dns/libidn[abi_x86_32(-)]
-	                          media-libs/openal[abi_x86_32(-)]
-	                          media-libs/libsndfile[abi_x86_32(-)]
-	                     )
-	                     (
-	                          app-emulation/emul-linux-x86-baselibs[-abi_x86_32(-)]
-	                          app-emulation/emul-linux-x86-soundlibs[-abi_x86_32(-)]
-	                     )
-	                  )
-	                 )
+	         amd64? ( sys-libs/zlib[abi_x86_32(-)]
+                          sys-apps/util-linux[abi_x86_32(-)]
+                          net-dns/libidn[abi_x86_32(-)]
+                          media-libs/openal[abi_x86_32(-)]
+                          media-libs/libsndfile[abi_x86_32(-)] )
 	         x86? ( net-dns/libidn
 	                media-libs/openal
 	                media-libs/libsndfile )
