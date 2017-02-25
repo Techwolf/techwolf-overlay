@@ -127,7 +127,7 @@ if [[ "${MY_LLCODEBASE}" -ge "271" ]] ; then
   DEPEND="${DEPEND}
           dev-libs/glod-hg
 	  media-libs/llcolladadom
-	  dev-libs/llhacdconvexdecomposition-hg"
+	  dev-libs/llhacdconvexdecomposition"
 fi
 
 if [[ "${MY_LLCODEBASE}" -ge "320" ]] ; then

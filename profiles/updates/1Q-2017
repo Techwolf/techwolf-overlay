@@ -1,2 +1,3 @@
 move dev-libs/jsoncpp-hg dev-libs/jsoncpp-ll
 move media-libs/llcolladadom-hg media-libs/llcolladadom
+move dev-libs/llhacdconvexdecomposition-hg dev-libs/llhacdconvexdecomposition
