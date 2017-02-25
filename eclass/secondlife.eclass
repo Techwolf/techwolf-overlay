@@ -106,7 +106,7 @@ if [[ "${MY_LLCODEBASE}" -ge "200" ]] ; then
 	  unit_test? ( dev-util/gmock )"
   if [[ "${MY_LLCODEBASE}" -ge "352" ]] ; then
     DEPEND="${DEPEND}
-	    dev-libs/boost-dcoroutine"
+	    dev-libs/boost-coroutine" # do not use dcoroutine yet, currently broken with newer boost.
    else
     DEPEND="${DEPEND}
 	    dev-libs/boost-coroutine"
