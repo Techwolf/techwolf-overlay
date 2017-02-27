@@ -26,7 +26,6 @@ HOMEPAGE="http://www.vmware.com/"
 SRC_URI="http://download3.vmware.com/software/vmserver/${FN}.zip"
 
 LICENSE="vmware"
-IUSE=""
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
 RESTRICT="mirror strip"
@@ -39,23 +38,12 @@ DEPEND=">=sys-libs/glibc-2.3.5
 # vmware-server-console should not use virtual/libc as this is a
 # precompiled binary package thats linked to glibc.
 RDEPEND=">=sys-libs/glibc-2.3.5[multilib]
-
 	sys-libs/zlib[abi_x86_32(-)]
-
-	x11-libs/libICE[abi_x86_32(-)]
 	x11-libs/libSM[abi_x86_32(-)]
-	x11-libs/libX11[abi_x86_32(-)]
-	x11-libs/libXext[abi_x86_32(-)]
-
-	x11-libs/libXi[abi_x86_32(-)]
-
 	x11-libs/libXt[abi_x86_32(-)]
 	x11-libs/libXtst[abi_x86_32(-)]
-
 	dev-lang/perl"
 
-FULL_NAME="Server Console"
-MY_CONFIG_PROGRAM="vmware-config-server-console.pl"
 MY_CONFIG_DIR="/etc/${PN}"
 
 pkg_setup() {
@@ -91,12 +79,12 @@ src_install() {
 	for x in bin lib
 	do
                 dodir "${VMWARE_INSTALL_DIR}"/${x}
-                cp -pPR "${S}"/${x}/* "${D}""${VMWARE_INSTALL_DIR}"/${x}
+                cp -pPR "${S}"/${x}/* "${D%/}/""${VMWARE_INSTALL_DIR}"/${x}
 	done
 
 	# We have an /etc directory, copy it.
         dodir "${MY_CONFIG_DIR}"
-        cp -pPR "${S}"/etc/* "${D}""${MY_CONFIG_DIR}"
+        cp -pPR "${S}"/etc/* "${D%/}/""${MY_CONFIG_DIR}"
         fowners root:${VMWARE_GROUP} "${MY_CONFIG_DIR}"
         fperms 770 "${MY_CONFIG_DIR}"
 
@@ -120,14 +108,14 @@ src_install() {
         
         # Questions:
 	einfo "Adding answers to ${MY_CONFIG_DIR}/locations"
-	locations="${D}${MY_CONFIG_DIR}/locations"
+	locations="${D%/}/${MY_CONFIG_DIR}/locations"
 	echo "answer BINDIR ${VMWARE_INSTALL_DIR}/bin" >> ${locations}
 	echo "answer LIBDIR ${VMWARE_INSTALL_DIR}/lib" >> ${locations}
 	echo "answer MANDIR ${VMWARE_INSTALL_DIR}/man" >> ${locations}
 	echo "answer DOCDIR ${VMWARE_INSTALL_DIR}/doc" >> ${locations}
 
 	# Fix an ugly GCC error on start
-	rm -f "${D}${VMWARE_INSTALL_DIR}/lib/lib/libgcc_s.so.1/libgcc_s.so.1"
+	rm -f "${D%/}/${VMWARE_INSTALL_DIR}/lib/lib/libgcc_s.so.1/libgcc_s.so.1"
 	make_desktop_entry ${PN} "VMWare Remote Console" ${PN} System
 
 	dodir /usr/bin
@@ -142,25 +130,25 @@ pkg_preinst() {
 	# This must be done after the install to get the mtimes on each file
 	# right.
 
-	#Note: it's a bit weird to use ${D} in a preinst script but it should work
+	#Note: it's a bit weird to use ${D%/}/ in a preinst script but it should work
 	#(drobbins, 1 Feb 2002)
 
 	einfo "Generating ${MY_CONFIG_DIR}/locations file."
-	d=`echo ${D} | wc -c`
-	for x in `find ${D}${VMWARE_INSTALL_DIR} ${D}${MY_CONFIG_DIR}` ; do
+	d=`echo ${D%/}/ | wc -c`
+	for x in `find ${D%/}/${VMWARE_INSTALL_DIR} ${D%/}/${MY_CONFIG_DIR}` ; do
 		x="`echo ${x} | cut -c ${d}-`"
-		if [ -d "${D}/${x}" ] ; then
-			echo "directory ${x}" >> "${D}${MY_CONFIG_DIR}"/locations
+		if [ -d "${D%/}//${x}" ] ; then
+			echo "directory ${x}" >> "${D%/}/${MY_CONFIG_DIR}"/locations
 		else
-			echo -n "file ${x}" >> "${D}${MY_CONFIG_DIR}"/locations
+			echo -n "file ${x}" >> "${D%/}/${MY_CONFIG_DIR}"/locations
 			if [ "${x}" == "${MY_CONFIG_DIR}/locations" ] ; then
-				echo "" >> "${D}${MY_CONFIG_DIR}"/locations
+				echo "" >> "${D%/}/${MY_CONFIG_DIR}"/locations
 			elif [ "${x}" == "${MY_CONFIG_DIR}/not_configured" ] ; then
-				echo "" >> "${D}${MY_CONFIG_DIR}"/locations
+				echo "" >> "${D%/}/${MY_CONFIG_DIR}"/locations
 			else
-				echo -n " " >> "${D}${MY_CONFIG_DIR}"/locations
-				find ${D}${x} -printf %T@ >> "${D}${MY_CONFIG_DIR}"/locations
-				echo "" >> "${D}${MY_CONFIG_DIR}"/locations
+				echo -n " " >> "${D%/}/${MY_CONFIG_DIR}"/locations
+				find ${D%/}/${x} -printf %T@ >> "${D%/}/${MY_CONFIG_DIR}"/locations
+				echo "" >> "${D%/}/${MY_CONFIG_DIR}"/locations
 			fi
 		fi
 	done
@@ -188,7 +176,7 @@ pkg_postinst() {
 	echo
         elog "After configuring, run ${PN} to launch"
 	echo
-	ewarn "Remember, in order to run VMware ${FULL_NAME}, you have to"
+	ewarn "Remember, in order to run VMware Server Console, you have to"
 	ewarn "be in the '${VMWARE_GROUP}' group."
 	echo
 }
