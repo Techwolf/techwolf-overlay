@@ -1,5 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
-<herd>vmware</herd>
+  <maintainer type="person">
+    <email>techwolf.lupindo@gmail.com</email>
+    <name>Techwolf Lupindo</name>
+  </maintainer>
+  <upstream>
+    <url>http://www.vmware.com/security/advisories/VMSA-2009-0015.html</url>
+    <maintainer status="active">
+      <email>vmware@gentoo.org</email>
+      <name>Gentoo VMware Project</name>
+    </maintainer>
+    <maintainer status="inactive">
+      <email>mario.fetka@gmail.com</email>
+      <name>Mario Fetka</name>
+      <url>http://www.disconnected-by-peer.at</url>
+    </maintainer>
+  </upstream>
 </pkgmetadata>
