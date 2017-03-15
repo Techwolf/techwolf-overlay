@@ -17,3 +17,8 @@ SLOT="0"
 KEYWORDS="~x86 ~amd64"
 
 S="${S}/src"
+
+src_install() {
+        default
+        doman ../pixiewps.1
+}
