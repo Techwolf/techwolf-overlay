@@ -20,12 +20,9 @@ RESTRICT="mirror"
 # example: GITHUBNAME="nant/nant"
 
 if [[ -n "$EGIT_COMMIT" ]] ;  then
-    # github only offers .zip and .tar.gz. zip has better compression then gzip.
-    DEPEND="${DEPEND}
-            app-arch/unzip"
     GITHUBACC=${GITHUBNAME%/*}
     GITHUBREPO=${GITHUBNAME#*/}
-    SRC_URI="https://github.com/${GITHUBACC}/${GITHUBREPO}/archive/${EGIT_COMMIT}.zip -> ${P}.zip"
+    SRC_URI="https://github.com/${GITHUBACC}/${GITHUBREPO}/archive/${EGIT_COMMIT}.tar.gz -> ${P}.tar.gz"
     S="${WORKDIR}/${GITHUBREPO}-${EGIT_COMMIT}"
 fi
 
