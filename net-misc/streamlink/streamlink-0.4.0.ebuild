@@ -5,7 +5,7 @@ EAPI=6
 
 PYTHON_COMPAT=( python{2_7,3_4,3_5} )
 PYTHON_REQ_USE='xml(+),threads(+)'
-EGIT_COMMIT="ef6458c62aed8692e153925fd38044f104c2a1a0"
+EGIT_COMMIT="0871d22b0f06dd6e3b3b5683fa31a07a29c4ca80"
 GITHUBNAME="streamlink/streamlink"
 
 inherit distutils-r1 webvcs
