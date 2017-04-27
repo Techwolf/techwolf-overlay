@@ -578,26 +578,28 @@ secondlife_colladadom_build() {
 
 secondlife_cmake_prep() {
 	cd "${S}"
-	mycmakeargs="${mycmakeargs} -DSTANDALONE:BOOL=TRUE -DUSESYSTEMLIBS:BOOL=TRUE -DNDOF:BOOL=TRUE
-		     -DAPP_SHARE_DIR:STRING=${GAMES_DATADIR}/${PN}
-		     -DAPP_BINARY_DIR:STRING=${GAMES_DATADIR}/${PN}/bin
-		     $(cmake-utils_use openal OPENAL)
-		     $(cmake-utils_use gstreamer GSTREAMER)
-		     $(cmake-utils_use dbus DBUSGLIB)
-		     $(cmake-utils_use tcmalloc USE_GOOGLE_PERFTOOLS)"
+	mycmakeargs+=(
+            -DSTANDALONE:BOOL=TRUE -DUSESYSTEMLIBS:BOOL=TRUE -DNDOF:BOOL=TRUE
+            -DAPP_SHARE_DIR:STRING=${GAMES_DATADIR}/${PN}
+            -DAPP_BINARY_DIR:STRING=${GAMES_DATADIR}/${PN}/bin
+            $(cmake-utils_use openal OPENAL)
+            $(cmake-utils_use gstreamer GSTREAMER)
+            $(cmake-utils_use dbus DBUSGLIB)
+            $(cmake-utils_use tcmalloc USE_GOOGLE_PERFTOOLS)
+        )
 
-	[[ "${MY_LLCODEBASE}" -ge "200" ]] && mycmakeargs="${mycmakeargs} $(cmake-utils_use unit_test LL_TESTS)"
-	[[ "${MY_LLCODEBASE}" -ge "210" ]] && mycmakeargs="${mycmakeargs} $(cmake-utils_use pulseaudio PULSEAUDIO)"
-	[[ "${MY_LLCODEBASE}" -ge "250" ]] && mycmakeargs="${mycmakeargs} $(cmake-utils_use crash-reporting NON_RELEASE_CRASH_REPORTING)"
+	[[ "${MY_LLCODEBASE}" -ge "200" ]] && mycmakeargs+=( $(cmake-utils_use unit_test LL_TESTS) )
+	[[ "${MY_LLCODEBASE}" -ge "210" ]] && mycmakeargs+=( $(cmake-utils_use pulseaudio PULSEAUDIO) )
+	[[ "${MY_LLCODEBASE}" -ge "250" ]] && mycmakeargs+=( $(cmake-utils_use crash-reporting NON_RELEASE_CRASH_REPORTING) )
 
 	if use fmod && ! use amd64 ; then
-	  mycmakeargs="${mycmakeargs} -DFMOD:BOOL=TRUE"
+	  mycmakeargs+=( -DFMOD:BOOL=TRUE )
 	 else
-	  mycmakeargs="${mycmakeargs} -DFMOD:BOOL=FALSE"
+	  mycmakeargs+=( -DFMOD:BOOL=FALSE )
 	fi
 
 	# LL like to break code from time to time
-	mycmakeargs="${mycmakeargs} -DGCC_DISABLE_FATAL_WARNINGS:BOOL=TRUE"
+	mycmakeargs+=( -DGCC_DISABLE_FATAL_WARNINGS:BOOL=TRUE )
 
 	# Linden Labs sse enabled processor build detection is broken, lets turn it on for
 	# amd64 or (x86 and (sse or sse2))
@@ -608,9 +610,9 @@ secondlife_cmake_prep() {
 
 	# Don't package by default on LINUX
 	if [[ "${MY_LLCODEBASE}" -ge "130" ]] ; then
-	  mycmakeargs="${mycmakeargs} -DPACKAGE:BOOL=FALSE"
+	  mycmakeargs+=( -DPACKAGE:BOOL=FALSE )
 	 else
-	  mycmakeargs="${mycmakeargs} -DINSTALL:BOOL=TRUE" # somebody has very strange logic, INSTALL=No packageing. ?!
+	  mycmakeargs+=( -DINSTALL:BOOL=TRUE ) # somebody has very strange logic, INSTALL=No packageing. ?!
 	fi
 
 	# Overide and set build type to "Release" instead of "Gentoo"
@@ -633,7 +635,7 @@ secondlife_cmake_prep() {
 	# huntspell fix
 	if [[ -f "${WORKDIR}/linden/indra/cmake/FindHunSpell.cmake" ]] || [[ -f "${WORKDIR}/linden/indra/cmake/FindHUNSPELL.cmake" ]]; then
 	  einfo "Adding \"hunspell\" to HUNSPELL_NAMES"
-	  mycmakeargs="${mycmakeargs} -DHUNSPELL_NAMES=hunspell"
+	  mycmakeargs+=( -DHUNSPELL_NAMES=hunspell )
 	fi
 
 	# upstream set this to on, let turn it off untill they fix it. This will override any users setting. :-(
