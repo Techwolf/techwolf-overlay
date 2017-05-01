@@ -1,0 +1,34 @@
+diff -up ./usr/src/blackmagic-10.9a7/blackmagic_lib.c.org ./usr/src/blackmagic-10.9a7/blackmagic_lib.c
+--- ./usr/src/blackmagic-10.9a7/blackmagic_lib.c.org	2017-04-13 01:57:33.000000000 -0400
++++ ./usr/src/blackmagic-10.9a7/blackmagic_lib.c	2017-04-28 23:02:42.407930997 -0400
+@@ -662,7 +662,12 @@ dl_get_user_pages(void *task_ptr, void *
+ 		write = 0;
+ 	
+ 	down_read(&current_task->mm->mmap_sem);
+-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 9, 0)
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 10, 0)
++		if (current_task == current)
++			ret = get_user_pages((unsigned long)ptr & PAGE_MASK, *nr_pages, write ? FOLL_WRITE : 0, pages, NULL);
++		else
++			ret = get_user_pages_remote(current_task, current_task->mm, (unsigned long)ptr & PAGE_MASK, *nr_pages, write ? FOLL_WRITE : 0, pages, NULL, NULL);
++#elif LINUX_VERSION_CODE >= KERNEL_VERSION(4, 9, 0)
+ 		if (current_task == current)
+ 			ret = get_user_pages((unsigned long)ptr & PAGE_MASK, *nr_pages, write ? FOLL_WRITE : 0, pages, NULL);
+ 		else
+diff -up ./usr/src/blackmagic-io-10.9a7/bm_mm.c.org ./usr/src/blackmagic-io-10.9a7/bm_mm.c
+--- ./usr/src/blackmagic-io-10.9a7/bm_mm.c.org	2017-04-13 01:57:33.000000000 -0400
++++ ./usr/src/blackmagic-io-10.9a7/bm_mm.c	2017-04-28 23:04:53.373643034 -0400
+@@ -103,7 +103,12 @@ static bool bm_get_user_pages(bm_user_me
+ 		return false;
+ 
+ 	down_read(&task->mm->mmap_sem);
+-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 9, 0)
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 10, 0)
++		if (task == current)
++			ret = get_user_pages((unsigned long)address & PAGE_MASK, umem->length, write ? FOLL_WRITE : 0, umem->pages, NULL);
++		else
++			ret = get_user_pages_remote(task, task->mm, (unsigned long)address & PAGE_MASK, umem->length, write ? FOLL_WRITE : 0, umem->pages, NULL, NULL);
++#elif LINUX_VERSION_CODE >= KERNEL_VERSION(4, 9, 0)
+ 		if (task == current)
+ 			ret = get_user_pages((unsigned long)address & PAGE_MASK, umem->length, write ? FOLL_WRITE : 0, umem->pages, NULL);
+ 		else
