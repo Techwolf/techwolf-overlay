@@ -3,17 +3,18 @@
 
 EAPI=6
 
-inherit gnome2-utils fdo-mime
+EGIT_COMMIT="7974dd0371ff1072b0221eb2016d0d9a9e3f6020"
+GITHUBNAME="vinszent/gnome-twitch"
+
+inherit gnome2-utils fdo-mime webvcs
 
 DESCRIPTION="Enjoy Twitch on your GNU/Linux desktop"
 HOMEPAGE="http://gnome-twitch.vinszent.com/"
-SRC_URI="https://github.com/vinszent/gnome-twitch/archive/v${PV}.tar.gz -> ${P}.tar.gz"
-RESTRICT="mirror"
 
 LICENSE="GPL-3"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
-DOCS="README.md CONTRIBUTING.md TODO.org"
+DOCS="README.md CONTRIBUTING.md CHANGELOG.md"
 IUSE="gst-cairo gst-opengl gst-clutter +mpv"
 
 DEPEND=">=dev-util/meson-0.32.0
@@ -60,16 +61,16 @@ src_compile() {
 
 	params="--prefix=/usr --libdir=lib --buildtype=release -Ddo-post-install=false"
 	if use gst-cairo ; then
-		params="${params} -Dwith-player-gstreamer-cairo=true"
+		params="${params} -Dbuild-player-backends=gstreamer-cairo"
 	fi
 	if use gst-opengl ; then
-		params="${params} -Dwith-player-gstreamer-opengl=true"
+		params="${params} -Dbuild-player-backends=gstreamer-opengl"
 	fi
 	if use gst-clutter ; then
-		params="${params} -Dwith-player-gstreamer-clutter=true"
+		params="${params} -Dbuild-player-backends=gstreamer-clutter"
 	fi
 	if use mpv ; then
-		params="${params} -Dwith-player-mpv-opengl=true"
+		params="${params} -Dbuild-player-backends=mpv-opengl"
 	fi
 	meson ${params} -Db_lundef=false .. || die
 	ninja || die
