@@ -28,6 +28,8 @@ PATCHES=( "${FILESDIR}"/${P}-build.patch )
 
 RESTRICT="test" #409263
 
+S="${WORKDIR}/openjpeg-version.1.5"
+
 src_configure() {
 	local mycmakeargs=(
 		-DOPENJPEG_INSTALL_LIB_DIR="$(get_libdir)"
