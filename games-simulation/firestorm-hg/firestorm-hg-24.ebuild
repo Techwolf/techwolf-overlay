@@ -18,11 +18,6 @@ IUSE="opensim avx crash-reporting openjpeg2 kdu"
 
 DEPEND="${DEPEND}
 	dev-perl/XML-XPath
-	crash-reporting? ( dev-util/google-breakpad-hg )
-	dev-libs/llhacdconvexdecomposition-hg
-	dev-libs/glod-hg
-	media-libs/llcolladadom-hg
-	dev-libs/glh-hg
 	openjpeg2? ( >=media-libs/openjpeg-2.0 )
 	kdu? ( media-libs/kdu )"
 
@@ -57,6 +52,14 @@ src_prepare() {
 	sed -i -e 's:#include "cef/llceflib.h"::' "${WORKDIR}/linden/indra/newview/llappviewer.cpp"
 	sed -i -e 's:info\["LLCEFLIB_VERSION"\] = LLCEFLIB_VERSION:info\["LLCEFLIB_VERSION"\] = "Undefined":' "${WORKDIR}/linden/indra/newview/llappviewer.cpp"
 	sed -i -e 's:media_plugin_cef:media_plugin_webkit:g' "${WORKDIR}/linden/indra/newview/llviewermedia.cpp"
+	
+	# point to the right coroutines
+	sed -i -e 's/#include <boost\/d\?coroutine\//#include <boost-coroutine\//g' "${WORKDIR}/linden/indra/llcommon/llevents.cpp"
+	sed -i -e 's/boost::dcoroutines/boost::coroutines/g' "${WORKDIR}/linden/indra/llcommon/llevents.cpp"
+	
+	# pre_3 source has not been released, so use released source instead.
+	epatch "${FILESDIR}/glod_pre_4_2.patch"
+	epatch "${FILESDIR}/glod_pre_4.patch"
 
 	# allow users to try out patches
 	# put patches in /etc/portage/patches/{${CATEGORY}/${PF},${CATEGORY}/${P},${CATEGORY}/${PN}}/feature.patch
