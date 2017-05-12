@@ -6,8 +6,9 @@ EAPI=5
 inherit cmake-utils multilib
 
 DESCRIPTION="An open-source JPEG 2000 library"
-HOMEPAGE="http://code.google.com/p/openjpeg/"
-SRC_URI="http://${PN}.googlecode.com/files/${P}.tar.gz"
+HOMEPAGE="http://www.openjpeg.org/"
+SRC_URI="https://github.com/uclouvain/openjpeg/archive/version.1.5.tar.gz -> ${P}.tar.gz"
+RESTRICT="mirror"
 
 LICENSE="BSD-2"
 SLOT="0"
