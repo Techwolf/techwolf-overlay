@@ -3,7 +3,7 @@
 # $Header: $
 # Nonofficial ebuild by Techwolf. Lastest version at http://gentoo.techwolf.net/
 
-EAPI="2"
+EAPI="5"
 MY_LLCODEBASE="263"
 inherit mercurial secondlife
 
