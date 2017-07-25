@@ -578,8 +578,16 @@ secondlife_colladadom_build() {
 
 secondlife_cmake_prep() {
 	cd "${S}"
+	
+	# un-used variables tend to cause other passed variables to be not parsed correctly.
+	if grep -q 'USESYSTEMLIBS' "${WORKDIR}/linden/indra/cmake/Variables.cmake" ; then
+          mycmakeargs+=( -DUSESYSTEMLIBS:BOOL=TRUE )
+	 else
+          mycmakeargs+=( -DSTANDALONE:BOOL=TRUE )
+        fi
+	
 	mycmakeargs+=(
-            -DSTANDALONE:BOOL=TRUE -DUSESYSTEMLIBS:BOOL=TRUE -DNDOF:BOOL=TRUE
+            -DNDOF:BOOL=TRUE
             -DAPP_SHARE_DIR:STRING=${GAMES_DATADIR}/${PN}
             -DAPP_BINARY_DIR:STRING=${GAMES_DATADIR}/${PN}/bin
             $(cmake-utils_use openal OPENAL)
