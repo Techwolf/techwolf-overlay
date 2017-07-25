@@ -579,7 +579,6 @@ secondlife_colladadom_build() {
 secondlife_cmake_prep() {
 	cd "${S}"
 	
-	# un-used variables tend to cause other passed variables to be not parsed correctly.
 	if grep -q 'USESYSTEMLIBS' "${WORKDIR}/linden/indra/cmake/Variables.cmake" ; then
           mycmakeargs+=( -DUSESYSTEMLIBS:BOOL=TRUE )
 	 else
@@ -677,6 +676,7 @@ secondlife_viewer_manifest() {
 	  cp -p "${CMAKE_BUILD_DIR}/newview/${MY_VIEWER_BINARY_NAME}" "${CMAKE_BUILD_DIR}/newview/secondlife-stripped" || die
 	fi
 
+	# login_channel was removed and viewer_version.txt was added in LL viewer 3.5.2-beta1 4-25-2013
 	if grep -q 'login_channel' "${WORKDIR}/linden/indra/newview/viewer_manifest.py" ; then
 	  "${WORKDIR}"/linden/indra/newview/viewer_manifest.py  --actions="copy" \
 	    --channel="${MY_VIEWER_CHANNEL} Gentoo" \
@@ -992,6 +992,15 @@ secondlife_src_prepare() {
             sed -i -e 's:else (USESYSTEMLIBS):include(FindPkgConfig)\npkg_check_modules(VLC REQUIRED vlc-plugin)\nset(VLC_INCLUDE_DIR ${VLC_INCLUDE_DIRS})\nset(VLC_PLUGIN_LIBRARIES ${VLC_LIBRARIES})\nelse (USESYSTEMLIBS):' "${WORKDIR}/linden/indra/cmake/LibVLCPlugin.cmake"
             sed -i -e 's:elseif (LINUX):elseif (LINUX AND NOT USESYSTEMLIBS):' "${WORKDIR}/linden/indra/cmake/LibVLCPlugin.cmake"
 	fi
+	
+	# fix an old bug interduced with viewer 2.0. Many TPVs worked around it or didn't notice.
+	# make sure packaged files are included in the --action="copy" command
+	# do not use ":g" as we only want to change the first self.is_packaging_viewer()
+	sed -i -e 's:if self.is_packaging_viewer():if True:' "${WORKDIR}/linden/indra/newview/viewer_manifest.py"
+	# the above will create a new error, "Failed to open '../../doc/contributions.txt'" during copy_l_viewer_manifest so...
+	# fix the extra step of copying files around for generateing symbols. Gentoo does not need that.
+	sed -i -e 's:add_custom_target(copy_l_viewer_manifest:# add_custom_target(copy_l_viewer_manifest:' "${WORKDIR}/linden/indra/newview/CMakeLists.txt"
+
 }
 
 secondlife_pkg_postinst() {
