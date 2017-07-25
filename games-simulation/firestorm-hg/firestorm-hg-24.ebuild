@@ -74,28 +74,28 @@ src_configure() {
 	secondlife_cmake_prep
 
 	# add opensim support option
-	mycmakeargs="${mycmakeargs} $(cmake-utils_use opensim OPENSIM)"
+	mycmakeargs+=( $(cmake-utils_use opensim OPENSIM) )
 	
 	# AVX support
-	mycmakeargs="${mycmakeargs} $(cmake-utils_use avx USE_AVX_OPTIMIZATION)"
+	mycmakeargs+=( $(cmake-utils_use avx USE_AVX_OPTIMIZATION) )
 	
 	# Nicky 64-bit support
 	if use amd64 ; then
-	  mycmakeargs="${mycmakeargs} -DNDTARGET_ARCH:STRING=x64"
+	  mycmakeargs+=( -DNDTARGET_ARCH:STRING=x64 )
 	 else
-	  mycmakeargs="${mycmakeargs} -DNDTARGET_ARCH:STRING=x86"
+	  mycmakeargs+=( -DNDTARGET_ARCH:STRING=x86 )
 	fi
 
 	# add include path for prebuilt includes, in this case, glh_linear.h
-	mycmakeargs="${mycmakeargs} -DCMAKE_INCLUDE_PATH=${WORKDIR}/linden/include"
+	mycmakeargs+=( -DCMAKE_INCLUDE_PATH=${WORKDIR}/linden/include )
 
-	use crash-reporting && mycmakeargs="${mycmakeargs} -DNON_RELEASE_CRASH_REPORTING:BOOL=TRUE"
+	use crash-reporting && mycmakeargs+=( -DNON_RELEASE_CRASH_REPORTING:BOOL=TRUE )
 	
 	# openjpeg2 suppport
-	mycmakeargs="${mycmakeargs} $(cmake-utils_use openjpeg2 ND_USE_OPENJPEG2)"
+	mycmakeargs+=( $(cmake-utils_use openjpeg2 ND_USE_OPENJPEG2) )
 	
 	# kdu support.
-	use kdu && mycmakeargs="${mycmakeargs} -DUSE_KDU:BOOL=ON"
+	use kdu && mycmakeargs+=( -DUSE_KDU:BOOL=ON )
 
 	cmake-utils_src_configure
 }
