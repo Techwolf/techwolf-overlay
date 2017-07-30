@@ -19,7 +19,7 @@ LICENSE="GPL-2"
 
 src_prepare() {
         sed -i -e 's:./data:/usr/share/qavimator/data:' "${S}/src/constants.cpp"
-	default_src_prepare
+	cmake-utils_src_prepare
 }
 
 src_configure() {
