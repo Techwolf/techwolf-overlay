@@ -28,7 +28,6 @@ RDEPEND="dev-libs/apr
 	dev-libs/openssl
 	>=dev-libs/xmlrpc-epi-0.51-r1
 	tcmalloc? ( dev-util/google-perftools )
-	fmod? ( =media-libs/fmod-3.75* )
 	media-libs/freetype
 	virtual/jpeg
 	media-libs/libogg
@@ -39,7 +38,6 @@ RDEPEND="dev-libs/apr
 	openal? ( media-libs/openal
 		media-libs/freealut )
 	gstreamer? ( media-plugins/gst-plugins-meta:0.10[http] )
-	net-dns/c-ares
 	net-misc/curl
 	sys-libs/zlib
 	vivox? (
@@ -81,7 +79,7 @@ QA_TEXTRELS="usr/share/games/${PN}/lib/libvivoxsdk.so usr/share/games/${PN}/lib/
 # 334 - LL v3.3.4 (264214) with spell checker.
 # 340 - LL v3.4.0 (264911) with pathfinding (this version number currentelly not used)
 # 350 - LL v3.5.0 (273444) with CHUI (this version number currentelly not used)
-# 352 - LL v3.5.2 (276129) May 20, 2013: coroutine moved to dcoroutine
+# 352 - LL v3.5.2 (276129) May 20, 2013: coroutine moved to dcoroutine. FMOD change to FMODEX, 3.75:0 to >=4.38:1
 # 351 - LL v3.5.1 (274821) April 29, 2013: Server Side Appearence (SSA)
 # 360 - LL v3.6.0 (277516) with Materials (this version number currentelly not used)
 # 371 - LL v3.7.16 (299021) added uriparser depends, droped the 6 number for now. May have to refactor to four digit version number.
@@ -89,7 +87,10 @@ QA_TEXTRELS="usr/share/games/${PN}/lib/libvivoxsdk.so usr/share/games/${PN}/lib/
 # 372 - LL v3.7.28 (300847) May 08, 2015: Last version to support windows XP. Next version has autobuild VS2013 changes.
 #
 # 400 - LL v4.0.0 (309247) December 17, 2015 Replace LLQtWebKit based media plugin with CEF based one
+# 405 - LL v4.0.5 (315117) May 11, 2016 Graphics Presets and Avatar Rendering Complexity Controls. OPEN-292 Remove lscript from the viewer
+# 403 - LL v4.0.3 (312816) March 23, 2016 HTTP replaced with corehttp. Removed ares depends.
 # 411 - LL v4.1.1 (320331) October 06, 2016 QuickTime replace with LibVLC on windows, added libvlc depends to both Win and Linux.
+# 412 - LL v4.1.2 (321518) November 10, 2016 Maintenance release. Now depends on dev-python/llbase. The code was removed from the viewer.
 
 
 if [[ "${MY_LLCODEBASE}" -ge "130" ]] ; then
@@ -140,14 +141,32 @@ if [[ "${MY_LLCODEBASE}" -ge "334" ]] ; then
 	  app-text/hunspell"
 fi
 
+if [[ "${MY_LLCODEBASE}" -ge "352" ]] ; then
+  DEPEND="${DEPEND}
+          fmod? ( media-libs/fmod:1 )"
+ else
+  DEPEND="${DEPEND}
+          fmod? ( media-libs/fmod:0 )"
+fi
+
 if [[ "${MY_LLCODEBASE}" -ge "371" ]] ; then
   DEPEND="${DEPEND}
 	  dev-libs/uriparser"
 fi
 
+if [[ "${MY_LLCODEBASE}" -lt "403" ]] ; then
+  DEPEND="${DEPEND}
+	  net-dns/c-ares"
+fi
+
 if [[ "${MY_LLCODEBASE}" -ge "411" ]] ; then
   DEPEND="${DEPEND}
 	  media-video/vlc"
+fi
+
+if [[ "${MY_LLCODEBASE}" -ge "412" ]] ; then
+  DEPEND="${DEPEND}
+	  dev-python/llbase"
 fi
 
 # Internial function to take one file and convert it from DOS to UNIX if text file.
@@ -599,11 +618,7 @@ secondlife_cmake_prep() {
 	[[ "${MY_LLCODEBASE}" -ge "210" ]] && mycmakeargs+=( $(cmake-utils_use pulseaudio PULSEAUDIO) )
 	[[ "${MY_LLCODEBASE}" -ge "250" ]] && mycmakeargs+=( $(cmake-utils_use crash-reporting NON_RELEASE_CRASH_REPORTING) )
 
-	if use fmod && ! use amd64 ; then
-	  mycmakeargs+=( -DFMOD:BOOL=TRUE )
-	 else
-	  mycmakeargs+=( -DFMOD:BOOL=FALSE )
-	fi
+	mycmakeargs+=( $(cmake-utils_use fmod FMOD) )
 
 	# LL like to break code from time to time
 	mycmakeargs+=( -DGCC_DISABLE_FATAL_WARNINGS:BOOL=TRUE )
@@ -750,15 +765,15 @@ secondlife_pkg_setup() {
 secondlife_src_prepare() {
 	# strip out any hardcoded cflags. We are not cross compiling. Use gento supplied flags.
 	einfo "Striping out hardcoded cflags options so that ebuild supplied cflags are used."
-	sed -i -e 's:-march=[a-zA-Z0-9]*::' "${WORKDIR}/linden/indra/cmake/00-Common.cmake"
-	sed -i -e 's:-m32::' "${WORKDIR}/linden/indra/cmake/00-Common.cmake"
-	sed -i -e 's:-m64::' "${WORKDIR}/linden/indra/cmake/00-Common.cmake"
-	sed -i -e 's:-O[23]::' "${WORKDIR}/linden/indra/cmake/00-Common.cmake"
+        sed -i -e 's:-march=[a-zA-Z0-9]*::' \
+               -e 's:-m32::' \
+               -e 's:-m64::' \
+               -e 's:-O[23]::' "${WORKDIR}/linden/indra/cmake/00-Common.cmake"
 	
 	# Gentoo defines _FORTIFY_SOURCE by default for gcc 4.7 and up
 	if tc-is-gcc && [[ $(gcc-version) > 4.6 ]]; then
 	  einfo "Removing \"add_definitions(-D_FORTIFY_SOURCE=2)\" from 00-Common.cmake"
-	  sed -i -e 's:add_definitions(-D_FORTIFY_SOURCE=2):#add_definitions(-D_FORTIFY_SOURCE=2):g' "${WORKDIR}/linden/indra/cmake/00-Common.cmake"
+	  sed -i -e 's:add_definitions(-D_FORTIFY_SOURCE=2):# add_definitions(-D_FORTIFY_SOURCE=2):' "${WORKDIR}/linden/indra/cmake/00-Common.cmake"
         fi
 	
 	# reenable an optimization due to no longer using gcc 3.x that crash on it.
@@ -771,9 +786,11 @@ secondlife_src_prepare() {
 	# Fix it for all pre 2.0 based LL code.
 	if grep -q 'LIST(APPEND CMAKE_EXE_LINKER_FLAGS ' "${WORKDIR}/linden/indra/newview/CMakeLists.txt" ; then
 	  einfo "Fixing an improper CMAKE_EXE_LINKER_FLAGS setting."
-	  sed -i -e 's/LIST(APPEND CMAKE_EXE_LINKER_FLAGS -Wl,--as-needed)/SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--as-needed")/' "${WORKDIR}/linden/indra/newview/CMakeLists.txt" || die "LDFLAG fix failed"
-	  sed -i -e 's/LIST(APPEND /list(APPEND /' "${WORKDIR}/linden/indra/newview/CMakeLists.txt" || die "LDFLAG fix failed"
-	  sed -i -e 's:list(APPEND CMAKE_EXE_LINKER_FLAGS -Wl,--as-needed):set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--as-needed"):' "${WORKDIR}/linden/indra/linux_crash_logger/CMakeLists.txt"
+	  sed -i -e 's/LIST(APPEND CMAKE_EXE_LINKER_FLAGS -Wl,--as-needed)/SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--as-needed")/' \
+                 -e 's/LIST(APPEND /list(APPEND /' \
+                    "${WORKDIR}/linden/indra/newview/CMakeLists.txt" || die "LDFLAG fix failed"
+	  sed -i -e 's:list(APPEND CMAKE_EXE_LINKER_FLAGS -Wl,--as-needed):set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--as-needed"):' \
+            "${WORKDIR}/linden/indra/linux_crash_logger/CMakeLists.txt"
 	fi
 
 	# Make tcmalloc optional
@@ -784,7 +801,7 @@ secondlife_src_prepare() {
 
 	# Re-enable gstreamer for 64-bit systems.
 	if grep -q '"x86_64" ]; then' "${WORKDIR}/linden/indra/newview/linux_tools/wrapper.sh" && grep -q "GStreamer is automatically disabled - for now - on 64-bit systems due" "${WORKDIR}/linden/indra/newview/linux_tools/wrapper.sh" ; then
-	  einfon "Fixing gstremer for 64-bit systems -->"
+	  einfon "Fixing gstreamer for 64-bit systems -->"
 	  epatch "${EBUILD%/*}/../../eclass/SNOW-589_gstreamer.patch"
 	fi
 
@@ -798,9 +815,10 @@ secondlife_src_prepare() {
 	  [[ -f "${WORKDIR}/linden/indra/media_plugins/gstreamer010/llmediaimplgstreamervidplug.cpp" ]] && MY_FILE="${WORKDIR}/linden/indra/media_plugins/gstreamer010/llmediaimplgstreamervidplug.cpp"
 	  if [[ -n "${MY_FILE}" ]] && grep -q "static GST_PLUGIN_DEFINE" "${MY_FILE}" ; then
 	    einfo "Fixing ${MY_FILE} for gstreamer-0.10.28 or higher"
-	    sed -i -e 's/static GST_PLUGIN_DEFINE/       GST_PLUGIN_DEFINE/' "${MY_FILE}" || die "gstreamer 0.10.28 fix failed"
-	    sed -i -e ':a;N;s/void gst_slvideo_init_class (void)\n{//;ba' "${MY_FILE}" || die "gstreamer 0.10.28 fix failed"
-	    sed -i -e 's/#undef PACKAGE/#undef PACKAGE\n\nvoid gst_slvideo_init_class (void)\n{/' "${MY_FILE}" || die "gstreamer 0.10.28 fix failed"
+	    sed -i -e 's/static GST_PLUGIN_DEFINE/       GST_PLUGIN_DEFINE/' \
+                   -e ':a;N;s/void gst_slvideo_init_class (void)\n{//;ba' \
+                   -e '/#undef PACKAGE/ a \nvoid gst_slvideo_init_class (void)\n{' \
+                        "${MY_FILE}" || die "gstreamer 0.10.28 fix failed"
 	  fi
 	fi
 
@@ -829,42 +847,40 @@ secondlife_src_prepare() {
 	if has_version '>=media-libs/libpng-1.4'; then
 	  if grep -q "png_set_gray_1_2_4_to_8" "${WORKDIR}/linden/indra/llimage/llpngwrapper.cpp" ; then
 	    einfo "Fixing llpngwrapper.{h|cpp} for libpng 1.14 or highter"
-	    sed -i -e 's:#include "libpng12/png.h":#define png_infopp_NULL (png_infopp)NULL\n#include "png.h":' "${WORKDIR}/linden/indra/llimage/llpngwrapper.h"
-	    sed -i -e 's:png_set_gray_1_2_4_to_8:png_set_expand_gray_1_2_4_to_8:' "${WORKDIR}/linden/indra/llimage/llpngwrapper.cpp"
+	    sed -i -e '\:#include "libpng12/png.h": i #define png_infopp_NULL (png_infopp)NULL' \
+                   -e 's:png_set_gray_1_2_4_to_8:png_set_expand_gray_1_2_4_to_8:' "${WORKDIR}/linden/indra/llimage/llpngwrapper.cpp"
 	  fi
 	fi
 
 	# Make sure FindTut.cmake is not called if !unit_test
 	if [[ -f "${WORKDIR}/linden/indra/cmake/LLAddBuildTest.cmake" ]] && [[ "${MY_LLCODEBASE}" -ge "130" ]] && ! use unit_test ; then
 	  einfo "Fixing all CMakeLists.txt files to not include the unit framework tests"
-	  find "${WORKDIR}/linden" -name "CMakeLists.txt" -exec sed -i -e 's:include(Tut):#include(Tut):' {} \;
-	  find "${WORKDIR}/linden" -name "CMakeLists.txt" -exec sed -i -e 's:include(LLAddBuildTest):#include(LLAddBuildTest):' {} \;
-	  
-	  # added in 3.2.5, fixes "Unknown CMake command "SET_TEST_PATH"."
-	  find "${WORKDIR}/linden" -name "CMakeLists.txt" -exec sed -i -e 's:add_subdirectory(${VIEWER_PREFIX}test):# add_subdirectory(${VIEWER_PREFIX}test):' {} \;
+	  find "${WORKDIR}/linden" -name "CMakeLists.txt" \
+                -exec sed -i -e 's:include(Tut):# include(Tut):' \
+                             -e 's:include(LLAddBuildTest):# include(LLAddBuildTest):' \
+                             -e 's:add_subdirectory(${VIEWER_PREFIX}test):# add_subdirectory(${VIEWER_PREFIX}test):' {} \;
+                                #  ^^^ added in 3.2.5, fixes "Unknown CMake command "SET_TEST_PATH"."
 	  
 	  if grep -q "LL_ADD_PROJECT_UNIT_TESTS" "${WORKDIR}/linden/indra/cmake/LLAddBuildTest.cmake" ; then
 	    # 2.0 base code
-	    find "${WORKDIR}/linden" -name "CMakeLists.txt" -exec sed -i -e 's:LL_ADD_PROJECT_UNIT_TESTS(:#LL_ADD_PROJECT_UNIT_TESTS(:' {} \;
-	    find "${WORKDIR}/linden" -name "CMakeLists.txt" -exec sed -i -e 's:LL_ADD_INTEGRATION_TEST(.*):#&:' {} \;
+	    find "${WORKDIR}/linden" -name "CMakeLists.txt" -exec sed -i -e 's:LL_ADD_PROJECT_UNIT_TESTS(:# LL_ADD_PROJECT_UNIT_TESTS(:' \
+                                                                         -e 's:LL_ADD_INTEGRATION_TEST(.*):# &:' {} \;
 	   else
 	    # snowglobe 1.3 base code
-	    find "${WORKDIR}/linden" -name "CMakeLists.txt" -exec sed -i -e 's:ADD_VIEWER_BUILD_TEST(:#ADD_VIEWER_BUILD_TEST(:' {} \;
-	    find "${WORKDIR}/linden" -name "CMakeLists.txt" -exec sed -i -e 's:ADD_BUILD_TEST(:#ADD_BUILD_TEST(:' {} \;
+	    find "${WORKDIR}/linden" -name "CMakeLists.txt" -exec sed -i -e 's:ADD_VIEWER_BUILD_TEST(:# ADD_VIEWER_BUILD_TEST(:' \
+                                                                         -e 's:ADD_BUILD_TEST(:# ADD_BUILD_TEST(:' {} \;
 	  fi
 	fi
 
 	# Enable the unit tests for LL code without LL_TESTS
 	if [[ "${MY_LLCODEBASE}" -eq "130" ]] && use unit_test ; then
 	  einfo "Enableing the unit tests"
-	  sed -i -e 's:^ENDIF (NOT LINUX AND VIEWER)::' "${WORKDIR}/linden/indra/llmessage/CMakeLists.txt"
-	  sed -i -e 's:^IF (NOT LINUX AND VIEWER)::' "${WORKDIR}/linden/indra/llmessage/CMakeLists.txt"
-
-	    sed -i -e 's:^endif (NOT STANDALONE)::' "${WORKDIR}/linden/indra/llimage/CMakeLists.txt"
-	    sed -i -e 's:^if (NOT STANDALONE)::' "${WORKDIR}/linden/indra/llimage/CMakeLists.txt"
-	    sed -i -e 's:^endif (NOT STANDALONE)::' "${WORKDIR}/linden/indra/newview/CMakeLists.txt"
-	    sed -i -e 's:^if (NOT STANDALONE)::' "${WORKDIR}/linden/indra/newview/CMakeLists.txt"
-	  
+	  sed -i -e 's:^ENDIF (NOT LINUX AND VIEWER)::' \
+                 -e 's:^IF (NOT LINUX AND VIEWER)::' "${WORKDIR}/linden/indra/llmessage/CMakeLists.txt"
+          sed -i -e 's:^endif (NOT STANDALONE)::' \
+                 -e 's:^if (NOT STANDALONE)::' "${WORKDIR}/linden/indra/llimage/CMakeLists.txt"
+          sed -i -e 's:^endif (NOT STANDALONE)::' \
+                 -e 's:^if (NOT STANDALONE)::' "${WORKDIR}/linden/indra/newview/CMakeLists.txt"
 	fi
 
 	# dcoroutine is currenty broken on boost >= 1.61. Fallback to older coroutine that works on newer boost.
@@ -904,7 +920,7 @@ secondlife_src_prepare() {
 	fi
 
 	# fix an cmake warning, we want to overide the FindZLIB module with a faster one.
-	sed -i -e 's:set(ROOT_PROJECT_NAME:cmake_policy(SET CMP0017 OLD)\nset(ROOT_PROJECT_NAME:' "${WORKDIR}/linden/indra/CMakeLists.txt"
+	sed -i -e '/set(ROOT_PROJECT_NAME/ i cmake_policy(SET CMP0017 OLD)' "${WORKDIR}/linden/indra/CMakeLists.txt"
 
 	# fontconfig greater then 2.8 fix. Affects all LL based code.
 	if has_version '>=media-libs/fontconfig-2.9.0'; then
@@ -915,7 +931,8 @@ secondlife_src_prepare() {
 	  fi
 	fi
 
-	if has_version '>=sys-devel/bison-2.6' && grep -q 'ifdef __cplusplus' "${WORKDIR}/linden/indra/lscript/lscript_compile/indra.y" ; then
+	# OPEN-292 removed the local lsl compiler in v4.0.5
+	if has_version '>=sys-devel/bison-2.6' && [[ -f ""${WORKDIR}/linden/indra/lscript/lscript_compile/indra.y"" ]] && grep -q 'ifdef __cplusplus' "${WORKDIR}/linden/indra/lscript/lscript_compile/indra.y" ; then
 	  einfo "Patching for bison 2.6 or greater"
 	  epatch "${EBUILD%/*}/../../eclass/bison_2.6.patch"
 	fi
@@ -937,7 +954,10 @@ secondlife_src_prepare() {
 	fi
 
 	# fix bug in BuildVersion.cmake for out of source builds
-	sed -i -e 's:COMMAND ${MERCURIAL}:COMMAND ${MERCURIAL} --cwd ${CMAKE_SOURCE_DIR}:' ${WORKDIR}/linden/indra/cmake/BuildVersion.cmake
+	if ! grep -q 'CMAKE_SOURCE_DIR' ${WORKDIR}/linden/indra/cmake/BuildVersion.cmake ; then
+	  einfo "Fixing out of source cmake build for version info."
+	  sed -i -e 's:COMMAND ${MERCURIAL}:COMMAND ${MERCURIAL} --cwd ${CMAKE_SOURCE_DIR}:' ${WORKDIR}/linden/indra/cmake/BuildVersion.cmake
+        fi
 	
 	# work around autobuild depends. Started at LL v3.7.28
 	if [[ -f "${WORKDIR}/linden/indra/cmake/BuildPackagesInfo.cmake" ]]; then
@@ -972,14 +992,18 @@ secondlife_src_prepare() {
         fi
         if [[ "${MY_LLCODEBASE}" -ge "382" ]] ; then
             einfo "(v3.8.2)Fixing jsoncpp includes"
-            sed -i -e 's:#include "reader.h":#include "jsoncpp/reader.h":' "${WORKDIR}/linden/indra/newview/llmarketplacefunctions.cpp"
-            sed -i -e 's:#include "writer.h":#include "jsoncpp/writer.h":' "${WORKDIR}/linden/indra/newview/llmarketplacefunctions.cpp"
+            sed -i \
+              -e 's:#include "reader.h":#include "jsoncpp/reader.h":' \
+              -e 's:#include "writer.h":#include "jsoncpp/writer.h":' \
+                "${WORKDIR}/linden/indra/newview/llmarketplacefunctions.cpp"
         fi
         if [[ "${MY_LLCODEBASE}" -ge "403" ]] ; then
             einfo "(v4.0.3)Fixing jsoncpp includes"
             sed -i -e 's:#include "value.h":#include "jsoncpp/value.h":' "${WORKDIR}/linden/indra/llcommon/llsdjson.h"
-            sed -i -e 's:#include "reader.h":#include "jsoncpp/reader.h":' "${WORKDIR}/linden/indra/llmessage/llcorehttputil.cpp"
-            sed -i -e 's:#include "writer.h":#include "jsoncpp/writer.h":' "${WORKDIR}/linden/indra/llmessage/llcorehttputil.cpp"
+            sed -i \
+              -e 's:#include "reader.h":#include "jsoncpp/reader.h":' \
+              -e 's:#include "writer.h":#include "jsoncpp/writer.h":' \
+                "${WORKDIR}/linden/indra/llmessage/llcorehttputil.cpp"
         fi
         if [[ "${MY_LLCODEBASE}" -ge "401" ]] ; then
             einfo "(v4.7.7)Fixing firestorm jsoncpp includes"
@@ -989,8 +1013,10 @@ secondlife_src_prepare() {
 	# add findpkg for vlc for USESYSTEMLIBS. LL v4.1.1 and FS >v4.7.9 (v5.0.1)
 	if [[ -f "${WORKDIR}/linden/indra/cmake/LibVLCPlugin.cmake" ]] && ! grep -q 'pkg_check_modules' "${WORKDIR}/linden/indra/cmake/LibVLCPlugin.cmake"; then
             einfo "Adding pkg_check_modules for vlc."
-            sed -i -e 's:else (USESYSTEMLIBS):include(FindPkgConfig)\npkg_check_modules(VLC REQUIRED vlc-plugin)\nset(VLC_INCLUDE_DIR ${VLC_INCLUDE_DIRS})\nset(VLC_PLUGIN_LIBRARIES ${VLC_LIBRARIES})\nelse (USESYSTEMLIBS):' "${WORKDIR}/linden/indra/cmake/LibVLCPlugin.cmake"
-            sed -i -e 's:elseif (LINUX):elseif (LINUX AND NOT USESYSTEMLIBS):' "${WORKDIR}/linden/indra/cmake/LibVLCPlugin.cmake"
+            sed -i \
+              -e 's:else (USESYSTEMLIBS):include(FindPkgConfig)\npkg_check_modules(VLC REQUIRED vlc-plugin)\nset(VLC_INCLUDE_DIR ${VLC_INCLUDE_DIRS})\nset(VLC_PLUGIN_LIBRARIES ${VLC_LIBRARIES})\nelse (USESYSTEMLIBS):' \
+              -e 's:elseif (LINUX):elseif (LINUX AND NOT USESYSTEMLIBS):' \
+                "${WORKDIR}/linden/indra/cmake/LibVLCPlugin.cmake"
 	fi
 	
 	# fix an old bug interduced with viewer 2.0. Many TPVs worked around it or didn't notice.
