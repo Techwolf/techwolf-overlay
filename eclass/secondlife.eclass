@@ -773,7 +773,7 @@ secondlife_src_prepare() {
 	# Gentoo defines _FORTIFY_SOURCE by default for gcc 4.7 and up
 	if tc-is-gcc && [[ $(gcc-version) > 4.6 ]]; then
 	  einfo "Removing \"add_definitions(-D_FORTIFY_SOURCE=2)\" from 00-Common.cmake"
-	  sed -i -e 's:add_definitions(-D_FORTIFY_SOURCE=2):# add_definitions(-D_FORTIFY_SOURCE=2):' "${WORKDIR}/linden/indra/cmake/00-Common.cmake"
+	  sed -i -e 's:add_definitions(-D_FORTIFY_SOURCE=2):# &:' "${WORKDIR}/linden/indra/cmake/00-Common.cmake"
         fi
 	
 	# reenable an optimization due to no longer using gcc 3.x that crash on it.
@@ -856,19 +856,19 @@ secondlife_src_prepare() {
 	if [[ -f "${WORKDIR}/linden/indra/cmake/LLAddBuildTest.cmake" ]] && [[ "${MY_LLCODEBASE}" -ge "130" ]] && ! use unit_test ; then
 	  einfo "Fixing all CMakeLists.txt files to not include the unit framework tests"
 	  find "${WORKDIR}/linden" -name "CMakeLists.txt" \
-                -exec sed -i -e 's:include(Tut):# include(Tut):' \
-                             -e 's:include(LLAddBuildTest):# include(LLAddBuildTest):' \
-                             -e 's:add_subdirectory(${VIEWER_PREFIX}test):# add_subdirectory(${VIEWER_PREFIX}test):' {} \;
+                -exec sed -i -e 's:include(Tut):# &:' \
+                             -e 's:include(LLAddBuildTest):# &:' \
+                             -e 's:add_subdirectory(${VIEWER_PREFIX}test):# &:' {} \;
                                 #  ^^^ added in 3.2.5, fixes "Unknown CMake command "SET_TEST_PATH"."
 	  
 	  if grep -q "LL_ADD_PROJECT_UNIT_TESTS" "${WORKDIR}/linden/indra/cmake/LLAddBuildTest.cmake" ; then
 	    # 2.0 base code
-	    find "${WORKDIR}/linden" -name "CMakeLists.txt" -exec sed -i -e 's:LL_ADD_PROJECT_UNIT_TESTS(:# LL_ADD_PROJECT_UNIT_TESTS(:' \
+	    find "${WORKDIR}/linden" -name "CMakeLists.txt" -exec sed -i -e 's:LL_ADD_PROJECT_UNIT_TESTS(:# &:' \
                                                                          -e 's:LL_ADD_INTEGRATION_TEST(.*):# &:' {} \;
 	   else
 	    # snowglobe 1.3 base code
-	    find "${WORKDIR}/linden" -name "CMakeLists.txt" -exec sed -i -e 's:ADD_VIEWER_BUILD_TEST(:# ADD_VIEWER_BUILD_TEST(:' \
-                                                                         -e 's:ADD_BUILD_TEST(:# ADD_BUILD_TEST(:' {} \;
+	    find "${WORKDIR}/linden" -name "CMakeLists.txt" -exec sed -i -e 's:ADD_VIEWER_BUILD_TEST(:# &:' \
+                                                                         -e 's:ADD_BUILD_TEST(:# &:' {} \;
 	  fi
 	fi
 
@@ -1025,7 +1025,7 @@ secondlife_src_prepare() {
 	sed -i -e '0,/if self.is_packaging_viewer()/ s::if True:' "${WORKDIR}/linden/indra/newview/viewer_manifest.py"
 	# the above will create a new error, "Failed to open '../../doc/contributions.txt'" during copy_l_viewer_manifest so...
 	# fix the extra step of copying files around for generateing symbols. Gentoo does not need that.
-	sed -i -e 's:add_custom_target(copy_l_viewer_manifest:# add_custom_target(copy_l_viewer_manifest:' "${WORKDIR}/linden/indra/newview/CMakeLists.txt"
+	sed -i -e 's:add_custom_target(copy_l_viewer_manifest:# &:' "${WORKDIR}/linden/indra/newview/CMakeLists.txt"
 
 }
 
