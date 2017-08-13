@@ -5,7 +5,7 @@
 
 EAPI="6"
 
-EGIT_COMMIT="6f09d8c20904b48a90f1ea90742aa82083150147"
+EGIT_COMMIT="19cd32aa3dbf21aeeb90735fd9291f07c4e0bcaa"
 GITHUBNAME="audiohacked/OpenCorsairLink"
 
 inherit webvcs
