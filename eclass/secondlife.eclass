@@ -1021,8 +1021,8 @@ secondlife_src_prepare() {
 	
 	# fix an old bug interduced with viewer 2.0. Many TPVs worked around it or didn't notice.
 	# make sure packaged files are included in the --action="copy" command
-	# do not use ":g" as we only want to change the first self.is_packaging_viewer()
-	sed -i -e 's:if self.is_packaging_viewer():if True:' "${WORKDIR}/linden/indra/newview/viewer_manifest.py"
+	# Only change the first self.is_packaging_viewer()
+	sed -i -e '0,/if self.is_packaging_viewer()/ s::if True:' "${WORKDIR}/linden/indra/newview/viewer_manifest.py"
 	# the above will create a new error, "Failed to open '../../doc/contributions.txt'" during copy_l_viewer_manifest so...
 	# fix the extra step of copying files around for generateing symbols. Gentoo does not need that.
 	sed -i -e 's:add_custom_target(copy_l_viewer_manifest:# add_custom_target(copy_l_viewer_manifest:' "${WORKDIR}/linden/indra/newview/CMakeLists.txt"
