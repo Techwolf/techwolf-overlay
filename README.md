@@ -87,11 +87,11 @@ There is several mercurial branches from Linden Labs and third party viewers. Th
 2.  Create some udev rules if they are not supplied with the distro. Currently gentoo does not.
 
     ```Shell
-cat << EOF > /etc/udev/rules.d/91-spacenavigator.rules
-KERNEL=="event[0-9]*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c603", SYMLINK+="input/spacemouse", GROUP="plugdev", MODE="664"
-KERNEL=="event[0-9]*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c623", SYMLINK+="input/spacetraveler", GROUP="plugdev", MODE="664"
-KERNEL=="event[0-9]*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c626", SYMLINK+="input/spacenavigator", GROUP="plugdev", MODE="664"
-EOF
+    cat << EOF > /etc/udev/rules.d/91-spacenavigator.rules
+    KERNEL=="event[0-9]*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c603", SYMLINK+="input/spacemouse", GROUP="plugdev", MODE="664"
+    KERNEL=="event[0-9]*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c623", SYMLINK+="input/spacetraveler", GROUP="plugdev", MODE="664"
+    KERNEL=="event[0-9]*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c626", SYMLINK+="input/spacenavigator", GROUP="plugdev", MODE="664"
+    EOF
     ```
 
 3.  Create some hal policy rules to prevent the SpaceNavigator from being used as a mouse with hotpluggin on x-org. Only needed if you find the joystick controlling the mouse.
