@@ -3,7 +3,7 @@
 
 EAPI=6
 
-EGIT_COMMIT="7974dd0371ff1072b0221eb2016d0d9a9e3f6020"
+EGIT_COMMIT="c5c51d0a9455e2553694d84a3d307a7d61d78170"
 GITHUBNAME="vinszent/gnome-twitch"
 
 inherit gnome2-utils fdo-mime webvcs
