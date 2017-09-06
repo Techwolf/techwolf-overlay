@@ -1,8 +1,8 @@
 # Distributed under the terms of the GNU General Public License v2
-# $Header: $
-# ebuild by Techwolf Lupindo
 
-EAPI="2"
+# 2017 Techwolf Lupindo
+
+EAPI="6"
 
 inherit autotools eutils
 
@@ -13,14 +13,14 @@ RESTRICT="mirror"
 LICENSE="BSD"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
-IUSE=""
 
-DEPEND=""
+S="${WORKDIR}/boost-coroutine"
 
 src_prepare() {
-	cd "${WORKDIR}/boost-coroutine"
 	epatch "${FILESDIR}"/boost-coroutine-linden.patch
 	epatch "${FILESDIR}"/boost-coroutine-linden-2.patch
+	epatch "${FILESDIR}"/gcc6.patch
+	eapply_user
 }
 
 src_install() {

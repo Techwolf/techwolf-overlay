@@ -1,0 +1,23 @@
+# HG changeset patch
+# User Nat Goodspeed <nat@lindenlab.com>
+# Date 1413240012 14400
+# Node ID 0415b49902a0acadc7b079cd78d1799d4c08266a
+# Parent  e98e50a9a4692d24a47d8bb44a6b84c8d3826205
+Update dcoroutine for Boost 1.56; also fix picky C++ errors.
+Boost.Coroutine now exposes a platform's default stack size with a new API.
+Use that instead of previous API.
+The clang compiler shipped with Xcode 6 picked up a couple legitimate C++
+errors, which happened to be okay with all previous compilers. Fix those too.
+
+diff --git boost/coroutine/detail/wait_impl.hpp boost/coroutine/detail/wait_impl.hpp
+--- boost/coroutine/detail/wait_impl.hpp
++++ boost/coroutine/detail/wait_impl.hpp
+@@ -60,7 +60,7 @@
+   template<typename Tuple>
+   void wait_n(const Tuple& t, int n) {
+     BOOST_STATIC_ASSERT(boost::tuples::length<Tuple>::value);
+-    wait_gateway::wait(t.get<0>(), n);
++    wait_gateway::wait(t.template get<0>(), n);
+   }
+ 
+   /*
