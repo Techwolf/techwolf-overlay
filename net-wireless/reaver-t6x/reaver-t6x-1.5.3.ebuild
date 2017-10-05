@@ -32,6 +32,6 @@ src_prepare() {
 }
 
 src_compile() {
-        # Bug in parralles builds. Errors out due to imporper build sequence.
+        # Work around bugs in parallel dependency resolution.
         emake -j1
 }
