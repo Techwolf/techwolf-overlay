@@ -4,7 +4,7 @@
 # Copyright 2017 Techwolf Lupindo
 
 EAPI="6"
-EGIT_COMMIT="056ec95f20bf9c38b68395c7f2d397a91d4704f5"
+EGIT_COMMIT="6cfd96e997f2a6eda17bef2216282e801c6fdad7"
 GITHUBNAME="t6x/reaver-wps-fork-t6x"
 
 inherit webvcs
@@ -14,8 +14,7 @@ HOMEPAGE="https://github.com/t6x/reaver-wps-fork-t6x"
 
 LICENSE="GPL-2"
 SLOT="0"
-# KEYWORDS="~x86 ~amd64"
-# masked untill upstream ports all the features from there old branch
+KEYWORDS="~x86 ~amd64"
 
 RDEPEND="net-libs/libpcap
          dev-db/sqlite
@@ -25,9 +24,14 @@ DEPEND="${RDEPEND}"
 S="${S}/src"
 
 src_prepare() {
-        # fix double lib/lib path.
-        sed -i 's:CONFDIR=@localstatedir@/lib/@target@:CONFDIR=@localstatedir@/@target@:' config.mak.in || die "sed Makefile failed"
+        # move to /var instead of /etc. This was done upstream in there new branch.
+        sed -i 's:CONFDIR=@sysconfdir@/@target@:CONFDIR=@localstatedir@/@target@:' Makefile.in || die "sed Makefile failed"
         
         # required for EAPI 6
         eapply_user
+}
+
+src_compile() {
+        # Bug in parralles builds. Errors out due to imporper build sequence.
+        emake -j1
 }
