@@ -1,7 +1,5 @@
-# Copyright 2010 Techwolf Lupindo
+# Copyright 2017 Techwolf Lupindo
 # Distributed under the terms of the GNU General Public License v2
-# $Header: $
-# Nonofficial ebuild by Techwolf. Lastest version at http://gentoo.techwolf.net/
 
 EAPI="5"
 MY_LLCODEBASE="501"
@@ -60,6 +58,13 @@ src_prepare() {
 	# pre_3 source has not been released, so use released source instead.
 	epatch "${FILESDIR}/glod_pre_4_2.patch"
 	epatch "${FILESDIR}/glod_pre_4.patch"
+
+	if use openjpeg2 ; then
+	  einfo "Enabling openjpeg 2.x support"
+	  MY_OPENJPEG2_CMAKE_MODULE=$(ls /usr/$(get_libdir)/openjpeg-2*/OpenJPEGConfig.cmake)
+	  sed -i -e 's:include( OpenJPEG2 ):include( '"$MY_OPENJPEG2_CMAKE_MODULE"' )\nset(OPENJPEG_INCLUDE_DIR ${OPENJPEG_INCLUDE_DIRS}):' "${WORKDIR}/linden/indra/cmake/OpenJPEG.cmake"
+	  sed -i -e 's:#include "openjpeg-2.1-fs/openjpeg.h":#include "openjpeg.h":' "${WORKDIR}/linden/indra/llimagej2coj/llimagej2coj2.cpp"
+	fi
 
 	# allow users to try out patches
 	# put patches in /etc/portage/patches/{${CATEGORY}/${PF},${CATEGORY}/${P},${CATEGORY}/${PN}}/feature.patch
