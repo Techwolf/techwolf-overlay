@@ -44,6 +44,6 @@ src_install() {
 	cmake-utils_src_install
 
 	# See broken -E create_symlink(s) in the -build.patch!
-	dosym openjpeg-1.5/openjpeg.h /usr/include/openjpeg.h
-	dosym libopenjpeg1.pc /usr/$(get_libdir)/pkgconfig/libopenjpeg.pc
+	# dosym openjpeg-1.5/openjpeg.h /usr/include/openjpeg.h
+	# dosym libopenjpeg1.pc /usr/$(get_libdir)/pkgconfig/libopenjpeg.pc
 }

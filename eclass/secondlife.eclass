@@ -34,7 +34,7 @@ RDEPEND="dev-libs/apr
 	media-libs/libpng
 	media-libs/libsdl[X,opengl]
 	media-libs/libvorbis
-	<=media-libs/openjpeg-1.5.0:0
+	<media-libs/openjpeg-1.5.1:0
 	openal? ( media-libs/openal
 		media-libs/freealut )
 	gstreamer? ( media-plugins/gst-plugins-meta:0.10[http] )
@@ -642,16 +642,9 @@ secondlife_cmake_prep() {
 	
 	# OPENJPEG_VERSION needs to be set for openjpeg greater then 1.3. It was removed from openjpeg.h on 1.4 stable.
 	# Don't set it if program includes it own openjpeg
-	if [[ ! -f "${WORKDIR}/linden/indra/libopenjpeg/openjpeg.h" ]] ; then
-	  if has_version '>=media-libs/openjpeg-1.5'; then
-	      append-cflags '-DOPENJPEG_VERSION=\"1.5\"'
-	      append-cxxflags '-DOPENJPEG_VERSION=\"1.5\"'
-	    else
-	      if has_version '>=media-libs/openjpeg-1.4'; then
-		append-cflags '-DOPENJPEG_VERSION=\"1.4\"'
-		append-cxxflags '-DOPENJPEG_VERSION=\"1.4\"'
-	      fi
-	  fi
+	if [[ ! -f "${WORKDIR}/linden/indra/libopenjpeg/openjpeg.h" ]] && ( ! use openjpeg2 ) ; then
+	  append-cflags '-DOPENJPEG_VERSION=\"1.5\"'
+	  append-cxxflags '-DOPENJPEG_VERSION=\"1.5\"'
 	fi
 
 	# huntspell fix
@@ -1026,6 +1019,12 @@ secondlife_src_prepare() {
 	# the above will create a new error, "Failed to open '../../doc/contributions.txt'" during copy_l_viewer_manifest so...
 	# fix the extra step of copying files around for generateing symbols. Gentoo does not need that.
 	sed -i -e 's:add_custom_target(copy_l_viewer_manifest:# &:' "${WORKDIR}/linden/indra/newview/CMakeLists.txt"
+	
+	# No longer using /usr/include/openjpeg.h so both version 1 and 2 can be selected.
+	if [[ ! -f "${WORKDIR}/linden/indra/libopenjpeg/openjpeg.h" ]] && ( ! use openjpeg2 ) ; then
+	  einfo "Fixing openjpeg include to point to openjpeg-1.5"
+	  sed -i -e 's:/usr/include/openjpeg:/usr/include/openjpeg-1.5:' "${WORKDIR}/linden/indra/cmake/FindOpenJPEG.cmake"
+	fi
 
 }
 
