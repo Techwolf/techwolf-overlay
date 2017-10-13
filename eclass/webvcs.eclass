@@ -22,7 +22,7 @@ RESTRICT="mirror"
 if [[ -n "$EGIT_COMMIT" ]] ;  then
     GITHUBACC=${GITHUBNAME%/*}
     GITHUBREPO=${GITHUBNAME#*/}
-    SRC_URI="https://github.com/${GITHUBACC}/${GITHUBREPO}/archive/${EGIT_COMMIT}.tar.gz -> ${P}.tar.gz"
+    SRC_URI="https://github.com/${GITHUBACC}/${GITHUBREPO}/archive/${EGIT_COMMIT}.tar.gz -> ${P}.${EGIT_COMMIT:0:5}.tar.gz"
     S="${WORKDIR}/${GITHUBREPO}-${EGIT_COMMIT}"
 fi
 
@@ -40,6 +40,6 @@ fi
 if [[ -n "$EHG_COMMIT" ]] ;  then
     BITBUCKETACC=${BITBUCKETNAME%/*}
     BITBUCKETREPO=${BITBUCKETNAME#*/}
-    SRC_URI="https://bitbucket.org/${BITBUCKETACC}/${BITBUCKETREPO}/get/${EHG_COMMIT}.tar.bz2 -> ${P}.tar.bz2"
+    SRC_URI="https://bitbucket.org/${BITBUCKETACC}/${BITBUCKETREPO}/get/${EHG_COMMIT}.tar.bz2 -> ${P}.${EHG_COMMIT:0:5}.tar.bz2"
     S="${WORKDIR}/${BITBUCKETACC}-${BITBUCKETREPO}-${EHG_COMMIT}"
 fi
