@@ -1,2 +1,3 @@
 move dev-libs/glod-hg dev-libs/glod
+move dev-dotnet/nant dev-util/nant
 

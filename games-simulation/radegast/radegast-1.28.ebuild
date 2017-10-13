@@ -1,14 +1,13 @@
-# Copyright 2009 Techwolf Lupindo
+# Copyright 2009-2017 Techwolf Lupindo
 # Distributed under the terms of the GNU General Public License v2
-# $Header: $
 
-EAPI="2"
+EAPI="5"
 
 inherit eutils mono games
 
 DESCRIPTION="Lightweight client for connecting to Second Life and OpenSim based virtual worlds."
-HOMEPAGE="http://radegastclient.org/"
-SRC_URI="http://radegast.googlecode.com/files/${P}-src.zip"
+HOMEPAGE="https://code.google.com/archive/p/radegast/"
+SRC_URI="https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/radegast/radegast-1.28-src.zip"
 LICENSE="BSD"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
@@ -18,11 +17,11 @@ RESTRICT="mirror"
 RDEPEND="dev-lang/mono
 	dev-dotnet/libgdiplus[cairo]"
 DEPEND="${RDEPEND}
-	dev-dotnet/nant"
+	dev-util/nant"
 
 src_unpack() {
 	unpack ${A}
-	S="${WORKDIR}/${P}-src"
+	S="${WORKDIR}/${P}-source"
 }
 
 src_compile() {
@@ -44,7 +43,7 @@ src_install() {
 	doins bin/*.dylib || die
 	doins bin/*.XML || die
 	doins bin/*.xml || die
-	doins bin/*.html || die
+	# doins bin/*.html || die
 	insinto "${GAMES_DATADIR}/${PN}/aiml"
 	doins bin/aiml/*.aiml || die
 	insinto "${GAMES_DATADIR}/${PN}/aiml_config"
