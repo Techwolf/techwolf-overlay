@@ -38,7 +38,6 @@ RDEPEND="dev-libs/apr
 	openal? ( media-libs/openal
 		media-libs/freealut )
 	gstreamer? ( media-plugins/gst-plugins-meta:0.10[http] )
-	net-misc/curl
 	sys-libs/zlib
 	vivox? (
 	         amd64? ( sys-libs/zlib[abi_x86_32(-)]
@@ -155,8 +154,11 @@ if [[ "${MY_LLCODEBASE}" -ge "371" ]] ; then
 fi
 
 if [[ "${MY_LLCODEBASE}" -lt "403" ]] ; then
-  DEPEND="${DEPEND}
-	  net-dns/c-ares"
+    DEPEND="${DEPEND}
+	    net-misc/curl[adns]"
+  else
+    DEPEND="${DEPEND}
+	    net-misc/curl"
 fi
 
 if [[ "${MY_LLCODEBASE}" -ge "411" ]] ; then
