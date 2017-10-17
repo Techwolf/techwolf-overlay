@@ -1,0 +1,95 @@
+# HG changeset patch
+# User Nat Goodspeed <nat@lindenlab.com>
+# Date 1459373737 14400
+# Node ID 9146024ea71e0035e614f69f799be67a1c95ef62
+# Parent  36bd894cdf2df60d34e1107a4cf03802adba21e5
+DRTVWR-418: Replace buggy varargs functions with variadic templates.
+
+Calls to makeStringArray() and makeStringList() blew up in 64-bit builds. Why?
+Because they were passing things like:
+
+makeStringList("1", "2", "3", "4", 0)
+
+using va_arg(const char*) to walk the argument list. Why is that a problem?
+Because in a 64-bit build, the int literal 0 is not as wide as const char*!
+
+Because this repo is not properly set up for Vendor Branch strategy, I am
+strenuously avoiding pervasive edits: edits that require patching every single
+instance of a particular call. So changing every final '0' to
+'static_cast<const char*>(0)' is out. Besides, new upstream calls wouldn't
+follow that convention anyway.
+
+Besides that, va_list and friends are crufty and type-unsafe and bad news and
+should be eliminated whenever possible.
+
+Instead, introduce makeStringArray() and makeStringList() implemented as
+variadic templates, which is type-safe going forward. This requires a bit of
+funny business to make them avoid treating the final '0' as a string.
+
+This requires -std=c++11 in the compiler switches.
+
+diff --git a/include/dae/daeUtils.h b/include/dae/daeUtils.h
+--- a/include/dae/daeUtils.h
++++ b/include/dae/daeUtils.h
+@@ -54,9 +54,39 @@
+ 	                      bool separatorsInResult = false);
+ 
+ 	typedef std::list<std::string>::iterator tokenIter;
+-	
+-	DLLSPEC std::vector<std::string> makeStringArray(const char* s, ...);
+-	DLLSPEC std::list<std::string> makeStringList(const char* s, ...);
++
++//	DLLSPEC std::vector<std::string> makeStringArray(const char* s, ...);
++//	DLLSPEC std::list<std::string> makeStringList(const char* s, ...);
++	// degenerate makeString<T>(Container&, 0): end of recursion
++	template < class Container, typename Type0 >
++	void makeString(Container&, Type0 string0)
++	{
++		// All existing calls end with 0
++		assert(! string0);
++	}
++	// makeString(Container&, at least one string, ..., 0)
++	template < class Container,
++			   typename Type0, typename Type1, typename ... Types >
++	void makeString(Container& partial,
++					Type0 string0, Type1 string1, Types... strings)
++	{
++		partial.push_back(string0);
++		makeString(partial, string1, strings...);
++	}
++	template < typename ... Types >
++	std::vector<std::string> makeStringArray(Types... strings)
++	{
++		std::vector<std::string> result;
++		makeString(result, strings...);
++		return result;
++	}
++	template < typename ... Types >
++	std::list<std::string> makeStringList(Types... strings)
++	{
++		std::list<std::string> result;
++		makeString(result, strings...);
++		return result;
++	}
+ 
+ 	DLLSPEC std::string getCurrentDir();
+ 	DLLSPEC std::string getCurrentDirAsUri();
+diff --git a/src/dae/daeUtils.cpp b/src/dae/daeUtils.cpp
+--- a/src/dae/daeUtils.cpp
++++ b/src/dae/daeUtils.cpp
+@@ -94,6 +94,7 @@
+ 	return result;
+ }
+ 
++#if 0
+ vector<string> cdom::makeStringArray(const char* s, ...) {
+ 	va_list args;
+ 	va_start(args, s);
+@@ -117,6 +118,7 @@
+ 	va_end(args);
+ 	return result;
+ }
++#endif 0
+ 
+ string cdom::getCurrentDir() {
+ #ifdef __CELLOS_LV2__

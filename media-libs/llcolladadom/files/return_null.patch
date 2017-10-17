@@ -1,0 +1,21 @@
+# HG changeset patch
+# User Nat Goodspeed <nat@lindenlab.com>
+# Date 1459372655 14400
+# Node ID c52cc0c171f70422eda86dc8e9157cf280196e6e
+# Parent  4292b638aca694d8b3e56564373aae21912f0409
+DRTVWR-418: clang doesn't like returning 'false' for a pointer.
+
+It's correct. Don't do it.
+
+diff --git a/src/dae/daeMetaGroup.cpp b/src/dae/daeMetaGroup.cpp
+--- a/src/dae/daeMetaGroup.cpp
++++ b/src/dae/daeMetaGroup.cpp
+@@ -26,7 +26,7 @@
+ 	(void)offset;
+ 	daeString nm = child->getElementName();
+ 	if ( findChild( nm ) == NULL ) {
+-		return false;
++		return NULL;
+ 	}
+ 	daeElementRef el;
+ 
