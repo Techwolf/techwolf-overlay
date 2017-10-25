@@ -237,12 +237,12 @@ xpath_get_value() {
         if [[ -f "${S}/autobuild.xml" ]] ; then
 	  einfo "Getting $2 $1 from ${S}/autobuild.xml"
 	  SLASSET=$(xpath -e "//key[text()=\"$1\"]/following-sibling::map[1]/key[text()=\"platforms\"]/following-sibling::map[1]/key[text()=\"$2\"]/following-sibling::map[1]/key[text()=\"archive\"]/following-sibling::map[1]/string[2]/text()" "${S}/autobuild.xml")
-	  SLASSET_MD5SUM=$(xpath -e "//key[text()=\"$1\"]/following-sibling::map[1]/key[text()=\"platforms\"]/following-sibling::map[1]/key[text()=\"$2\"]/following-sibling::map[1]/key[text()=\"archive\"]/following-sibling::map[1]/string[1]/text()" "${S}/autobuild.xml" )
+	  SLASSET_MD5SUM=$(xpath -e "//key[text()=\"$1\"]/following-sibling::map[1]/key[text()=\"platforms\"]/following-sibling::map[1]/key[text()=\"$2\"]/following-sibling::map[1]/key[text()=\"archive\"]/following-sibling::map[1]/string[1]/text()" "${S}/autobuild.xml")
 	 else
 	  # some TPVs still use pre 2.6.3 build system parts.
 	  einfo "Getting $2 $1 from ${S}/install.xml"
-	  SLASSET=$(xpath "${S}/install.xml" "//key[text()=\"$1\"]/following-sibling::map[1]/key[text()=\"packages\"]/following-sibling::map[1]/key[text()=\"$2\"]/following-sibling::map[1]/uri/text()")
-	  SLASSET_MD5SUM=$(xpath "${S}/install.xml" "//key[text()=\"$1\"]/following-sibling::map[1]/key[text()=\"packages\"]/following-sibling::map[1]/key[text()=\"$2\"]/following-sibling::map[1]/string/text()")
+	  SLASSET=$(xpath -e "//key[text()=\"$1\"]/following-sibling::map[1]/key[text()=\"packages\"]/following-sibling::map[1]/key[text()=\"$2\"]/following-sibling::map[1]/uri/text()" "${S}/install.xml")
+	  SLASSET_MD5SUM=$(xpath -e "//key[text()=\"$1\"]/following-sibling::map[1]/key[text()=\"packages\"]/following-sibling::map[1]/key[text()=\"$2\"]/following-sibling::map[1]/string/text()" "${S}/install.xml")
 	fi
     else
 	if [[ -f "${S}/autobuild.xml" ]] ; then
