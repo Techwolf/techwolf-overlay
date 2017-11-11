@@ -4,7 +4,7 @@
 # Copyright 2017 Techwolf Lupindo
 
 EAPI="6"
-EGIT_COMMIT="f723d5017f304b727981560396044d7d11ec1080"
+EGIT_COMMIT="3c8daf98dfd34372dfbe480ab3eef1b59a2b014a"
 GITHUBNAME="wiire/pixiewps"
 
 inherit webvcs
