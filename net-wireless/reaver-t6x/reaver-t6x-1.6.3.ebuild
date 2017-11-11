@@ -4,7 +4,7 @@
 # Copyright 2017 Techwolf Lupindo
 
 EAPI="6"
-EGIT_COMMIT="056ec95f20bf9c38b68395c7f2d397a91d4704f5"
+EGIT_COMMIT="03ba435b19e2aa0b84bc7d6896d1041281e81893"
 GITHUBNAME="t6x/reaver-wps-fork-t6x"
 
 inherit webvcs
