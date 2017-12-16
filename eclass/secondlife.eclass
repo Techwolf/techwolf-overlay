@@ -120,7 +120,7 @@ fi
 if [[ "${MY_LLCODEBASE}" -ge "250" ]] ; then
   IUSE="${IUSE} crash-reporting"
   DEPEND="${DEPEND}
-	  crash-reporting? ( dev-util/google-breakpad-hg )"
+	  crash-reporting? ( dev-util/google-breakpad )"
 fi
 
 if [[ "${MY_LLCODEBASE}" -ge "271" ]] ; then
