@@ -1,45 +1,34 @@
-# Copyright 2013 Techwolf Lupindo
+# Copyright 1999-2018 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: $
 
-EAPI="2"
+# Copyright 2018 Techwolf Lupindo
 
-inherit toolchain-funcs subversion qt4-r2
+EAPI="6"
 
-DESCRIPTION="QtWebKit is an HTML rendering library, which incorporates WebKit into Nokia's Qt."
-HOMEPAGE="http://hg.secondlife.com/llqtwebkit/"
+inherit qmake-utils epatch
 
-
-
+DESCRIPTION="The ultimate GUI for aircrack-ng and wireless tools"
+HOMEPAGE="https://code.google.com/archive/p/aircrackgui-m4/"
+SRC_URI="https://storage.googleapis.com/google-code-archive-source/v2/code.google.com/aircrackgui-m4/source-archive.zip -> ${P}.zip"
 LICENSE="GPL-3"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
-IUSE=""
 
 DEPEND="dev-qt/qtcore
 	dev-qt/qtgui"
 RDEPEND="${DEPEND}"
 
-src_unpack() {
-	# When using svc, S is the directory the checkout is copied into.
-	# S="${WORKDIR}/${P}"
-	ESVN_REPO_URI="http://aircrackgui-m4.googlecode.com/svn/trunk/"
-	# ESVN_PROJECT="radegast"
-	subversion_src_unpack
-
-	S="${WORKDIR}/${P}/aircrack-ng-1.1-M4"
-	ESVN_REPO_URI="http://aircrackgui-m4.googlecode.com/svn/aircrack-ng/"
-	subversion_src_unpack
-
-	S="${WORKDIR}/${P}"
-}
+S=${WORKDIR}/${PN}/trunk
 
 src_prepare() {
-	cd ${WORKDIR}/${P}/aircrack-ng-1.1-M4
+	cd "${WORKDIR}"/${PN}/aircrack-ng
+	rm -r .svn
+	mv * "${S}"/aircrack-ng-1.1-M4
+	cd "${S}"/aircrack-ng-1.1-M4
 	
 	# copy missing files from the aircrack svn
-	cp -r "${FILESDIR}/radiotap" "${WORKDIR}/${P}/aircrack-ng-1.1-M4/src/osdep"
-	
+	cp -r "${FILESDIR}/radiotap" "${S}/aircrack-ng-1.1-M4/src/osdep"
+
 	epatch "${FILESDIR}/aircrack-ng-1.0_rc4-fix_build.patch"
 	epatch "${FILESDIR}/aircrack-ng-1.1-parallelmake.patch"
 	epatch "${FILESDIR}/aircrack-ng-1.1-sse-pic.patch"
@@ -53,19 +42,20 @@ src_prepare() {
 	#likely to stay after version bump
 	epatch "${FILESDIR}"/airodump-ng-oui-update-path-fix.patch
 	
-	cd ${WORKDIR}/${P}
+	cd ${S}
 	sed -i -e "s:aircrack-ng-1.1-M4/:/usr/bin/aircrack-ng-1.1-M4/:g" DEFINES.h
-	qt4-r2_src_prepare
+	# qt5 support
+	eapply "${FILESDIR}"/qt5.patch
+	
+	eapply_user
 }
 
 src_configure() {
-	qt4-r2_src_configure
-	cd ${WORKDIR}/${P}/aircrack-ng-1.1-M4
-	base_src_configure
+	eqmake5 "aircrack GUI.pro"
 }
 
 src_compile() {
-	cd ${WORKDIR}/${P}/aircrack-ng-1.1-M4
+	cd ${S}/aircrack-ng-1.1-M4
 	emake \
 		CC="$(tc-getCC)" \
 		AR="$(tc-getAR)" \
@@ -73,8 +63,8 @@ src_compile() {
 		sqlite="false" \
 		UNSTABLE="false"
 		
-	cd ${WORKDIR}/${P}
-	qt4-r2_src_compile
+	cd ${S}
+	emake
 }
 
 src_install() {

@@ -1,0 +1,33 @@
+From 8d86646c5a862bde608738cde730da6d773d99de Mon Sep 17 00:00:00 2001
+From: a1ive <ligenlive@gmail.com>
+Date: Sat, 11 Nov 2017 16:21:29 +0000
+Subject: [PATCH] Qt5
+
+---
+ aircrack GUI.pro | 2 +-
+ main.cpp         | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/aircrack GUI.pro b/aircrack GUI.pro
+index 4a3a08c..78a4f4c 100755
+--- a/aircrack GUI.pro	
++++ b/aircrack GUI.pro	
+@@ -4,7 +4,7 @@
+ #
+ #-------------------------------------------------
+ 
+-QT       += core gui
++QT       += core gui widgets
+ 
+ TARGET = aircrack-GUI
+ TEMPLATE = app
+diff --git a/main.cpp b/main.cpp
+index 7a785a4..90dd8d6 100755
+--- a/main.cpp
++++ b/main.cpp
+@@ -1,4 +1,4 @@
+-#include <QtGui/QApplication>
++#include <QApplication>
+ #include "mainwindow.h"
+ #include <QProcess>
+ #include "airodump.h"
