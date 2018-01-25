@@ -16,7 +16,7 @@ Primary purpose is for Second Life with the following added:
 
 As root:
 
-`layman -f -a techwolf -o 'http://techwolf.github.io/overlays.xml'`
+`layman -f -a Techwolf -o 'http://techwolf.github.io/overlays.xml'`
 
 Or if using paludis:
 
