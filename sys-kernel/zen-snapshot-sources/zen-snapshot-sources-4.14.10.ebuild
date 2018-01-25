@@ -16,7 +16,8 @@ HOMEPAGE="http://zen-kernel.org/"
 DESCRIPTION="The Zen Kernel sources"
 SRC_URI="${KERNEL_URI}"
 
-UNIPATCH_LIST="${FILESDIR}/zen_master-${PV}.patch.bz2"
+UNIPATCH_LIST="${FILESDIR}/zen_master-${PV}.patch.bz2
+		${FILESDIR}/sync_check.patch"
 
 K_NOSETEXTRAVERSION="true"
 K_EXTRAEINFO="For more info on zen-sources and details on how to report problems, see: \
