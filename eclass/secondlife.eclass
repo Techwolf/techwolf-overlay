@@ -1027,6 +1027,12 @@ secondlife_src_prepare() {
 	  einfo "Fixing openjpeg include to point to openjpeg-1.5"
 	  sed -i -e 's:/usr/include/openjpeg:/usr/include/openjpeg-1.5:' "${WORKDIR}/linden/indra/cmake/FindOpenJPEG.cmake"
 	fi
+	
+	if [[ -f "${WORKDIR}"/linden/indra/llrender/CMakeLists.txt ]]; then
+	  # need -fPIC for linking.
+	  einfo "adding -fPIC to llrender/CMakeLists.txt"
+	  echo "add_definitions(-fPIC)" >> "${WORKDIR}"/linden/indra/llrender/CMakeLists.txt
+	fi
 
 }
 
