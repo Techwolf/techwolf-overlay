@@ -1,18 +1,21 @@
-# Copyright 2012 Techwolf Lupindo
+# Copyright 1999-2010 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: $
 
-inherit mercurial
+# Copyright 2012-2018 Techwolf Lupindo
+
+EAPI="6"
+
+EHG_COMMIT="a9c24a3957df"
+BITBUCKETNAME="lindenlab/3p-glh-linear"
+
+inherit webvcs
 
 DESCRIPTION="glh - is a platform-indepenedent C++ OpenGL helper library"
 HOMEPAGE="https://bitbucket.org/lindenlab/3p-glh-linear"
 
-EHG_REPO_URI="https://bitbucket.org/lindenlab/3p-glh-linear"
-
 LICENSE="BSD"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
-IUSE=""
 
 src_install() {
 	# Install headers
@@ -21,5 +24,5 @@ src_install() {
 	doins include/GL/*.h
 	insinto /usr/include/glh
 	doins include/glh/*.h
-	dodoc LICENSES/glh_linear.txt
+	dodoc LICENSES/glh-linear.txt
 }

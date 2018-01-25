@@ -91,6 +91,8 @@ QA_TEXTRELS="usr/share/games/${PN}/lib/libvivoxsdk.so usr/share/games/${PN}/lib/
 # 411 - LL v4.1.1 (320331) October 06, 2016 QuickTime replace with LibVLC on windows, added libvlc depends to both Win and Linux.
 # 412 - LL v4.1.2 (321518) November 10, 2016 Maintenance release. Now depends on dev-python/llbase. The code was removed from the viewer.
 
+# 510 - LL v5.1.0 (511732) 64 bit support. Linux 64 bit defered to later version.
+
 
 if [[ "${MY_LLCODEBASE}" -ge "130" ]] ; then
   IUSE="${IUSE} unit_test"
@@ -132,7 +134,7 @@ fi
 
 if [[ "${MY_LLCODEBASE}" -ge "320" ]] ; then
   DEPEND="${DEPEND}
-	  dev-libs/glh-hg"
+	  dev-libs/glh"
 fi
 
 if [[ "${MY_LLCODEBASE}" -ge "334" ]] ; then
