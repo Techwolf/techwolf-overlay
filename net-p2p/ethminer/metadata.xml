@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+        <maintainer type="person">
+            <email>techwolf.lupindo@gmail.com</email>
+            <name>Techwolf Lupindo</name>
+        </maintainer>
+	<upstream>
+		<bugs-to>https://github.com/ethereum-mining/ethminer/issues</bugs-to>
+		<changelog>https://github.com/ethereum-mining/ethminer/releases</changelog>
+		<remote-id type="github">ethereum-mining/ethminer</remote-id>
+	</upstream>
+	<use>
+		<flag name="apicore">API Server support</flag>
+		<flag name="opencl">OpenCL mining</flag>
+		<flag name="cuda">CUDA mining</flag>
+		<flag name="dbus">D-Bus support</flag>
+		<flag name="stratum">Stratum protocol support</flag>
+	</use>
+</pkgmetadata>
