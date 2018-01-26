@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+        <maintainer type="person">
+            <email>techwolf.lupindo@gmail.com</email>
+            <name>Techwolf Lupindo</name>
+        </maintainer>
+	<upstream>
+		<maintainer status="active">
+			<name>Corey Harding</name>
+			<email>contact@legacysecuritygroup.com</email>
+		</maintainer>
+		<bugs-to>https://github.com/exploitagency/vanitygen-plus/issues</bugs-to>
+		<changelog>https://github.com/exploitagency/vanitygen-plus/releases</changelog>
+		<remote-id type="github">exploitagency/vanitygen-plus</remote-id>
+	</upstream>
+	<use>
+		<flag name="opencl">Add GPU support.</flag>
+	</use>
+</pkgmetadata>
