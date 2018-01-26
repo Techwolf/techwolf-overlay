@@ -1,11 +1,11 @@
 # Copyright 1999-2007 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 
-# Copyright 2017 Techwolf Lupindo
+# Copyright 2018 Techwolf Lupindo
 
 EAPI="6"
 
-EGIT_COMMIT="19cd32aa3dbf21aeeb90735fd9291f07c4e0bcaa"
+EGIT_COMMIT="da882973fd87c7e5eba19f0b1d39d86a4271b9a2"
 GITHUBNAME="audiohacked/OpenCorsairLink"
 
 inherit webvcs
