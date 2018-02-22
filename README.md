@@ -1,5 +1,7 @@
 # Gentoo Overlay Project
 
+[![Tip Me via PayPal](https://img.shields.io/badge/PayPal-tip%20me-green.svg?logo=paypal)](https://www.paypal.me/Techwolf)
+
 Primary purpose is for Second Life with the following added:
 
 *   Working streaming media on 64-bit systems.
