@@ -21,6 +21,7 @@ KEYWORDS="~amd64 ~x86"
 IUSE="opensim avx openjpeg2 kdu"
 
 DEPEND="${DEPEND}
+	dev-util/google-breakpad
 	openjpeg2? ( media-libs/openjpeg:2 )
 	kdu? ( media-libs/kdu )"
 
