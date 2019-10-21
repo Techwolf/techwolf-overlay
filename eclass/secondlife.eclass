@@ -25,7 +25,7 @@ RDEPEND="dev-libs/apr
 	elfio? ( dev-libs/elfio )
 	dev-libs/expat
 	dbus? ( dev-libs/dbus-glib )
-	dev-libs/openssl
+	|| ( <dev-libs/openssl-1.1 dev-libs/openssl-compat )
 	>=dev-libs/xmlrpc-epi-0.51-r1
 	tcmalloc? ( dev-util/google-perftools )
 	media-libs/freetype
@@ -91,7 +91,7 @@ QA_TEXTRELS="usr/share/games/${PN}/lib/libvivoxsdk.so usr/share/games/${PN}/lib/
 # 411 - LL v4.1.1 (320331) October 06, 2016 QuickTime replace with LibVLC on windows, added libvlc depends to both Win and Linux.
 # 412 - LL v4.1.2 (321518) November 10, 2016 Maintenance release. Now depends on dev-python/llbase. The code was removed from the viewer.
 
-# 510 - LL v5.1.0 (511732) 64 bit support. Linux 64 bit defered to later version.
+# 510 - LL v5.1.0 (511732) 64 bit support. Linux 64 bit defered to later version. Added nghttp2 depends.
 
 
 if [[ "${MY_LLCODEBASE}" -ge "130" ]] ; then
@@ -173,6 +173,11 @@ if [[ "${MY_LLCODEBASE}" -ge "412" ]] ; then
 	  dev-python/llbase"
 fi
 
+if [[ "${MY_LLCODEBASE}" -ge "510" ]] ; then
+  DEPEND="${DEPEND}
+	  net-misc/curl[http2]"
+fi
+
 # Internial function to take one file and convert it from DOS to UNIX if text file.
 # Fixes permissions of shell, python, and source code files.
 # Performance tweaks and pretty progress indecator
@@ -216,14 +221,14 @@ check_and_convert_DOS() {
 # live distfile check. For when file name and info is known only after doing a SVN pull
 distfile_check_download() {
 	ASSET="$1"
-# 	if [[ -f "${MY_STORE_DIR}/${ASSET##*/}" ]] ; then
-# 	  if echo "$2" | grep -q "$(md5sum ${MY_STORE_DIR}/${ASSET##*/} | awk '{print $1}')" ; then
-# 	    einfo "${ASSET##*/} md5sum ok"
-# 	   else
-# 	    einfo "${ASSET##*/} md5sum failed, removing"
-# 	    rm -f "${MY_STORE_DIR}/${ASSET##*/}"
-# 	  fi
-# 	fi
+	if [[ -f "${MY_STORE_DIR}/${ASSET##*/}" ]] ; then
+	  if [[ "$(md5sum ${MY_STORE_DIR}/${ASSET##*/} | awk '{print $1}')" == "$2" ]] ; then
+	    einfo "${ASSET##*/} md5sum ok"
+	   else
+	    einfo "${ASSET##*/} md5sum failed, removing"
+	    rm -f "${MY_STORE_DIR}/${ASSET##*/}"
+	  fi
+	fi
 	if [[ ! -f "${MY_STORE_DIR}/${ASSET##*/}" ]] ; then
 	  wget --directory-prefix="${MY_STORE_DIR}" "${ASSET}" || die "Problem with fetching ${ASSET##*/}"
 	fi
@@ -607,6 +612,28 @@ secondlife_cmake_prep() {
 	 else
           mycmakeargs+=( -DSTANDALONE:BOOL=TRUE )
         fi
+        
+        # ------------ Linden Lab changes with viewer release 5.1.0 ---------------
+        # Requires LL_BUILD to be set or it erros out.
+        # Note that it is an envoroment variable and NOT a cmake/gcc define.
+        # Define to a no-op as it is not use for standalone/USESYSLIBS builds and does not harm older viewers.
+        export LL_BUILD=" "
+        # LL changed the address size detect to python that breaks on python 3 and also has bad cmake math: "string begin index: -2 is out of range 0 - 0"
+        # in cmake/Variables.cmake:91 (string)
+        # set the address size here to overide the bad autodetect code. Compatiable with older working code.
+        if use amd64 ; then
+	  mycmakeargs+=( -DADDRESS_SIZE=64 )
+	 else
+          mycmakeargs+=( -DADDRESS_SIZE=32 )
+        fi
+        # The above bug exposed a gentoo cmake bug. cmake does not honor the PYTHON_COMPAT setting.
+        mycmakeargs+=( -DPYTHON_EXECUTABLE=/usr/bin/python2.7 )
+        
+        # LL_LINUX was move to an outside file. Define it for both cmake and gcc. Safe to define for all viewers. 
+        mycmakeargs+=( -DLL_LINUX=1 )
+        append-cflags "-DLL_LINUX=1"
+        append-cxxflags "-DLL_LINUX=1"
+	# --------------------------------------------------------------------------
 	
 	mycmakeargs+=(
             -DNDOF:BOOL=TRUE
@@ -627,11 +654,13 @@ secondlife_cmake_prep() {
 	# LL like to break code from time to time
 	mycmakeargs+=( -DGCC_DISABLE_FATAL_WARNINGS:BOOL=TRUE )
 
-	# Linden Labs sse enabled processor build detection is broken, lets turn it on for
-	# amd64 or (x86 and (sse or sse2))
-	if { use amd64 || use sse || use sse2; }; then
-	    append-cflags "-DLL_VECTORIZE=1"
-	    append-cxxflags "-DLL_VECTORIZE=1"
+	if [[ "${MY_LLCODEBASE}" -lt "324" ]] ; then
+	  # Linden Labs sse enabled processor build detection is broken, lets turn it on for
+	  # amd64 or (x86 and (sse or sse2))
+	  if { use amd64 || use sse || use sse2; }; then
+	      append-cflags "-DLL_VECTORIZE=1"
+	      append-cxxflags "-DLL_VECTORIZE=1"
+	  fi
 	fi
 
 	# Don't package by default on LINUX
@@ -719,14 +748,25 @@ secondlife_viewer_manifest() {
 	# in that case, use the vivox supplied one.
 	# FIRE-16605 BUG-8471 MAINT-4876 https://jira.phoenixviewer.com/browse/FIRE-16605
 	if use vivox ; then
-	  einfo "Installing voice files..."
+	  if [[ -f "${WORKDIR}/linden/indra/packages/vivox/lib/release/SLVoice" ]] ; then
+	    einfo "Installing voice files from packages..."
+	    exeinto "${GAMES_DATADIR}/${PN}/bin"
+	    doexe ../packages/vivox/lib/release/SLVoice || die
+	    exeinto "${GAMES_DATADIR}/${PN}/lib"
+	    ! use amd64 && rm ../packages/vivox/lib/release/libvivoxoal.so.1
+	    doexe ../packages/vivox/lib/release/lib* || die
+	  fi
+	  # detect the old way, before starting to use packages directory.
 	  if [[ -f "${WORKDIR}/linden/lib/release/SLVoice" ]] ; then
+	    einfo "Installing voice files..."
 	    exeinto "${GAMES_DATADIR}/${PN}/bin"
 	    doexe ../../lib/release/SLVoice || die
 	    exeinto "${GAMES_DATADIR}/${PN}/lib"
 	    ! use amd64 && rm ../../lib/release/libvivoxoal.so.1
 	    doexe ../../lib/release/lib* || die
-	  else
+	  fi
+	  if [[ -f "${WORKDIR}/linden/indra/newview/vivox-runtime/i686-linux/SLVoice" ]] ; then
+	    einfo "Installing i686 voice files..."
 	    exeinto "${GAMES_DATADIR}/${PN}/bin"
 	    doexe vivox-runtime/i686-linux/SLVoice || die
 	    ! use amd64 && rm vivox-runtime/i686-linux/libvivoxoal.so.1
@@ -1036,6 +1076,46 @@ secondlife_src_prepare() {
 	  echo "add_definitions(-fPIC)" >> "${WORKDIR}"/linden/indra/llrender/CMakeLists.txt
 	fi
 
+	if [[ "${MY_LLCODEBASE}" -ge "510" ]] ; then
+	  # For Unknown reasons, cmake is no longer defaulting of UNset 46 and instead is erroring out, despite the fact it is NOT being set anywhere.
+	  sed -i -e '/set(ROOT_PROJECT_NAME/ i cmake_policy(SET CMP0046 OLD)' "${WORKDIR}/linden/indra/CMakeLists.txt"
+	fi
+	
+	# curl 7.62.0 made a header change of CURLE_SSL_CACERT.
+	if grep -q 'case CURLE_SSL_CACERT:' ${WORKDIR}/linden/indra/newview/llxmlrpctransaction.cpp ; then
+	  einfo "Fixing curl => 7.62.0"
+	  sed -i -e 's/\(.*\)case CURLE_SSL_CACERT:/#if LIBCURL_VERSION_NUM < 0x073e00\n\1case CURLE_SSL_CACERT:\n#endif/' ${WORKDIR}/linden/indra/newview/llxmlrpctransaction.cpp
+	  sed -i -e 's/\(.*\)case CURLE_SSL_CACERT:/#if LIBCURL_VERSION_NUM < 0x073e00\n\1case CURLE_SSL_CACERT:\n#endif/' ${WORKDIR}/linden/indra/newview/llxmlrpclistener.cpp
+	fi
+        
+	# openssl 1.1 and 1.0.2 has API differences. Use older openssl for now.
+	if has_version '>=dev-libs/openssl-1.1'; then
+	  einfo "Fixing OpenSSL.cmake for openssl 1.0.2"
+	  sed -i -e "s:include(FindOpenSSL):set(OPENSSL_LIBRARIES /usr/$(get_libdir)/libssl.so.1.0.0 /usr/$(get_libdir)/libcrypto.so.1.0.0)\n set(OPENSSL_INCLUDE_DIRS /usr/include):" \
+	      ${WORKDIR}/linden/indra/cmake/OpenSSL.cmake
+	  
+	  MY_OPENSSL_FILES=( 
+	    llcrashlogger/llcrashlogger.cpp
+	    llcorehttp/httpcommon.cpp
+	    llcorehttp/tests/llcorehttp_test.h
+	    llcorehttp/examples/http_texture_load.cpp
+	    llcorehttp/_httpoprequest.h
+	    newview/llxmlrpctransaction.cpp
+	    newview/llsecapi.h
+	    newview/llsechandler_basic.h
+	    newview/tests/llsechandler_basic_test.cpp
+	    newview/exoflickr.cpp
+	    newview/llappcorehttp.cpp
+	    newview/llsechandler_basic.cpp
+	    newview/llsecapi.cpp
+	    llmessage/llblowfishcipher.cpp )
+	  for x in "${MY_OPENSSL_FILES[@]}"; do
+	    if [[ -f "${WORKDIR}/linden/indra/${x}" ]] ; then
+	      einfo "Fixing ${x} for openssl 1.0.2"
+	      sed -i -e 's:#include <openssl/:#include <openssl10/:' "${WORKDIR}/linden/indra/${x}"
+	    fi
+	  done;
+	fi
 }
 
 secondlife_pkg_postinst() {
