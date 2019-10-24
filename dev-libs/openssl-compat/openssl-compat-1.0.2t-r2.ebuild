@@ -62,7 +62,7 @@ DOCS=()
 S="${WORKDIR}/${MY_P}"
 
 MULTILIB_WRAPPED_HEADERS=(
-	usr/include/openssl/opensslconf.h
+	usr/include/openssl10/opensslconf.h
 )
 
 src_prepare() {
