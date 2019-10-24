@@ -18,7 +18,7 @@ DEPEND="
 	iconv? ( >=virtual/libiconv-0-r2[${MULTILIB_USEDEP}] )
 	icu? ( <dev-libs/icu-59:=[${MULTILIB_USEDEP}] )
 	ssl? (
-		!libressl? ( >=dev-libs/openssl-1.0.1h-r2:0[${MULTILIB_USEDEP}] )
+		!libressl? ( dev-libs/openssl-compat[${MULTILIB_USEDEP}] )
 		libressl? ( dev-libs/libressl:=[${MULTILIB_USEDEP}] )
 	)
 "
