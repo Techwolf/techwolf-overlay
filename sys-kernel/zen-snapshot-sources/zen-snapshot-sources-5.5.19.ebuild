@@ -1,8 +1,8 @@
 # Copyright 1999-2012 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: $
 
-EAPI="5"
+
+EAPI="6"
 ETYPE="sources"
 K_SECURITY_UNSUPPORTED="1"
 
@@ -11,7 +11,6 @@ detect_version
 detect_arch
 
 KEYWORDS="-* ~amd64 ~ppc ~ppc64 ~x86"
-IUSE=""
 
 HOMEPAGE="http://zen-kernel.org/"
 DESCRIPTION="The Zen Kernel sources"
